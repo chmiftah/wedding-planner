@@ -83,6 +83,9 @@
 <svelte:head>
   <title>Nikahku — Rencanakan Pernikahan Impianmu</title>
   <meta name="description" content="Rencanakan pernikahan dengan mudah. Atur anggaran, undang tamu, pantau tabungan — semua dalam satu tempat." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&display=swap" rel="stylesheet" />
 </svelte:head>
 
 {#snippet iconSvg(name: string, size = 20)}
@@ -956,29 +959,28 @@
   }
 
   .hero-title-main {
-    font-family: var(--font-display);
-    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-family: var(--font-script, 'Dancing Script', cursive);
+    font-size: clamp(2.8rem, 6.5vw, 4.4rem);
     font-weight: 700;
-    line-height: 1.18;
+    line-height: 1.15;
     color: #2C1810;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0 0.3em;
+    gap: 0 0.35em;
   }
 
   .hero-title-sub {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-weight: 400;
-    font-size: clamp(2rem, 4.5vw, 3.2rem);
-    line-height: 1.18;
+    font-family: var(--font-script, 'Dancing Script', cursive);
+    font-weight: 600;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.2;
     background: linear-gradient(135deg, #C9847A 0%, #B8726A 50%, #8B5E52 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   .hero-subtitle {
@@ -1775,14 +1777,14 @@
     }
 
     .hero-title-main {
-      font-size: 1.85rem;
-      line-height: 1.25;
+      font-size: 2.35rem;
+      line-height: 1.2;
       text-wrap: balance;
     }
 
     .hero-title-sub {
-      font-size: 1.65rem;
-      line-height: 1.25;
+      font-size: 1.85rem;
+      line-height: 1.2;
     }
 
     .hero-subtitle {

@@ -52,11 +52,39 @@
 
   const progress = $derived(Math.round(((step + 1) / totalSteps) * 100));
 
-  const estimatedBudget = $derived(() => {
-    const base = { sederhana: 75_000_000, menengah: 150_000_000, mewah: 350_000_000 };
-    const perPax = { sederhana: 200_000, menengah: 400_000, mewah: 800_000 };
-    return Math.round((base[style] + guestCount * perPax[style]) / 1_000_000) * 1_000_000;
+  const budgetBreakdown = $derived(() => {
+    // Biaya dasar (dekorasi, busana/rias, dokumentasi, administrasi, dll) disesuaikan dengan jenis venue
+    const venueMultiplier: Record<string, number> = {
+      rumah: 0.6,     // Di rumah: hemat sewa gedung, hanya tenda & kursi
+      gedung: 1.0,    // Di gedung: standar sewa aula/ballroom
+      kombinasi: 1.15 // Kombinasi: tempat akad + resepsi terpisah
+    };
+
+    const baseGedung = {
+      sederhana: 45_000_000,
+      menengah: 95_000_000,
+      mewah: 220_000_000,
+    };
+
+    const perPaxRate = {
+      sederhana: venueType === 'rumah' ? 110_000 : 140_000,
+      menengah: venueType === 'rumah' ? 190_000 : 250_000,
+      mewah: venueType === 'rumah' ? 380_000 : 500_000,
+    };
+
+    const multiplier = venueMultiplier[venueType] || 1.0;
+    const baseCost = Math.round((baseGedung[style] * multiplier) / 1_000_000) * 1_000_000;
+    const paxCost = guestCount * perPaxRate[style];
+    const total = Math.round((baseCost + paxCost) / 1_000_000) * 1_000_000;
+
+    return {
+      baseCost,
+      paxCost,
+      total,
+    };
   });
+
+  const estimatedBudget = $derived(() => budgetBreakdown().total);
 
   const effectiveBudget = $derived(budgetKnown === 'ya' ? totalBudget : estimatedBudget());
 
@@ -346,9 +374,15 @@
             </div>
           {:else}
             <div class="estimate-card">
-              <p class="text-subtle text-sm">Berdasarkan {guestCount} tamu dan gaya "{style}", perkiraan anggaran:</p>
+              <p class="text-subtle text-sm">
+                Berdasarkan <strong>{guestCount} tamu</strong>, lokasi <strong>{venueType === 'rumah' ? 'di rumah' : venueType === 'gedung' ? 'gedung' : 'kombinasi'}</strong>, dan gaya <strong>"{style}"</strong>:
+              </p>
               <p class="estimate-amount">{formatRupiah(estimatedBudget())}</p>
-              <p class="text-subtle text-xs">Perkiraan ini bisa diubah kapan saja di halaman anggaran.</p>
+              <div class="estimate-breakdown text-subtle text-xs">
+                <span>Pokok venue & vendor: {formatRupiah(budgetBreakdown().baseCost)}</span> •
+                <span>Konsumsi & undangan ({guestCount} tamu): {formatRupiah(budgetBreakdown().paxCost)}</span>
+              </div>
+              <p class="text-subtle text-xs mt-2">Perkiraan ini bisa disesuaikan kapan saja di halaman anggaran.</p>
             </div>
           {/if}
         </div>
@@ -818,6 +852,16 @@
     font-weight: 700;
     color: var(--color-accent);
     margin: var(--space-2) 0;
+  }
+
+  .estimate-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: var(--space-2) 0;
+    line-height: 1.4;
   }
 
   /* Envelope */
