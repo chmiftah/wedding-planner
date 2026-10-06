@@ -4,6 +4,8 @@
   import { wedding } from '#lib/stores/wedding';
   import { resolveMusicSrc } from '#lib/utils/music';
 
+  let { data } = $props();
+
   let audioRef = $state<HTMLAudioElement | null>(null);
   let isPlaying = $state(false);
 
@@ -72,10 +74,10 @@
   }
 
   function handleStart() {
-    if ($wedding.wizardCompleted) {
+    if (data?.user) {
       goto('/dashboard');
     } else {
-      goto('/wizard');
+      goto('/daftar');
     }
   }
 </script>
@@ -279,19 +281,22 @@
 
       <!-- Right Action Buttons -->
       <div class="header-nav-actions">
-        {#if $wedding.wizardCompleted}
+        {#if data?.user}
+          <a href="/dashboard" class="header-link-demo hide-mobile">
+            Halo, {data.user.name}
+          </a>
           <button onclick={handleStart} class="header-cta-btn">
             <span>Buka Dashboard</span>
             <span class="cta-arrow" aria-hidden="true">{@render iconSvg('arrow-right', 14)}</span>
           </button>
         {:else}
-          <a href="/dashboard" class="header-link-demo hide-mobile">
-            Lihat Demo
+          <a href="/masuk" class="header-link-demo">
+            Masuk
           </a>
-          <button onclick={handleStart} class="header-cta-btn">
-            <span>Mulai Gratis</span>
+          <a href="/daftar" class="header-cta-btn">
+            <span>Daftar Gratis</span>
             <span class="cta-sparkle" aria-hidden="true">{@render iconSvg('sparkles', 14)}</span>
-          </button>
+          </a>
         {/if}
       </div>
     </div>

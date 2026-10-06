@@ -1,0 +1,867 @@
+{
+  "id": "1abf1646-e7c9-49f4-b728-bf04082595b2",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.wedding_budget_categories": {
+      "name": "wedding_budget_categories",
+      "schema": "",
+      "columns": {
+        "wedding_budget_categories_id": {
+          "name": "wedding_budget_categories_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_budget_categories_wedding_id": {
+          "name": "wedding_budget_categories_wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_budget_categories_name": {
+          "name": "wedding_budget_categories_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_budget_categories_color": {
+          "name": "wedding_budget_categories_color",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'#C9847A'"
+        },
+        "wedding_budget_categories_icon": {
+          "name": "wedding_budget_categories_icon",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'catering'"
+        },
+        "wedding_budget_categories_order": {
+          "name": "wedding_budget_categories_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "wedding_budget_categories_created_at": {
+          "name": "wedding_budget_categories_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_budget_categories_wedding_budget_categories_wedding_id_wedding_weddings_wedding_weddings_id_fk": {
+          "name": "wedding_budget_categories_wedding_budget_categories_wedding_id_wedding_weddings_wedding_weddings_id_fk",
+          "tableFrom": "wedding_budget_categories",
+          "tableTo": "wedding_weddings",
+          "columnsFrom": [
+            "wedding_budget_categories_wedding_id"
+          ],
+          "columnsTo": [
+            "wedding_weddings_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_budget_items": {
+      "name": "wedding_budget_items",
+      "schema": "",
+      "columns": {
+        "wedding_budget_items_id": {
+          "name": "wedding_budget_items_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_budget_items_category_id": {
+          "name": "wedding_budget_items_category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_budget_items_name": {
+          "name": "wedding_budget_items_name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_budget_items_quantity": {
+          "name": "wedding_budget_items_quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "wedding_budget_items_unit": {
+          "name": "wedding_budget_items_unit",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'paket'"
+        },
+        "wedding_budget_items_unit_price": {
+          "name": "wedding_budget_items_unit_price",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "wedding_budget_items_vendor_name": {
+          "name": "wedding_budget_items_vendor_name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_budget_items_notes": {
+          "name": "wedding_budget_items_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_budget_items_created_at": {
+          "name": "wedding_budget_items_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_budget_items_wedding_budget_items_category_id_wedding_budget_categories_wedding_budget_categories_id_fk": {
+          "name": "wedding_budget_items_wedding_budget_items_category_id_wedding_budget_categories_wedding_budget_categories_id_fk",
+          "tableFrom": "wedding_budget_items",
+          "tableTo": "wedding_budget_categories",
+          "columnsFrom": [
+            "wedding_budget_items_category_id"
+          ],
+          "columnsTo": [
+            "wedding_budget_categories_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_checklist_items": {
+      "name": "wedding_checklist_items",
+      "schema": "",
+      "columns": {
+        "wedding_checklist_items_id": {
+          "name": "wedding_checklist_items_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_checklist_items_wedding_id": {
+          "name": "wedding_checklist_items_wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_checklist_items_text": {
+          "name": "wedding_checklist_items_text",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_checklist_items_due_date": {
+          "name": "wedding_checklist_items_due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_checklist_items_assignee": {
+          "name": "wedding_checklist_items_assignee",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_checklist_items_completed": {
+          "name": "wedding_checklist_items_completed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "wedding_checklist_items_category": {
+          "name": "wedding_checklist_items_category",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Umum'"
+        },
+        "wedding_checklist_items_notes": {
+          "name": "wedding_checklist_items_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_checklist_items_created_at": {
+          "name": "wedding_checklist_items_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_checklist_items_wedding_checklist_items_wedding_id_wedding_weddings_wedding_weddings_id_fk": {
+          "name": "wedding_checklist_items_wedding_checklist_items_wedding_id_wedding_weddings_wedding_weddings_id_fk",
+          "tableFrom": "wedding_checklist_items",
+          "tableTo": "wedding_weddings",
+          "columnsFrom": [
+            "wedding_checklist_items_wedding_id"
+          ],
+          "columnsTo": [
+            "wedding_weddings_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_funding_sources": {
+      "name": "wedding_funding_sources",
+      "schema": "",
+      "columns": {
+        "wedding_funding_sources_id": {
+          "name": "wedding_funding_sources_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_funding_sources_wedding_id": {
+          "name": "wedding_funding_sources_wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_funding_sources_type": {
+          "name": "wedding_funding_sources_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'tabungan_sendiri'"
+        },
+        "wedding_funding_sources_name": {
+          "name": "wedding_funding_sources_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_funding_sources_confirmed_amount": {
+          "name": "wedding_funding_sources_confirmed_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "wedding_funding_sources_is_estimate": {
+          "name": "wedding_funding_sources_is_estimate",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "wedding_funding_sources_notes": {
+          "name": "wedding_funding_sources_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_funding_sources_created_at": {
+          "name": "wedding_funding_sources_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_funding_sources_wedding_funding_sources_wedding_id_wedding_weddings_wedding_weddings_id_fk": {
+          "name": "wedding_funding_sources_wedding_funding_sources_wedding_id_wedding_weddings_wedding_weddings_id_fk",
+          "tableFrom": "wedding_funding_sources",
+          "tableTo": "wedding_weddings",
+          "columnsFrom": [
+            "wedding_funding_sources_wedding_id"
+          ],
+          "columnsTo": [
+            "wedding_weddings_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_guests": {
+      "name": "wedding_guests",
+      "schema": "",
+      "columns": {
+        "wedding_guests_id": {
+          "name": "wedding_guests_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_guests_wedding_id": {
+          "name": "wedding_guests_wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_guests_name": {
+          "name": "wedding_guests_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_guests_phone": {
+          "name": "wedding_guests_phone",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_guests_email": {
+          "name": "wedding_guests_email",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_guests_category": {
+          "name": "wedding_guests_category",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'teman'"
+        },
+        "wedding_guests_rsvp_token": {
+          "name": "wedding_guests_rsvp_token",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_guests_rsvp_status": {
+          "name": "wedding_guests_rsvp_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "wedding_guests_guest_count": {
+          "name": "wedding_guests_guest_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "wedding_guests_rsvp_message": {
+          "name": "wedding_guests_rsvp_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_guests_rsvp_responded_at": {
+          "name": "wedding_guests_rsvp_responded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_guests_created_at": {
+          "name": "wedding_guests_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_guests_wedding_guests_wedding_id_wedding_weddings_wedding_weddings_id_fk": {
+          "name": "wedding_guests_wedding_guests_wedding_id_wedding_weddings_wedding_weddings_id_fk",
+          "tableFrom": "wedding_guests",
+          "tableTo": "wedding_weddings",
+          "columnsFrom": [
+            "wedding_guests_wedding_id"
+          ],
+          "columnsTo": [
+            "wedding_weddings_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "wedding_guests_wedding_guests_rsvp_token_unique": {
+          "name": "wedding_guests_wedding_guests_rsvp_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "wedding_guests_rsvp_token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_invitations": {
+      "name": "wedding_invitations",
+      "schema": "",
+      "columns": {
+        "wedding_invitations_id": {
+          "name": "wedding_invitations_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_invitations_wedding_id": {
+          "name": "wedding_invitations_wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_invitations_slug": {
+          "name": "wedding_invitations_slug",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_invitations_theme": {
+          "name": "wedding_invitations_theme",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'romantic_terracotta'"
+        },
+        "wedding_invitations_config": {
+          "name": "wedding_invitations_config",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_invitations_created_at": {
+          "name": "wedding_invitations_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "wedding_invitations_updated_at": {
+          "name": "wedding_invitations_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_invitations_wedding_invitations_wedding_id_wedding_weddings_wedding_weddings_id_fk": {
+          "name": "wedding_invitations_wedding_invitations_wedding_id_wedding_weddings_wedding_weddings_id_fk",
+          "tableFrom": "wedding_invitations",
+          "tableTo": "wedding_weddings",
+          "columnsFrom": [
+            "wedding_invitations_wedding_id"
+          ],
+          "columnsTo": [
+            "wedding_weddings_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "wedding_invitations_wedding_invitations_wedding_id_unique": {
+          "name": "wedding_invitations_wedding_invitations_wedding_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "wedding_invitations_wedding_id"
+          ]
+        },
+        "wedding_invitations_wedding_invitations_slug_unique": {
+          "name": "wedding_invitations_wedding_invitations_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "wedding_invitations_slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_payments": {
+      "name": "wedding_payments",
+      "schema": "",
+      "columns": {
+        "wedding_payments_id": {
+          "name": "wedding_payments_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_payments_budget_item_id": {
+          "name": "wedding_payments_budget_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_payments_amount": {
+          "name": "wedding_payments_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_payments_payment_date": {
+          "name": "wedding_payments_payment_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_payments_type": {
+          "name": "wedding_payments_type",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'dp'"
+        },
+        "wedding_payments_proof_url": {
+          "name": "wedding_payments_proof_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_payments_notes": {
+          "name": "wedding_payments_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_payments_created_at": {
+          "name": "wedding_payments_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_payments_wedding_payments_budget_item_id_wedding_budget_items_wedding_budget_items_id_fk": {
+          "name": "wedding_payments_wedding_payments_budget_item_id_wedding_budget_items_wedding_budget_items_id_fk",
+          "tableFrom": "wedding_payments",
+          "tableTo": "wedding_budget_items",
+          "columnsFrom": [
+            "wedding_payments_budget_item_id"
+          ],
+          "columnsTo": [
+            "wedding_budget_items_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_savings_entries": {
+      "name": "wedding_savings_entries",
+      "schema": "",
+      "columns": {
+        "wedding_savings_entries_id": {
+          "name": "wedding_savings_entries_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_savings_entries_funding_source_id": {
+          "name": "wedding_savings_entries_funding_source_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_savings_entries_amount": {
+          "name": "wedding_savings_entries_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_savings_entries_entry_date": {
+          "name": "wedding_savings_entries_entry_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_savings_entries_notes": {
+          "name": "wedding_savings_entries_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_savings_entries_created_at": {
+          "name": "wedding_savings_entries_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_savings_entries_wedding_savings_entries_funding_source_id_wedding_funding_sources_wedding_funding_sources_id_fk": {
+          "name": "wedding_savings_entries_wedding_savings_entries_funding_source_id_wedding_funding_sources_wedding_funding_sources_id_fk",
+          "tableFrom": "wedding_savings_entries",
+          "tableTo": "wedding_funding_sources",
+          "columnsFrom": [
+            "wedding_savings_entries_funding_source_id"
+          ],
+          "columnsTo": [
+            "wedding_funding_sources_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_users": {
+      "name": "wedding_users",
+      "schema": "",
+      "columns": {
+        "wedding_users_id": {
+          "name": "wedding_users_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_users_email": {
+          "name": "wedding_users_email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_users_password_hash": {
+          "name": "wedding_users_password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_users_name": {
+          "name": "wedding_users_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_users_created_at": {
+          "name": "wedding_users_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "wedding_users_updated_at": {
+          "name": "wedding_users_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "wedding_users_wedding_users_email_unique": {
+          "name": "wedding_users_wedding_users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "wedding_users_email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wedding_weddings": {
+      "name": "wedding_weddings",
+      "schema": "",
+      "columns": {
+        "wedding_weddings_id": {
+          "name": "wedding_weddings_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_weddings_user_id": {
+          "name": "wedding_weddings_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wedding_weddings_bride_name": {
+          "name": "wedding_weddings_bride_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_weddings_groom_name": {
+          "name": "wedding_weddings_groom_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_weddings_wedding_date": {
+          "name": "wedding_weddings_wedding_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_weddings_date_note": {
+          "name": "wedding_weddings_date_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wedding_weddings_venue_type": {
+          "name": "wedding_weddings_venue_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'gedung'"
+        },
+        "wedding_weddings_style": {
+          "name": "wedding_weddings_style",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'menengah'"
+        },
+        "wedding_weddings_guest_count": {
+          "name": "wedding_weddings_guest_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 100
+        },
+        "wedding_weddings_total_budget": {
+          "name": "wedding_weddings_total_budget",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "wedding_weddings_monthly_savings_target": {
+          "name": "wedding_weddings_monthly_savings_target",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "wedding_weddings_wizard_completed": {
+          "name": "wedding_weddings_wizard_completed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "wedding_weddings_created_at": {
+          "name": "wedding_weddings_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "wedding_weddings_updated_at": {
+          "name": "wedding_weddings_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wedding_weddings_wedding_weddings_user_id_wedding_users_wedding_users_id_fk": {
+          "name": "wedding_weddings_wedding_weddings_user_id_wedding_users_wedding_users_id_fk",
+          "tableFrom": "wedding_weddings",
+          "tableTo": "wedding_users",
+          "columnsFrom": [
+            "wedding_weddings_user_id"
+          ],
+          "columnsTo": [
+            "wedding_users_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

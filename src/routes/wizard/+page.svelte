@@ -91,10 +91,15 @@
   const envelopeTotal = $derived(guestCount * envelopePerGuest);
   const totalDana = $derived(currentSavings + (hasParentHelp === 'ya' ? parentHelpAmount : 0));
 
-  function finish() {
+  let isSaving = $state(false);
+
+  async function finish() {
+    if (isSaving) return;
+    isSaving = true;
+
     const info: WeddingInfo = {
-      brideName,
-      groomName,
+      brideName: brideName.trim() || 'Mempelai Wanita',
+      groomName: groomName.trim() || 'Mempelai Pria',
       weddingDate: hasDate === 'ya' ? weddingDate : null,
       dateNote,
       venueType,
@@ -104,7 +109,7 @@
       events: selectedEvents.map((name, i) => ({ id: `event-${i}`, name, date: '' })),
     };
 
-    const fundingSources: FundingSource[] = [
+    const fundingSourcesList: FundingSource[] = [
       {
         id: 'fs-1',
         type: 'tabungan_sendiri',
@@ -116,7 +121,7 @@
     ];
 
     if (hasParentHelp === 'ya') {
-      fundingSources.push({
+      fundingSourcesList.push({
         id: 'fs-2',
         type: 'bantuan_orangtua',
         name: 'Bantuan Orang Tua',
@@ -126,8 +131,40 @@
       });
     }
 
-    completeWizard({ info, monthlySavingsTarget: monthlySavings, fundingSources });
-    goto('/dashboard');
+    completeWizard({ info, monthlySavingsTarget: monthlySavings, fundingSources: fundingSourcesList });
+
+    const submission = {
+      brideName: info.brideName,
+      groomName: info.groomName,
+      weddingDate: info.weddingDate,
+      dateNote: info.dateNote,
+      venueType: info.venueType,
+      style: info.style,
+      guestCount: info.guestCount,
+      totalBudget: info.totalBudget,
+      monthlySavingsTarget: monthlySavings,
+      fundingSources: fundingSourcesList.map((f) => ({
+        type: f.type,
+        name: f.name,
+        confirmedAmount: f.confirmedAmount,
+        isEstimate: f.isEstimate,
+        notes: f.notes,
+      })),
+    };
+
+    try {
+      const formData = new FormData();
+      formData.append('payload', JSON.stringify(submission));
+      await fetch('/wizard', {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (err) {
+      console.warn('Error syncing wizard to database:', err);
+    } finally {
+      isSaving = false;
+      goto('/dashboard');
+    }
   }
 </script>
 
@@ -549,8 +586,12 @@
             </div>
           </div>
 
-          <button onclick={finish} class="btn btn-primary btn-block btn-lg mt-6">
-            🎊 Buat Rencana Anggaran Sekarang!
+          <button onclick={finish} class="btn btn-primary btn-block btn-lg mt-6" disabled={isSaving}>
+            {#if isSaving}
+              <span>⏳ Menyimpan Rencana ke Database...</span>
+            {:else}
+              <span>🎊 Buat Rencana Anggaran Sekarang!</span>
+            {/if}
           </button>
           <p class="text-subtle text-xs text-center mt-2">Semua data bisa diubah setelah wizard selesai.</p>
         </div>

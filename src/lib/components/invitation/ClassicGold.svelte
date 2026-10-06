@@ -215,7 +215,12 @@
 
   <!-- 1. GATE COVER (ROYAL GOLD) -->
   <section class="gold-gate-cover">
-    <div class="gold-real-bg" style="background-image: url('/images/themes/gold-marble-1.jpg');" aria-hidden="true"></div>
+    <div class="gold-real-bg" style="background-image: url('{invitation.cover.coverPhoto || '/images/themes/gold-marble-1.jpg'}');" aria-hidden="true"></div>
+    <!-- Floral Corner Decorations -->
+    <div class="gold-floral-corner gold-floral-tl" aria-hidden="true"></div>
+    <div class="gold-floral-corner gold-floral-tr" aria-hidden="true"></div>
+    <div class="gold-floral-corner gold-floral-bl" aria-hidden="true"></div>
+    <div class="gold-floral-corner gold-floral-br" aria-hidden="true"></div>
     <div class="gold-gate-overlay"></div>
     <div class="gate-border-frame">
       <div class="gate-inner-border">
@@ -619,6 +624,51 @@
     position: relative;
     overflow: hidden;
   }
+
+  /* Gold floral corner decorations */
+  .gold-floral-corner {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background-image: url('/wedding-floral-arch.jpg');
+    background-size: cover;
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 1;
+    filter: sepia(1) hue-rotate(30deg) saturate(1.5) brightness(0.7);
+  }
+  .gold-floral-tl {
+    top: -40px;
+    left: -40px;
+    transform: rotate(0deg);
+    border-radius: 0 0 100% 0;
+    mask-image: radial-gradient(circle at top left, rgba(0,0,0,0.9) 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at top left, rgba(0,0,0,0.9) 30%, transparent 70%);
+  }
+  .gold-floral-tr {
+    top: -40px;
+    right: -40px;
+    transform: scaleX(-1);
+    border-radius: 0 0 0 100%;
+    mask-image: radial-gradient(circle at top right, rgba(0,0,0,0.9) 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at top right, rgba(0,0,0,0.9) 30%, transparent 70%);
+  }
+  .gold-floral-bl {
+    bottom: -40px;
+    left: -40px;
+    transform: scaleY(-1);
+    border-radius: 0 100% 0 0;
+    mask-image: radial-gradient(circle at bottom left, rgba(0,0,0,0.9) 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at bottom left, rgba(0,0,0,0.9) 30%, transparent 70%);
+  }
+  .gold-floral-br {
+    bottom: -40px;
+    right: -40px;
+    transform: scale(-1, -1);
+    border-radius: 100% 0 0 0;
+    mask-image: radial-gradient(circle at bottom right, rgba(0,0,0,0.9) 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at bottom right, rgba(0,0,0,0.9) 30%, transparent 70%);
+  }
   .gold-real-bg {
     position: absolute;
     inset: 0;
@@ -737,7 +787,10 @@
   /* Main Content */
   .gold-main-content {
     padding: 2rem 1.25rem 4rem;
+    position: relative;
+    overflow: hidden;
   }
+
   .gold-header {
     text-align: center;
     padding: 2rem 0;

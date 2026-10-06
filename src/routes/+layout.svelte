@@ -4,7 +4,14 @@
   import { goto } from '$app/navigation';
   import { wedding } from '#lib/stores/wedding';
 
-  const { children } = $props();
+  interface Props {
+    children: any;
+    data: {
+      user: { id: string; email: string; name: string } | null;
+    };
+  }
+
+  const { children, data }: Props = $props();
 
   // Navigation Items
   const navItems = [
@@ -119,6 +126,20 @@
             </div>
           {/if}
 
+          <!-- Admin Link for Admin users -->
+          {#if data?.user?.role === 'admin'}
+            <a
+              href="/admin"
+              class="nav-admin-btn {currentPath.startsWith('/admin') ? 'active' : ''}"
+              title="Panel Administrator"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>Admin</span>
+            </a>
+          {/if}
+
           <!-- Settings Link -->
           <a
             href="/pengaturan"
@@ -131,6 +152,28 @@
             </svg>
             <span class="hide-mobile">Pengaturan</span>
           </a>
+
+          <!-- User Session / Auth Controls -->
+          {#if data?.user}
+            <div class="user-profile-badge hide-mobile" title="Masuk sebagai {data.user.email}">
+              <span class="user-avatar-circle">{data.user.name.charAt(0).toUpperCase()}</span>
+              <span class="user-display-name">{data.user.name}</span>
+            </div>
+            <a
+              href="/keluar"
+              class="nav-logout-btn"
+              title="Keluar dari akun"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span class="hide-mobile">Keluar</span>
+            </a>
+          {:else}
+            <a href="/masuk" class="nav-login-btn">Masuk</a>
+          {/if}
         </div>
       </div>
     </header>
@@ -296,6 +339,34 @@
     background: var(--color-primary);
   }
 
+  /* Admin Link */
+  .nav-admin-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    color: #92400e;
+    background: #fef3c7;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #fde68a;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .nav-admin-btn:hover {
+    background: #fde68a;
+    color: #78350f;
+  }
+
+  .nav-admin-btn.active {
+    background: #d97706;
+    color: #ffffff;
+    border-color: #b45309;
+  }
+
   /* Settings Link */
   .nav-settings-btn {
     display: inline-flex;
@@ -323,6 +394,76 @@
     color: var(--color-accent);
     font-weight: 600;
     border-color: var(--color-primary-light);
+  }
+
+  .user-profile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px 4px 4px;
+    background: var(--color-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    color: var(--color-text);
+  }
+
+  .user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+  }
+
+  .user-display-name {
+    font-weight: 600;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    color: var(--color-text-subtle);
+    font-size: 13px;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .nav-logout-btn:hover {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+  }
+
+  .nav-login-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: #ffffff;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 6px rgba(201, 132, 122, 0.3);
+    transition: all var(--transition-fast);
+  }
+
+  .nav-login-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(201, 132, 122, 0.4);
   }
 
   /* Main Content */

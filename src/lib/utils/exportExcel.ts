@@ -452,3 +452,14 @@ export function exportGuestsToExcel(wedding: WeddingStore): void {
   const fullXml = buildWorkbookXml(sheetsXml);
   triggerDownload(fullXml, filename);
 }
+
+export function exportChecklistToExcel(wedding: WeddingStore): void {
+  const coupleSlug = String(wedding.info.groomName || "Groom") + "-" + String(wedding.info.brideName || "Bride");
+  const cleanSlug = coupleSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const filename = "Nikahku-Checklist-" + cleanSlug + ".xls";
+
+  const sheetsXml = generateChecklistSheetXml(wedding);
+  const fullXml = buildWorkbookXml(sheetsXml);
+  triggerDownload(fullXml, filename);
+}
+

@@ -87,6 +87,7 @@ export interface ChecklistItem {
   completed: boolean;
   category: string;
   notes: string;
+  priority?: 'rendah' | 'sedang' | 'tinggi';
 }
 
 
@@ -95,6 +96,7 @@ export interface DigitalInvitation {
   cover: {
     title: string;
     subtitle: string;
+    coverPhoto?: string;
     bgMusicUrl: string;
     bgMusicAutoPlay: boolean;
   };
@@ -169,6 +171,7 @@ export const createDefaultInvitation = (info?: WeddingInfo): DigitalInvitation =
   cover: {
     title: 'The Wedding Of',
     subtitle: 'Kami mengundang Anda untuk merayakan momen bahagia penyatuan cinta kami',
+    coverPhoto: '/images/themes/romantic-arch-real.jpg',
     bgMusicUrl: '/music/the-way-you-look-at-me.mp3',
     bgMusicAutoPlay: true,
   },
@@ -531,8 +534,22 @@ export function deleteGuest(id: string) {
 }
 
 export function addChecklistItem(item: Omit<ChecklistItem, 'id' | 'completed'>) {
-  const newItem: ChecklistItem = { id: `task-${Date.now()}`, completed: false, ...item };
+  const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `task-${Date.now()}`;
+  const newItem: ChecklistItem = {
+    id,
+    completed: false,
+    priority: item.priority || 'sedang',
+    ...item,
+  };
   wedding.update((s) => ({ ...s, checklist: [...s.checklist, newItem] }));
+  return newItem;
+}
+
+export function updateChecklistItem(id: string, updates: Partial<Omit<ChecklistItem, 'id'>>) {
+  wedding.update((s) => ({
+    ...s,
+    checklist: s.checklist.map((item) => (item.id === id ? { ...item, ...updates } : item)),
+  }));
 }
 
 export function toggleChecklistItem(id: string) {
@@ -544,6 +561,64 @@ export function toggleChecklistItem(id: string) {
 
 export function deleteChecklistItem(id: string) {
   wedding.update((s) => ({ ...s, checklist: s.checklist.filter((i) => i.id !== id) }));
+}
+
+export function deleteCompletedChecklist() {
+  wedding.update((s) => ({ ...s, checklist: s.checklist.filter((i) => !i.completed) }));
+}
+
+export function setAllChecklistCompleted(completed: boolean) {
+  wedding.update((s) => ({
+    ...s,
+    checklist: s.checklist.map((i) => ({ ...i, completed })),
+  }));
+}
+
+export function resetChecklistToDefault() {
+  const defaultItems: ChecklistItem[] = [
+    { id: 't-1', text: 'Tentukan tanggal pernikahan & lokasi venue', category: 'Venue & Dekorasi', dueDate: '', assignee: 'Keluarga', completed: false, notes: 'Musyawarah kedua pihak keluarga', priority: 'tinggi' },
+    { id: 't-2', text: 'Booking gedung / konfirmasi lokasi akad & resepsi', category: 'Venue & Dekorasi', dueDate: '', assignee: 'Pasangan', completed: false, notes: 'Cek ketersediaan tanggal dan bayar DP', priority: 'tinggi' },
+    { id: 't-3', text: 'Pilih & booking katering pernikahan (test food)', category: 'Katering', dueDate: '', assignee: 'Pasangan', completed: false, notes: 'Sesuaikan dengan estimasi jumlah tamu', priority: 'tinggi' },
+    { id: 't-4', text: 'Pilih vendor busana pengantin & tata rias (MUA)', category: 'Rias & Busana', dueDate: '', assignee: 'Mempelai Wanita', completed: false, notes: 'Jadwalkan sesi fitting dan konsultasi tema', priority: 'sedang' },
+    { id: 't-5', text: 'Pilih & booking vendor fotografer & videografer', category: 'Dokumentasi', dueDate: '', assignee: 'Mempelai Pria', completed: false, notes: 'Tentukan paket prewedding dan hari-H', priority: 'sedang' },
+    { id: 't-6', text: 'Urus berkas administrasi KUA / catatan sipil', category: 'Administrasi', dueDate: '', assignee: 'Mempelai Pria', completed: false, notes: 'Surat pengantar RT/RW, kelurahan, dan imunisasi', priority: 'tinggi' },
+    { id: 't-7', text: 'Susun daftar tamu undangan', category: 'Tamu & Undangan', dueDate: '', assignee: 'Pasangan', completed: false, notes: 'Kumpulkan kontak keluarga, kerabat, dan teman', priority: 'sedang' },
+    { id: 't-8', text: 'Pilih MC, sound system, dan hiburan musik', category: 'Musik & Hiburan', dueDate: '', assignee: 'Pasangan', completed: false, notes: 'Buat susunan playlist lagu', priority: 'rendah' },
+    { id: 't-9', text: 'Buat & sebarkan undangan digital website', category: 'Tamu & Undangan', dueDate: '', assignee: 'Pasangan', completed: false, notes: 'Kirim via WhatsApp dan media sosial', priority: 'tinggi' },
+    { id: 't-10', text: 'Pesan souvenir dan cetak buku tamu', category: 'Undangan & Souvenir', dueDate: '', assignee: 'Mempelai Wanita', completed: false, notes: 'Pastikan jumlah souvenir ada cadangan 10%', priority: 'rendah' },
+    { id: 't-11', text: 'Fitting final busana pengantin & seragam keluarga', category: 'Rias & Busana', dueDate: '', assignee: 'Pasangan', completed: false, notes: 'H-2 minggu sebelum acara', priority: 'sedang' },
+    { id: 't-12', text: 'Technical meeting & gladi resik panitia / WO', category: 'Lainnya', dueDate: '', assignee: 'Keluarga', completed: false, notes: 'Finalisasi rundown acara dan koordinator lapangan', priority: 'tinggi' },
+  ];
+  wedding.update((s) => ({ ...s, checklist: defaultItems }));
+}
+
+export function hydrateWeddingFromDb(dbData: any) {
+  if (!dbData || !dbData.wedding) return;
+  const w = dbData.wedding;
+
+  wedding.update((s) => ({
+    ...s,
+    info: {
+      brideName: w.brideName || '',
+      groomName: w.groomName || '',
+      weddingDate: w.weddingDate || null,
+      dateNote: w.dateNote || '',
+      venueType: w.venueType || 'gedung',
+      style: w.style || 'menengah',
+      guestCount: w.guestCount || 100,
+      totalBudget: Number(w.totalBudget) || 0,
+      events: s.info.events.length > 0 ? s.info.events : [{ id: 'ev-1', name: 'Resepsi', date: w.weddingDate || '' }],
+    },
+    monthlySavingsTarget: Number(w.monthlySavingsTarget) || 0,
+    budgetCategories: dbData.budgetCategories?.length ? dbData.budgetCategories : s.budgetCategories,
+    fundingSources: dbData.fundingSources?.length ? dbData.fundingSources : s.fundingSources,
+    checklist: dbData.checklist?.length ? dbData.checklist : s.checklist,
+    guests: dbData.guests?.length ? dbData.guests : s.guests,
+    invitation: dbData.invitation?.config
+      ? { ...createDefaultInvitation(w), ...dbData.invitation.config }
+      : s.invitation,
+    wizardCompleted: Boolean(w.wizardCompleted),
+  }));
 }
 
 export function resetWedding() {

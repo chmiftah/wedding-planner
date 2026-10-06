@@ -1,7 +1,17 @@
 <script lang="ts">
-  import { wedding, budgetSummary, savingsSummary, guestSummary } from '#lib/stores/wedding';
+  import { wedding, budgetSummary, savingsSummary, guestSummary, hydrateWeddingFromDb } from '#lib/stores/wedding';
   import { formatRupiah, formatRupiahShort, formatDate, daysUntil } from '#lib/utils/format';
   import { goto } from '$app/navigation';
+  import CategoryIcon from '#lib/components/CategoryIcon.svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
+
+  $effect(() => {
+    if (data?.weddingData) {
+      hydrateWeddingFromDb(data.weddingData);
+    }
+  });
 
   const days = $derived(daysUntil($wedding.info.weddingDate));
   const bs = $derived($budgetSummary);
@@ -164,7 +174,7 @@
                 {@const catPaid = cat.items.reduce((a, i) => a + i.payments.filter(p => p.paidAt).reduce((b, p) => b + p.amount, 0), 0)}
                 {@const pct = catTotal > 0 ? Math.min(100, (catPaid / catTotal) * 100) : 0}
                 <div class="cat-row">
-                  <span class="cat-icon">{cat.icon}</span>
+                  <span class="cat-icon"><CategoryIcon icon={cat.icon} size={16} /></span>
                   <div class="cat-info flex-1">
                     <div class="flex justify-between mb-1">
                       <span class="text-sm font-medium">{cat.name}</span>

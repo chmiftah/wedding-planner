@@ -7,6 +7,7 @@
   } from '#lib/stores/wedding';
   import { formatRupiah, formatRupiahShort, formatDate, getPaymentStatus } from '#lib/utils/format';
   import { exportWeddingToExcel } from '#lib/utils/exportExcel';
+  import CategoryIcon from '#lib/components/CategoryIcon.svelte';
 
   // Navigation states
   let activeView = $state<'grid' | 'all'>('grid');
@@ -251,7 +252,7 @@
                 <!-- Top card info -->
                 <div class="card-top">
                   <div class="card-icon-badge" style="background: {cat.color}20; color: {cat.color}">
-                    <span>{cat.icon}</span>
+                    <CategoryIcon icon={cat.icon} size={22} />
                   </div>
                   <div class="card-title-group">
                     <h3 class="card-cat-name">{cat.name}</h3>
@@ -344,7 +345,7 @@
                   onclick={() => openCategoryDetail(c.id)}
                   title={c.name}
                 >
-                  <span>{c.icon}</span>
+                  <span><CategoryIcon icon={c.icon} size={15} /></span>
                   <span class="pill-name">{c.name.split(' ')[0]}</span>
                 </button>
               {/each}
@@ -356,7 +357,7 @@
             <div class="cat-banner-header">
               <div class="cat-banner-left">
                 <div class="cat-banner-icon" style="background: {cat.color}20; color: {cat.color}">
-                  {cat.icon}
+                  <CategoryIcon icon={cat.icon} size={28} />
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
@@ -662,7 +663,7 @@
                 <button type="button" class="category-header" onclick={() => toggleCategoryAccordion(cat.id)}>
                   <div class="category-left">
                     <div class="category-color-dot" style="background: {cat.color}"></div>
-                    <span class="category-icon">{cat.icon}</span>
+                    <span class="category-icon"><CategoryIcon icon={cat.icon} size={18} /></span>
                     <div class="category-title-group">
                       <span class="category-name">{cat.name}</span>
                       <span class="category-count-badge">{cat.items.length} item</span>

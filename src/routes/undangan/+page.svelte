@@ -52,6 +52,80 @@
     showToast('✓ Musik latar berhasil diganti');
   }
 
+  // Cover photo presets and upload
+  const COVER_PHOTO_PRESETS = [
+    {
+      id: 'romantic-arch',
+      title: 'Romantic Arch Boho',
+      tag: 'Terracotta',
+      url: '/images/themes/romantic-arch-real.jpg',
+    },
+    {
+      id: 'terracotta-arch',
+      title: 'Terracotta Floral Arch',
+      tag: 'Warm Rustic',
+      url: '/images/themes/terracotta-arch.jpg',
+    },
+    {
+      id: 'botanical-arch',
+      title: 'Botanical Garden Arch',
+      tag: 'Sage Green',
+      url: '/images/themes/botanical-arch-real.jpg',
+    },
+    {
+      id: 'gold-arch',
+      title: 'Royal Gold Luxury',
+      tag: 'Glamour',
+      url: '/images/themes/gold-luxury-real.jpg',
+    },
+    {
+      id: 'couple-prewed',
+      title: 'Pasangan Prewedding',
+      tag: 'Golden Hour',
+      url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'sunset-prewed',
+      title: 'Sunset Beach Romance',
+      tag: 'Pantai & Senja',
+      url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
+    },
+  ];
+
+  function selectCoverPreset(presetUrl: string) {
+    updateInvitation({
+      cover: {
+        ...$wedding.invitation.cover,
+        coverPhoto: presetUrl,
+      }
+    });
+    showToast('✓ Foto cover berhasil dipilih!');
+  }
+
+  function handleCoverFileUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('⚠️ Ukuran foto maksimal 5MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        updateInvitation({
+          cover: {
+            ...$wedding.invitation.cover,
+            coverPhoto: result,
+          }
+        });
+        showToast('✓ Foto cover berhasil diunggah!');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   // Toast notification
   let toastMessage = $state<string | null>(null);
   let toastTimer: any = null;
@@ -261,18 +335,17 @@
     <div class="container">
       <div class="page-header-inner">
         <div>
-          <div class="flex items-center gap-2 mb-1">
-            <span class="badge badge-primary text-xs">Studio Undangan Digital</span>
-            <span class="badge badge-success text-xs">
-              Tema Aktif: {currentActiveTemplate.title}
-            </span>
-          </div>
           <h1 class="page-title-with-icon">
-            <span class="page-title-icon" aria-hidden="true">💌</span>
-            Undangan Pernikahan Online
+            <span class="page-title-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </span>
+            Undangan Digital
           </h1>
           <p class="text-muted text-sm mt-1">
-            Pilih template desain favorit, lihat pratinjau langsung, lalu sesuaikan detail informasi pernikahan kalian.
+            Kustomisasi desain dan bagikan link website undangan pernikahan Anda
           </p>
         </div>
 
@@ -307,7 +380,15 @@
           onclick={() => currentView = 'templates'}
         >
           <span class="flow-step-number">1</span>
-          <span class="flow-btn-icon">🎨</span>
+          <span class="flow-btn-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+              <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+              <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+              <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"></path>
+            </svg>
+          </span>
           <div class="flow-btn-text">
             <strong>Pilih Template Undangan</strong>
             <span class="flow-btn-desc">{templates.length} pilihan desain cantik</span>
@@ -319,7 +400,12 @@
           onclick={() => currentView = 'customizer'}
         >
           <span class="flow-step-number">2</span>
-          <span class="flow-btn-icon">✏️</span>
+          <span class="flow-btn-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </span>
           <div class="flow-btn-text">
             <strong>Kustomisasi Isi &amp; Detail</strong>
             <span class="flow-btn-desc">Mempelai, acara, cerita cinta, kado</span>
@@ -329,7 +415,13 @@
 
       {#if currentView === 'templates'}
         <div class="flow-nav-info-banner">
-          <span class="info-icon">💡</span>
+          <span class="info-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </span>
           <span>
             Template yang <strong>sedang aktif berada di urutan pertama</strong>. Klik <strong>Preview</strong> untuk mencoba interaktif atau klik <strong>Kustomisasi</strong> untuk mengisi data.
           </span>
@@ -638,6 +730,84 @@
                         bind:value={$wedding.invitation.cover.title}
                         placeholder="Contoh: THE WEDDING OF"
                       />
+                    </div>
+
+                    <!-- Foto Cover / Kubah Prewedding Form -->
+                    <div class="form-group mb-4">
+                      <div class="flex items-center justify-between mb-1.5">
+                        <label class="form-label mb-0" for="cover-photo-url-input">Foto Cover Amplop / Kubah Prewedding</label>
+                        {#if $wedding.invitation.cover.coverPhoto && $wedding.invitation.cover.coverPhoto !== '/images/themes/romantic-arch-real.jpg'}
+                          <button
+                            type="button"
+                            class="text-xs text-primary underline"
+                            onclick={() => selectCoverPreset('/images/themes/romantic-arch-real.jpg')}
+                          >
+                            Reset ke Bawaan
+                          </button>
+                        {/if}
+                      </div>
+
+                      <!-- Current Cover Preview & Actions -->
+                      <div class="cover-photo-preview-bar mb-3">
+                        <div class="cover-preview-arch">
+                          <img
+                            src={$wedding.invitation.cover.coverPhoto || '/images/themes/romantic-arch-real.jpg'}
+                            alt="Cover Preview"
+                            class="cover-preview-img"
+                          />
+                        </div>
+                        <div class="cover-preview-info">
+                          <strong class="text-sm block text-heading mb-0.5">Foto Kubah Amplop Aktif</strong>
+                          <span class="text-xs text-muted block mb-2">
+                            Foto ini muncul di bingkai kubah (*arched dome*) pada cover pembuka undangan.
+                          </span>
+                          <div class="flex items-center gap-2">
+                            <label class="btn btn-secondary btn-xs cursor-pointer">
+                              <span>📁 Unggah Foto Sendiri</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style="display: none;"
+                                onchange={handleCoverFileUpload}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Presets Selection Grid -->
+                      <span class="form-label-sub mb-1.5 block text-xs">Pilih Dari Koleksi Template Siap Pakai:</span>
+                      <div class="cover-presets-grid mb-3">
+                        {#each COVER_PHOTO_PRESETS as preset}
+                          {@const isSelected = ($wedding.invitation.cover.coverPhoto || '/images/themes/romantic-arch-real.jpg') === preset.url}
+                          <button
+                            type="button"
+                            class="cover-preset-thumb-card {isSelected ? 'selected' : ''}"
+                            onclick={() => selectCoverPreset(preset.url)}
+                            title={preset.title}
+                          >
+                            <img src={preset.url} alt={preset.title} class="preset-thumb-img" />
+                            <div class="preset-overlay-label">
+                              <span>{preset.tag}</span>
+                            </div>
+                            {#if isSelected}
+                              <span class="preset-selected-badge">✓</span>
+                            {/if}
+                          </button>
+                        {/each}
+                      </div>
+
+                      <!-- Manual URL Input -->
+                      <div class="form-group">
+                        <label for="cover-photo-url-input" class="form-label text-xs">Atau Tempel Link Gambar (URL):</label>
+                        <input
+                          id="cover-photo-url-input"
+                          type="text"
+                          class="form-input text-xs"
+                          bind:value={$wedding.invitation.cover.coverPhoto}
+                          placeholder="https://... atau link foto pasangan"
+                        />
+                      </div>
                     </div>
                     <!-- Music Selection Section -->
                     <div class="form-group mb-3">
@@ -1496,7 +1666,10 @@
     color: white;
   }
   .flow-btn-icon {
-    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent);
   }
   .flow-btn-text {
     display: flex;
@@ -1522,7 +1695,11 @@
     color: var(--color-text-muted);
   }
   .info-icon {
-    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    flex-shrink: 0;
   }
 
   /* --- Active Summary Card --- */
@@ -2048,6 +2225,114 @@
     color: var(--color-text);
     margin: 0;
   }
+  /* Cover Photo Preview & Presets */
+  .cover-photo-preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+  .cover-preview-arch {
+    width: 60px;
+    height: 84px;
+    border-radius: 30px 30px 6px 6px;
+    overflow: hidden;
+    border: 2px solid #b89358;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    background: #f4ece4;
+  }
+  .cover-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .cover-preview-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .form-label-sub {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+  .cover-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+  }
+  @media (min-width: 480px) {
+    .cover-presets-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+  .cover-preset-thumb-card {
+    position: relative;
+    border-radius: 18px 18px 6px 6px;
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    background: #f0f0f0;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+  .cover-preset-thumb-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+    border-color: rgba(184, 147, 88, 0.5);
+  }
+  .cover-preset-thumb-card.selected {
+    border-color: #b89358;
+    box-shadow: 0 0 0 2px rgba(184, 147, 88, 0.3), 0 6px 14px rgba(0, 0, 0, 0.15);
+  }
+  .preset-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  .cover-preset-thumb-card:hover .preset-thumb-img {
+    transform: scale(1.06);
+  }
+  .preset-overlay-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 100%);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 10px 4px 3px 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preset-selected-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #b89358;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
   /* Music Preset Selector */
   .music-presets-grid {
     display: flex;

@@ -3,6 +3,13 @@
   import { formatDate, formatRupiah } from '#lib/utils/format';
   import { exportWeddingToExcel, exportBudgetToExcel, exportGuestsToExcel } from '#lib/utils/exportExcel';
   import { goto } from '$app/navigation';
+  import type { PageData } from './$types';
+
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 
   let showReset = $state(false);
   let resetConfirmText = $state('');
@@ -18,10 +25,56 @@
   function parseNum(s: string) { return parseInt(s.replace(/\D/g, ''), 10) || 0; }
 
   let info = $state({ ...$wedding.info });
+  let saveInfoSuccess = $state(false);
+  let isSavingInfo = $state(false);
 
-  function saveInfo() {
+  async function saveInfo() {
+    isSavingInfo = true;
     wedding.update(s => ({ ...s, info: { ...info } }));
-    alert('Pengaturan berhasil disimpan!');
+
+    try {
+      const formData = new FormData();
+      formData.append('brideName', info.brideName);
+      formData.append('groomName', info.groomName);
+      formData.append('weddingDate', info.weddingDate || '');
+      formData.append('venueType', info.venueType);
+      formData.append('style', info.style);
+      formData.append('guestCount', info.guestCount.toString());
+      formData.append('totalBudget', info.totalBudget.toString());
+
+      await fetch('?/updateInfo', {
+        method: 'POST',
+        body: formData,
+      });
+      saveInfoSuccess = true;
+      setTimeout(() => { saveInfoSuccess = false; }, 3500);
+    } catch (err) {
+      console.warn('Sync database error:', err);
+    } finally {
+      isSavingInfo = false;
+    }
+  }
+
+  let saveFinancialSuccess = $state(false);
+  let isSavingFinancial = $state(false);
+
+  async function saveFinancial() {
+    isSavingFinancial = true;
+    try {
+      const formData = new FormData();
+      formData.append('monthlySavingsTarget', $wedding.monthlySavingsTarget.toString());
+
+      await fetch('?/updateFinancial', {
+        method: 'POST',
+        body: formData,
+      });
+      saveFinancialSuccess = true;
+      setTimeout(() => { saveFinancialSuccess = false; }, 3500);
+    } catch (err) {
+      console.warn('Sync financial error:', err);
+    } finally {
+      isSavingFinancial = false;
+    }
   }
 
   // Backup & Restore Hub
@@ -53,7 +106,7 @@
         if (!json || typeof json !== 'object' || !json.info) {
           throw new Error('Format file tidak sesuai. Pastikan memilih file cadangan Nikahku (.json).');
         }
-        if (confirm('Pulihkan data dari cadangan ini? Data rencana saat ini di browser akan digantikan dengan data dari file cadangan.')) {
+        if (confirm('Pulihkan data dari cadangan ini? Data rencana saat ini akan digantikan dengan data dari file cadangan.')) {
           wedding.set(json);
           info = { ...json.info };
           restoreSuccessMessage = '✓ Data rencana pernikahan berhasil dipulihkan dari file cadangan!';
@@ -87,30 +140,35 @@
         </span>
         Pengaturan
       </h1>
-      <p class="text-muted text-sm mt-1">Kelola informasi pernikahan dan akun</p>
+      <p class="text-muted text-sm mt-1">Kelola data pernikahan, profil akun, dan ekspor laporan</p>
     </div>
   </div>
 
   <div class="container mt-6">
     <div class="settings-grid">
-      <div>
-        <!-- Wedding Info -->
+      <!-- ============================================== -->
+      <!-- KOLOM KIRI: PERENCANAAN & KEUANGAN             -->
+      <!-- ============================================== -->
+      <div class="settings-col">
+        <!-- Wedding Info Card -->
         <div class="card mb-6 animate-fade-in">
-          <h3 class="card-title-with-icon mb-4">
-            <span class="card-title-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"></circle><circle cx="16" cy="16" r="5"></circle></svg>
-            </span>
-            Informasi Pernikahan
-          </h3>
+          <div class="card-header-clean">
+            <h3 class="card-title-with-icon">
+              <span class="card-title-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"></circle><circle cx="16" cy="16" r="5"></circle></svg>
+              </span>
+              Informasi Pernikahan
+            </h3>
+          </div>
 
           <div class="grid-2 mb-4">
             <div class="form-group">
-              <label class="form-label" for="bride">Nama kamu</label>
-              <input id="bride" type="text" class="form-input" bind:value={info.brideName} />
+              <label class="form-label" for="bride">Nama Mempelai Wanita</label>
+              <input id="bride" type="text" class="form-input" bind:value={info.brideName} placeholder="Contoh: Sinta" />
             </div>
             <div class="form-group">
-              <label class="form-label" for="groom">Nama pasangan</label>
-              <input id="groom" type="text" class="form-input" bind:value={info.groomName} />
+              <label class="form-label" for="groom">Nama Mempelai Pria</label>
+              <input id="groom" type="text" class="form-input" bind:value={info.groomName} placeholder="Contoh: Rama" />
             </div>
           </div>
 
@@ -121,7 +179,7 @@
 
           <div class="grid-2 mb-4">
             <div class="form-group">
-              <label class="form-label" for="venue">Tempat</label>
+              <label class="form-label" for="venue">Lokasi / Tempat</label>
               <select id="venue" class="form-select" bind:value={info.venueType}>
                 <option value="gedung">Gedung / Ballroom</option>
                 <option value="rumah">Di Rumah</option>
@@ -129,7 +187,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label" for="style">Gaya</label>
+              <label class="form-label" for="style">Gaya Acara</label>
               <select id="style" class="form-select" bind:value={info.style}>
                 <option value="sederhana">Sederhana</option>
                 <option value="menengah">Menengah</option>
@@ -140,11 +198,11 @@
 
           <div class="grid-2 mb-6">
             <div class="form-group">
-              <label class="form-label" for="guests">Perkiraan Tamu</label>
-              <input id="guests" type="number" class="form-input" bind:value={info.guestCount} />
+              <label class="form-label" for="guests">Perkiraan Undangan Tamu</label>
+              <input id="guests" type="number" class="form-input" bind:value={info.guestCount} min="10" />
             </div>
             <div class="form-group">
-              <label class="form-label" for="tbudget">Target Anggaran</label>
+              <label class="form-label" for="tbudget">Target Total Anggaran</label>
               <div class="currency-input-wrapper">
                 <span class="currency-prefix">Rp</span>
                 <input id="tbudget" type="text" class="form-input"
@@ -155,119 +213,150 @@
             </div>
           </div>
 
-          <button class="btn btn-primary" onclick={saveInfo}>Simpan Perubahan</button>
+          <div class="flex items-center gap-3">
+            <button class="btn btn-primary" onclick={saveInfo} disabled={isSavingInfo}>
+              {#if isSavingInfo}
+                <span>Menyimpan...</span>
+              {:else}
+                <span>Simpan Perubahan</span>
+              {/if}
+            </button>
+            {#if saveInfoSuccess}
+              <span class="save-toast-inline">✓ Berhasil disimpan</span>
+            {/if}
+          </div>
         </div>
 
-        <!-- Shared Access -->
+        <!-- Target Finansial & Tabungan Card (Dipindahkan ke kiri agar seimbang) -->
         <div class="card mb-6 animate-fade-in delay-100">
-          <h3 class="card-title-with-icon mb-2">
-            <span class="card-title-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            </span>
-            Akses Bersama
-          </h3>
-          <p class="text-muted text-sm mb-4">Undang pasangan atau anggota keluarga untuk melihat dan mengedit bersama.</p>
-
-          <div class="invite-box">
-            <div class="invite-info">
-              <span class="font-semibold text-sm">Fitur Undang Pasangan</span>
-              <span class="text-subtle text-xs">Tersedia setelah fitur backend diaktifkan</span>
-            </div>
-            <button class="btn btn-secondary btn-sm" disabled>
-              <span class="inline-flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>Undang via Email</span>
-            </button>
+          <div class="card-header-clean">
+            <h3 class="card-title-with-icon">
+              <span class="card-title-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </span>
+              Estimasi Finansial &amp; Amplop
+            </h3>
+            <p class="text-muted text-xs mt-1">Konfigurasi proyeksi uang amplop dan komitmen tabungan bulanan.</p>
           </div>
 
-          <p class="text-subtle text-xs mt-3">
-            ℹ️ Saat ini semua data disimpan di browser lokal. Fitur berbagi akan tersedia setelah integrasi database aktif.
-          </p>
+          <div class="grid-2 mb-6">
+            <div class="form-group">
+              <label class="form-label" for="envPer">Rata-rata Amplop / Tamu</label>
+              <div class="currency-input-wrapper">
+                <span class="currency-prefix">Rp</span>
+                <input id="envPer" type="text" class="form-input"
+                  value={formatNum($wedding.envelopeEstimate.perGuest)}
+                  oninput={(e) => wedding.update(s => ({ ...s, envelopeEstimate: { ...s.envelopeEstimate, perGuest: parseNum((e.target as HTMLInputElement).value) } }))}
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="monthSav">Target Tabungan / Bulan</label>
+              <div class="currency-input-wrapper">
+                <span class="currency-prefix">Rp</span>
+                <input id="monthSav" type="text" class="form-input"
+                  value={formatNum($wedding.monthlySavingsTarget)}
+                  oninput={(e) => wedding.update(s => ({ ...s, monthlySavingsTarget: parseNum((e.target as HTMLInputElement).value) }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button class="btn btn-primary" onclick={saveFinancial} disabled={isSavingFinancial}>
+              {#if isSavingFinancial}
+                <span>Menyimpan...</span>
+              {:else}
+                <span>Simpan Target Finansial</span>
+              {/if}
+            </button>
+            {#if saveFinancialSuccess}
+              <span class="save-toast-inline">✓ Berhasil disimpan</span>
+            {/if}
+          </div>
         </div>
       </div>
 
-      <!-- Right: Data & Danger Zone -->
-      <div>
-        <!-- Data Summary -->
+      <!-- ============================================== -->
+      <!-- KOLOM KANAN: AKUN, CLOUD DATABASE & DATA       -->
+      <!-- ============================================== -->
+      <div class="settings-col">
+        <!-- Akun & Status Cloud Database Card -->
         <div class="card mb-6 animate-fade-in delay-200">
-          <h3 class="card-title-with-icon mb-4">
-            <span class="card-title-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            </span>
-            Ringkasan Data
-          </h3>
-          <div class="data-summary">
-            <div class="data-row">
-              <span class="text-muted text-sm">Kategori anggaran</span>
-              <span class="font-semibold">{$wedding.budgetCategories.length}</span>
-            </div>
-            <div class="data-row">
-              <span class="text-muted text-sm">Total item anggaran</span>
-              <span class="font-semibold">{$wedding.budgetCategories.reduce((a, c) => a + c.items.length, 0)}</span>
-            </div>
-            <div class="data-row">
-              <span class="text-muted text-sm">Sumber dana</span>
-              <span class="font-semibold">{$wedding.fundingSources.length}</span>
-            </div>
-            <div class="data-row">
-              <span class="text-muted text-sm">Setoran tabungan</span>
-              <span class="font-semibold">{$wedding.savingsEntries.length}</span>
-            </div>
-            <div class="data-row">
-              <span class="text-muted text-sm">Tamu diundang</span>
-              <span class="font-semibold">{$wedding.guests.length}</span>
-            </div>
-            <div class="data-row">
-              <span class="text-muted text-sm">Tugas checklist</span>
-              <span class="font-semibold">{$wedding.checklist.length}</span>
-            </div>
+          <div class="card-header-clean">
+            <h3 class="card-title-with-icon">
+              <span class="card-title-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              Akun &amp; Cloud Database
+            </h3>
           </div>
+
+          {#if data?.user}
+            <div class="account-card-box">
+              <div class="account-avatar">
+                {data.user.name.charAt(0).toUpperCase()}
+              </div>
+              <div class="account-details">
+                <div class="account-name">{data.user.name}</div>
+                <div class="account-email">{data.user.email}</div>
+                <div class="cloud-badge">
+                  <span class="cloud-dot"></span>
+                  <span>Database PostgreSQL Terhubung</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-muted text-xs mt-3">
+              Data rencana pernikahan Anda tersinkronisasi aman di cloud database dan dapat diakses dari perangkat mana saja.
+            </p>
+            <div class="mt-4 pt-3 border-t flex justify-end">
+              <a href="/keluar" class="btn btn-secondary btn-sm flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Keluar dari Akun
+              </a>
+            </div>
+          {:else}
+            <div class="account-guest-box">
+              <p class="text-sm font-semibold mb-1">Anda belum masuk ke akun</p>
+              <p class="text-muted text-xs mb-4">Masuk atau daftarkan akun baru agar seluruh rencana pernikahan Anda tersimpan di database cloud permanen.</p>
+              <div class="flex gap-2">
+                <a href="/masuk" class="btn btn-secondary btn-sm">Masuk</a>
+                <a href="/daftar" class="btn btn-primary btn-sm">Daftar Akun Baru</a>
+              </div>
+            </div>
+          {/if}
         </div>
 
-        <!-- Amplop Setting -->
+        <!-- Pusat Data & Cadangan Card (Lebih Lapang & Rapi) -->
         <div class="card mb-6 animate-fade-in delay-300">
-          <h3 class="card-title-with-icon mb-2">
-            <span class="card-title-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            </span>
-            Estimasi Amplop Tamu
-          </h3>
-          <p class="text-muted text-sm mb-4">Rata-rata uang amplop per tamu untuk proyeksi keuangan.</p>
-          <div class="form-group mb-3">
-            <label class="form-label" for="envPer">Per Tamu</label>
-            <div class="currency-input-wrapper">
-              <span class="currency-prefix">Rp</span>
-              <input id="envPer" type="text" class="form-input"
-                value={formatNum($wedding.envelopeEstimate.perGuest)}
-                oninput={(e) => wedding.update(s => ({ ...s, envelopeEstimate: { ...s.envelopeEstimate, perGuest: parseNum((e.target as HTMLInputElement).value) } }))}
-              />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="monthSav">Tabungan per Bulan</label>
-            <div class="currency-input-wrapper">
-              <span class="currency-prefix">Rp</span>
-              <input id="monthSav" type="text" class="form-input"
-                value={formatNum($wedding.monthlySavingsTarget)}
-                oninput={(e) => wedding.update(s => ({ ...s, monthlySavingsTarget: parseNum((e.target as HTMLInputElement).value) }))}
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Backup & Restore Hub Card -->
-        <div class="card mb-6 animate-fade-in delay-350">
           <div class="hub-header mb-3">
             <div>
-              <div class="flex items-center gap-2">
-                <span class="hub-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></span>
-                <h3 class="m-0">Pusat Data &amp; Cadangan</h3>
-              </div>
+              <h3 class="card-title-with-icon m-0">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                </span>
+                Pusat Data &amp; Cadangan
+              </h3>
               <p class="text-muted text-xs mt-1">
-                Ekspor laporan dokumen atau cadangkan data antar-perangkat.
+                Ekspor dokumen laporan atau cadangkan file rencana pernikahan.
               </p>
             </div>
-            <div class="hub-status-pill" title="Data tersimpan aman di browser perangkat ini">
+            <div class="hub-status-pill">
               <span class="hub-pulse-dot"></span>
-              <span>Tersimpan</span>
+              <span>Siap Diunduh</span>
             </div>
           </div>
 
@@ -283,17 +372,17 @@
             </div>
           {/if}
 
-          <!-- Section 1: Ekspor Dokumen Laporan (Excel) -->
-          <div class="hub-block mb-3">
+          <!-- Section 1: Ekspor Spreadsheet (.xls) -->
+          <div class="hub-block mb-4">
             <div class="hub-block-label">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
               <span>Ekspor Laporan Spreadsheet (.xls)</span>
             </div>
 
-            <!-- Workbook Hero Button -->
+            <!-- Workbook Hero Button (Lebih lapang tanpa teks terpotong) -->
             <button
               type="button"
               class="hub-hero-btn"
@@ -302,7 +391,7 @@
             >
               <div class="hub-hero-left">
                 <div class="hub-file-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2"></rect>
                     <line x1="3" y1="9" x2="21" y2="9"></line>
                     <line x1="9" y1="21" x2="9" y2="9"></line>
@@ -310,7 +399,7 @@
                 </div>
                 <div class="hub-hero-info">
                   <span class="hub-hero-title">Workbook Lengkap (3 Sheet)</span>
-                  <span class="hub-hero-desc">Anggaran, Tamu &amp; Checklist</span>
+                  <span class="hub-hero-desc">Anggaran, Daftar Tamu &amp; Checklist</span>
                 </div>
               </div>
               <div class="hub-action-pill">
@@ -319,7 +408,7 @@
                   <polyline points="7 10 12 15 17 10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                <span>Unduh</span>
+                <span>Unduh .XLS</span>
               </div>
             </button>
 
@@ -350,7 +439,7 @@
           <!-- Section 2: Backup & Restore Data (JSON) -->
           <div class="hub-block">
             <div class="hub-block-label">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
               <span>Cadangan Antar-Perangkat (.json)</span>
@@ -365,7 +454,7 @@
                 title="Simpan data ke file backup JSON"
               >
                 <div class="hub-sync-icon icon-export">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
                     <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -386,7 +475,7 @@
                   onchange={handleRestoreFile}
                 />
                 <div class="hub-sync-icon icon-import">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -401,32 +490,56 @@
           </div>
         </div>
 
-                <!-- Danger Zone -->
-        <div class="card danger-zone animate-fade-in delay-400">
-          <h3 class="danger-title card-title-with-icon mb-2" style="color: var(--color-danger)">
-            <span class="card-title-icon" style="color: var(--color-danger)" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <!-- Zona Bahaya Card -->
+        <div class="card danger-zone animate-fade-in delay-350">
+          <h3 class="danger-title card-title-with-icon mb-2">
+            <span class="card-title-icon danger-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
             </span>
             Zona Bahaya
           </h3>
-          <p class="text-muted text-sm mb-4">
-            Menghapus semua data tidak bisa dibatalkan. Semua anggaran, tamu, dan checklist akan hilang.
+          <p class="text-muted text-xs mb-4">
+            Menghapus semua data rencana bersifat permanen dan tidak dapat dibatalkan.
           </p>
           {#if !showReset}
-            <button class="btn btn-danger" onclick={() => showReset = true}>
-              <span class="inline-flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Hapus Semua Data</span>
+            <button class="btn btn-danger btn-sm" onclick={() => showReset = true}>
+              <span class="inline-flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Hapus Semua Data Rencana
+              </span>
             </button>
           {:else}
             <div class="reset-confirm">
-              <p class="text-sm font-semibold mb-2">Ketik <code>HAPUS</code> untuk konfirmasi:</p>
-              <input type="text" class="form-input mb-3" bind:value={resetConfirmText} placeholder="HAPUS" />
+              <p class="text-xs text-danger font-semibold mb-2">
+                Ketik <strong>HAPUS</strong> untuk mengonfirmasi penghapusan permanen:
+              </p>
               <div class="flex gap-2">
-                <button class="btn btn-ghost btn-sm" onclick={() => { showReset = false; resetConfirmText = ''; }}>Batal</button>
+                <input
+                  type="text"
+                  class="form-input flex-1"
+                  placeholder="Ketik HAPUS"
+                  bind:value={resetConfirmText}
+                />
                 <button
                   class="btn btn-danger btn-sm"
-                  onclick={confirmReset}
                   disabled={resetConfirmText !== 'HAPUS'}
-                >Hapus Semua</button>
+                  onclick={confirmReset}
+                >
+                  Konfirmasi
+                </button>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  onclick={() => { showReset = false; resetConfirmText = ''; }}
+                >
+                  Batal
+                </button>
               </div>
             </div>
           {/if}
@@ -437,16 +550,113 @@
 </div>
 
 <style>
-  .page-container { padding-bottom: var(--space-12); }
-  .page-header { background: white; border-bottom: 1px solid var(--color-border-light); padding: var(--space-8) 0 var(--space-6); }
-  .settings-grid { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-6); align-items: flex-start; }
+  .page-container {
+    padding-bottom: var(--space-12);
+  }
+  .page-header {
+    background: white;
+    border-bottom: 1px solid var(--color-border-light);
+    padding: var(--space-8) 0 var(--space-6);
+  }
 
-  .invite-box { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); padding: var(--space-4); }
-  .invite-info { display: flex; flex-direction: column; gap: 4px; }
+  /* Grid yang seimbang 2 kolom simetris */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: flex-start;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
 
-  .data-summary { display: flex; flex-direction: column; }
-  .data-row { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border-light); }
-  .data-row:last-child { border-bottom: none; }
+  .settings-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .card-header-clean {
+    margin-bottom: var(--space-4);
+  }
+
+  .save-toast-inline {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-success);
+    animation: fadeIn 0.25s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Akun & Database Box */
+  .account-card-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+  }
+
+  .account-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .account-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .account-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .account-email {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  .cloud-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-success);
+    margin-top: 2px;
+  }
+
+  .cloud-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-success);
+  }
+
+  .account-guest-box {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+  }
 
   /* Backup & Restore Hub Styles */
   .hub-header {
@@ -455,13 +665,12 @@
     align-items: flex-start;
     gap: var(--space-2);
   }
-  .hub-icon { font-size: 1.25rem; line-height: 1; }
 
   .hub-status-pill {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 8px;
+    padding: 3px 9px;
     border-radius: var(--radius-full);
     background: var(--color-success-bg, #E8F5E9);
     color: var(--color-success, #2E7D32);
@@ -470,6 +679,7 @@
     white-space: nowrap;
     border: 1px solid rgba(46, 125, 50, 0.15);
   }
+
   .hub-pulse-dot {
     width: 6px;
     height: 6px;
@@ -478,10 +688,8 @@
   }
 
   .hub-block {
-    background: #FAF6F4;
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-lg);
-    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
   }
 
   .hub-block-label {
@@ -496,14 +704,14 @@
     margin-bottom: var(--space-2);
   }
 
-  /* Hero Card Button */
+  /* Hero Card Button (Full-width & Spacious) */
   .hub-hero-btn {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-2);
-    padding: 9px 11px;
+    gap: var(--space-3);
+    padding: 10px 14px;
     background: white;
     border: 1.5px solid rgba(201, 132, 122, 0.35);
     border-radius: var(--radius-md);
@@ -512,22 +720,23 @@
     transition: all var(--transition-fast);
     font-family: var(--font-body);
   }
+
   .hub-hero-btn:hover {
     border-color: var(--color-primary);
     transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(201, 132, 122, 0.18);
+    box-shadow: 0 4px 12px rgba(201, 132, 122, 0.18);
   }
 
   .hub-hero-left {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-3);
     min-width: 0;
   }
 
   .hub-file-icon {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: var(--radius-sm);
     background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     color: white;
@@ -543,31 +752,29 @@
     gap: 1px;
     min-width: 0;
   }
+
   .hub-hero-title {
     font-weight: 700;
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--color-text);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
+
   .hub-hero-desc {
-    font-size: 10.5px;
+    font-size: 11px;
     color: var(--color-text-subtle);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .hub-action-pill {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    padding: 4px 10px;
+    gap: 4px;
+    padding: 5px 12px;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 600;
     color: var(--color-accent);
     flex-shrink: 0;
@@ -577,48 +784,44 @@
   .hub-sub-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 8px;
   }
+
   .hub-sub-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    padding: 6px 8px;
+    gap: 6px;
+    padding: 7px 10px;
     background: white;
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-sm);
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 600;
     color: var(--color-text-muted);
     cursor: pointer;
     font-family: var(--font-body);
     transition: all var(--transition-fast);
-    min-width: 0;
   }
+
   .hub-sub-btn:hover {
     border-color: var(--color-primary-light);
     color: var(--color-accent);
     background: #FAF7F5;
-  }
-  .hub-sub-btn span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   /* Sync & JSON Grid */
   .hub-sync-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 8px;
   }
 
   .hub-sync-card {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
+    gap: 10px;
+    padding: 9px 12px;
     background: white;
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);
@@ -626,36 +829,39 @@
     transition: all var(--transition-fast);
     text-align: left;
     font-family: var(--font-body);
-    min-width: 0;
   }
+
   .hub-sync-card:hover {
     border-color: var(--color-accent);
     background: #FAF7F5;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(139, 94, 82, 0.08);
+    box-shadow: 0 3px 8px rgba(139, 94, 82, 0.08);
   }
 
   .hub-upload-label {
     margin: 0;
     position: relative;
   }
+
   .hidden-file-input {
     display: none;
   }
 
   .hub-sync-icon {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
   }
+
   .icon-export {
     background: rgba(201, 132, 122, 0.15);
     color: var(--color-accent);
   }
+
   .icon-import {
     background: rgba(106, 138, 184, 0.15);
     color: var(--color-info);
@@ -667,20 +873,44 @@
     gap: 1px;
     min-width: 0;
   }
+
   .hub-sync-title {
     font-weight: 700;
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--color-text);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .hub-sync-sub {
-    font-size: 10px;
-    color: var(--color-text-subtle);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
+  .hub-sync-sub {
+    font-size: 10.5px;
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+  }
+
+  /* Danger Zone */
+  .danger-zone {
+    border: 1px solid rgba(192, 86, 90, 0.25);
+    background: #FFFDFD;
+  }
+
+  .danger-title {
+    color: var(--color-danger);
+  }
+
+  .danger-icon {
+    background: rgba(192, 86, 90, 0.12);
+    color: var(--color-danger);
+  }
+
+  .reset-confirm {
+    padding: var(--space-3);
+    background: var(--color-danger-bg);
+    border-radius: var(--radius-md);
+  }
+
+  @media (max-width: 900px) {
+    .settings-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
