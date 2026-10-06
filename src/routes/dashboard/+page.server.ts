@@ -1,20 +1,26 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getFullWeddingData } from '#lib/server/weddingService';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (!locals.user) {
-    throw redirect(303, '/masuk');
+    return {
+      user: null,
+      weddingData: null,
+    };
   }
 
-  const weddingData = await getFullWeddingData(locals.user.id);
+  try {
+    const weddingData = await getFullWeddingData(locals.user.id);
 
-  if (!weddingData || !weddingData.wedding.wizardCompleted) {
-    throw redirect(303, '/wizard');
+    return {
+      user: locals.user,
+      weddingData,
+    };
+  } catch (err) {
+    console.error('Error loading wedding data on dashboard:', err);
+    return {
+      user: locals.user,
+      weddingData: null,
+    };
   }
-
-  return {
-    user: locals.user,
-    weddingData,
-  };
 };

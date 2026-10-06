@@ -106,6 +106,25 @@
   </div>
 
   <div class="container">
+    {#if data?.user && (!data?.weddingData || !data?.weddingData?.wedding?.wizardCompleted)}
+      <div class="wizard-prompt-banner mb-6 animate-slide-up">
+        <div class="wizard-prompt-text">
+          <span class="prompt-icon">✨</span>
+          <div>
+            <h4 class="prompt-title">Rencanakan Pernikahan Impian Anda</h4>
+            <p class="prompt-desc">Gunakan panduan Wizard untuk mengisi detail acara, anggaran, dan kalkulasi otomatis.</p>
+          </div>
+        </div>
+        <a href="/wizard" class="btn btn-primary btn-sm">
+          <span>Mulai Wizard</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    {/if}
+
     <!-- Summary Cards -->
     <div class="stats-grid animate-slide-up">
       <div class="stat-card stat-card-primary">
@@ -554,8 +573,54 @@
   .upcoming-info { display: flex; flex-direction: column; gap: 2px; }
   .upcoming-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 
-  /* Empty State */
-  .empty-state { text-align: center; padding: var(--space-4) 0; }
+  /* Wizard Prompt Banner */
+  .wizard-prompt-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    background: linear-gradient(135deg, rgba(201, 132, 122, 0.12) 0%, rgba(212, 163, 115, 0.15) 100%);
+    border: 1px solid rgba(201, 132, 122, 0.3);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 4px 16px rgba(139, 94, 82, 0.06);
+  }
+
+  .wizard-prompt-text {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .prompt-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .prompt-title {
+    margin: 0 0 2px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .prompt-desc {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .wizard-prompt-banner {
+      flex-direction: column;
+      align-items: stretch;
+      text-align: left;
+    }
+    .wizard-prompt-banner .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 
   @media (max-width: 1024px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }

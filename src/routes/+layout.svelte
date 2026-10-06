@@ -283,6 +283,7 @@
     transition: all var(--transition-fast);
     text-decoration: none;
     white-space: nowrap;
+    cursor: pointer;
   }
 
   .nav-svg {
@@ -506,6 +507,7 @@
     padding: 2px 0;
     transition: all var(--transition-fast);
     -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
   }
 
   .bottom-nav-pill {
