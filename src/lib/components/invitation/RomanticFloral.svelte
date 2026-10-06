@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { DigitalInvitation } from '#lib/stores/wedding';
   import { onMount } from 'svelte';
+  import { resolveMusicSrc } from '#lib/utils/music';
 
   interface Props {
     invitation: DigitalInvitation;
@@ -17,6 +18,8 @@
     isPreview = false,
     onRsvpSubmit,
   }: Props = $props();
+
+  const resolvedMusicUrl = $derived(resolveMusicSrc(invitation.cover.bgMusicUrl));
 
   // State
   let isOpen = $state(false);
@@ -60,7 +63,48 @@
   onMount(() => {
     updateCountdown();
     timer = setInterval(updateCountdown, 1000);
-    return () => clearInterval(timer);
+
+    // Otomatis putar musik ketika web diakses
+    let cleanupGesture: (() => void) | null = null;
+    const startAudio = () => {
+      if (audioRef && !isPlaying) {
+        audioRef.play().then(() => {
+          isPlaying = true;
+          if (cleanupGesture) cleanupGesture();
+        }).catch(() => {
+          // Jika browser membatasi autoplay tanpa interaksi (browser policy),
+          // pasang listener pada sentuhan / scroll / klik pertama di layar mana saja
+          const onFirstInteraction = () => {
+            if (audioRef && !isPlaying) {
+              audioRef.play().then(() => {
+                isPlaying = true;
+              }).catch(() => {});
+            }
+            if (cleanupGesture) cleanupGesture();
+          };
+
+          cleanupGesture = () => {
+            window.removeEventListener('click', onFirstInteraction);
+            window.removeEventListener('touchstart', onFirstInteraction);
+            window.removeEventListener('scroll', onFirstInteraction);
+            window.removeEventListener('keydown', onFirstInteraction);
+          };
+
+          window.addEventListener('click', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('scroll', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
+        });
+      }
+    };
+
+    const autoTimer = setTimeout(startAudio, 250);
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(autoTimer);
+      if (cleanupGesture) cleanupGesture();
+    };
   });
 
   function handleOpenInvitation() {
@@ -149,17 +193,39 @@
 </script>
 
 <div class="invitation-wrapper {isOpen ? 'is-opened' : 'is-closed'}">
+  <!-- Ambient Floating Rose Petals -->
+  <div class="ambient-petals-wrap" aria-hidden="true">
+    <div class="falling-petal p1"></div>
+    <div class="falling-petal p2"></div>
+    <div class="falling-petal p3"></div>
+    <div class="falling-petal p4"></div>
+    <div class="falling-petal p5"></div>
+    <div class="falling-petal p6"></div>
+    <div class="falling-petal p7"></div>
+    <div class="falling-petal p8"></div>
+    <div class="falling-petal p9"></div>
+    <div class="falling-petal p10"></div>
+  </div>
+
+  <!-- Ambient Swaying Floral Corners -->
+  <div class="swaying-floral-corner corner-top-left" aria-hidden="true">
+    <img src="/wedding-bouquet.jpg" alt="" class="corner-flower-img" />
+  </div>
+  <div class="swaying-floral-corner corner-bottom-right" aria-hidden="true">
+    <img src="/wedding-bouquet.jpg" alt="" class="corner-flower-img" />
+  </div>
+
   <!-- Hidden Background Music -->
-  {#if invitation.cover.bgMusicUrl}
+  {#if resolvedMusicUrl}
     <audio
       bind:this={audioRef}
-      src={invitation.cover.bgMusicUrl}
+      src={resolvedMusicUrl}
       loop
-      preload="none"
+      preload="auto"
     ></audio>
 
     <!-- Floating Audio Control Button -->
-    {#if isOpen}
+    {#if isOpen || isPlaying}
       <button
         class="floating-audio-btn {isPlaying ? 'playing' : 'paused'}"
         onclick={toggleAudio}
@@ -178,8 +244,17 @@
   <!-- 1. FULLSCREEN GATE COVER (COVER PEMBUKA)        -->
   <!-- ============================================== -->
   <section class="gate-cover {isOpen ? 'gate-unlocked' : ''}">
-    <div class="gate-floral-bg" aria-hidden="true"></div>
-    <div class="gate-overlay"></div>
+    <!-- Two-Door Sliding Gate Doors -->
+    <div class="gate-door gate-door-left" aria-hidden="true">
+      <div class="door-bg-image" style="background-image: url('/images/themes/romantic-arch-real.jpg');"></div>
+      <div class="door-gradient-tint"></div>
+      <div class="door-border-trim left-trim"></div>
+    </div>
+    <div class="gate-door gate-door-right" aria-hidden="true">
+      <div class="door-bg-image" style="background-image: url('/images/themes/romantic-arch-real.jpg');"></div>
+      <div class="door-gradient-tint"></div>
+      <div class="door-border-trim right-trim"></div>
+    </div>
 
     <div class="gate-content">
       <div class="gate-badge">
@@ -204,8 +279,12 @@
       </div>
 
       <button class="gate-open-btn" onclick={handleOpenInvitation}>
-        <span class="open-btn-icon">💌</span>
+        <div class="wax-seal-wrapper">
+          <img src="/images/themes/wax-seal-real.jpg" alt="Wax Seal" class="gate-wax-seal" />
+          <span class="wax-seal-pulse-ring"></span>
+        </div>
         <span>Buka Undangan</span>
+        <span class="btn-sparkle-icon">✨</span>
       </button>
     </div>
   </section>
@@ -674,6 +753,156 @@
     to { transform: rotate(360deg); }
   }
 
+  /* Ambient Floating Rose Petals */
+  .ambient-petals-wrap {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99;
+    overflow: hidden;
+  }
+  .falling-petal {
+    position: absolute;
+    top: -30px;
+    background: radial-gradient(circle at 30% 30%, #F5C6BE 0%, #D88E83 60%, #B86B60 100%);
+    border-radius: 70% 30% 70% 30% / 60% 40% 60% 40%;
+    opacity: 0.65;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
+    animation: petalFall linear infinite;
+  }
+  .p1  { left: 8%;  width: 14px; height: 18px; animation-duration: 9s;  animation-delay: 0s; }
+  .p2  { left: 22%; width: 18px; height: 22px; animation-duration: 12s; animation-delay: 2s; }
+  .p3  { left: 38%; width: 12px; height: 15px; animation-duration: 8s;  animation-delay: 4s; }
+  .p4  { left: 52%; width: 16px; height: 20px; animation-duration: 11s; animation-delay: 1s; }
+  .p5  { left: 68%; width: 13px; height: 16px; animation-duration: 10s; animation-delay: 3s; }
+  .p6  { left: 82%; width: 17px; height: 21px; animation-duration: 13s; animation-delay: 5s; }
+  .p7  { left: 92%; width: 14px; height: 17px; animation-duration: 9.5s; animation-delay: 2.5s; }
+  .p8  { left: 15%; width: 15px; height: 19px; animation-duration: 11.5s; animation-delay: 6s; }
+  .p9  { left: 45%; width: 11px; height: 14px; animation-duration: 8.5s; animation-delay: 7s; }
+  .p10 { left: 75%; width: 16px; height: 20px; animation-duration: 10.5s; animation-delay: 4.5s; }
+
+  @keyframes petalFall {
+    0% {
+      transform: translateY(0) rotate(0deg) translateX(0);
+      opacity: 0;
+    }
+    10% { opacity: 0.7; }
+    90% { opacity: 0.7; }
+    100% {
+      transform: translateY(105vh) rotate(360deg) translateX(40px);
+      opacity: 0;
+    }
+  }
+
+  /* Swaying Floral Corners */
+  .swaying-floral-corner {
+    position: fixed;
+    z-index: 98;
+    pointer-events: none;
+    opacity: 0.85;
+    animation: gentleSway 6s ease-in-out infinite alternate;
+  }
+  .corner-top-left {
+    top: -20px;
+    left: -20px;
+    transform-origin: top left;
+  }
+  .corner-bottom-right {
+    bottom: -20px;
+    right: -20px;
+    transform-origin: bottom right;
+    transform: rotate(180deg);
+  }
+  .corner-flower-img {
+    width: 140px;
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
+  }
+  @keyframes gentleSway {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(4deg) scale(1.02); }
+  }
+
+  /* Gate Doors */
+  .gate-door {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 1;
+    overflow: hidden;
+    transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  .gate-door-left {
+    left: 0;
+    transform: translateX(0);
+  }
+  .gate-door-right {
+    right: 0;
+    transform: translateX(0);
+  }
+  .gate-unlocked .gate-door-left {
+    transform: translateX(-101%);
+  }
+  .gate-unlocked .gate-door-right {
+    transform: translateX(101%);
+  }
+  .door-bg-image {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 200%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.45;
+  }
+  .gate-door-left .door-bg-image {
+    left: 0;
+  }
+  .gate-door-right .door-bg-image {
+    right: 0;
+  }
+  .door-gradient-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 248, 246, 0.5) 0%, rgba(245, 230, 224, 0.88) 100%);
+  }
+  .door-border-trim {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, rgba(201, 132, 122, 0.6), transparent);
+  }
+  .left-trim { right: 0; }
+  .right-trim { left: 0; }
+
+  /* Wax Seal on Button */
+  .wax-seal-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wax-seal-pulse-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 255, 255, 0.7);
+    animation: rotateSlow 8s linear infinite;
+  }
+  @keyframes rotateSlow {
+    to { transform: rotate(360deg); }
+  }
+  .btn-sparkle-icon {
+    font-size: 0.9rem;
+    animation: pulseSparkle 2s ease-in-out infinite;
+  }
+  @keyframes pulseSparkle {
+    0%, 100% { opacity: 0.6; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
   /* --- 1. Gate Cover (Fullscreen Overlay) --- */
   .gate-cover {
     min-height: 100vh;
@@ -686,14 +915,15 @@
     position: relative;
     background: radial-gradient(circle at center, #FFF9F7 0%, #F5E6E0 100%);
     transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
   }
-  .gate-floral-bg {
-    position: absolute;
-    inset: 0;
-    opacity: 0.08;
-    background-image: radial-gradient(#C9847A 1.5px, transparent 1.5px);
-    background-size: 24px 24px;
-    pointer-events: none;
+  .gate-wax-seal {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
   }
   .gate-content {
     position: relative;

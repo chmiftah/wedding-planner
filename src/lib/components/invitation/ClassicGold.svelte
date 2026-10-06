@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { DigitalInvitation } from '#lib/stores/wedding';
   import { onMount } from 'svelte';
+  import { resolveMusicSrc } from '#lib/utils/music';
 
   interface Props {
     invitation: DigitalInvitation;
@@ -17,6 +18,8 @@
     isPreview = false,
     onRsvpSubmit,
   }: Props = $props();
+
+  const resolvedMusicUrl = $derived(resolveMusicSrc(invitation.cover.bgMusicUrl));
 
   let isOpen = $state(false);
   let isPlaying = $state(false);
@@ -59,7 +62,48 @@
   onMount(() => {
     updateCountdown();
     timer = setInterval(updateCountdown, 1000);
-    return () => clearInterval(timer);
+
+    // Otomatis putar musik ketika web diakses
+    let cleanupGesture: (() => void) | null = null;
+    const startAudio = () => {
+      if (audioRef && !isPlaying) {
+        audioRef.play().then(() => {
+          isPlaying = true;
+          if (cleanupGesture) cleanupGesture();
+        }).catch(() => {
+          // Jika browser membatasi autoplay tanpa interaksi (browser policy),
+          // pasang listener pada sentuhan / scroll / klik pertama di layar mana saja
+          const onFirstInteraction = () => {
+            if (audioRef && !isPlaying) {
+              audioRef.play().then(() => {
+                isPlaying = true;
+              }).catch(() => {});
+            }
+            if (cleanupGesture) cleanupGesture();
+          };
+
+          cleanupGesture = () => {
+            window.removeEventListener('click', onFirstInteraction);
+            window.removeEventListener('touchstart', onFirstInteraction);
+            window.removeEventListener('scroll', onFirstInteraction);
+            window.removeEventListener('keydown', onFirstInteraction);
+          };
+
+          window.addEventListener('click', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('scroll', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
+        });
+      }
+    };
+
+    const autoTimer = setTimeout(startAudio, 250);
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(autoTimer);
+      if (cleanupGesture) cleanupGesture();
+    };
   });
 
   function handleOpenInvitation() {
@@ -146,15 +190,15 @@
 </script>
 
 <div class="gold-theme-wrapper {isOpen ? 'is-opened' : 'is-closed'}">
-  {#if invitation.cover.bgMusicUrl}
+  {#if resolvedMusicUrl}
     <audio
       bind:this={audioRef}
-      src={invitation.cover.bgMusicUrl}
+      src={resolvedMusicUrl}
       loop
-      preload="none"
+      preload="auto"
     ></audio>
 
-    {#if isOpen}
+    {#if isOpen || isPlaying}
       <button
         class="floating-audio-btn {isPlaying ? 'playing' : 'paused'}"
         onclick={toggleAudio}
@@ -171,6 +215,8 @@
 
   <!-- 1. GATE COVER (ROYAL GOLD) -->
   <section class="gold-gate-cover">
+    <div class="gold-real-bg" style="background-image: url('/images/themes/gold-marble-1.jpg');" aria-hidden="true"></div>
+    <div class="gold-gate-overlay"></div>
     <div class="gate-border-frame">
       <div class="gate-inner-border">
         <div class="gold-crest">⚜️</div>
@@ -570,12 +616,38 @@
     padding: 2rem 1.25rem;
     box-sizing: border-box;
     background: radial-gradient(circle at center, #1E1C24 0%, #121214 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .gold-real-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.42;
+    filter: contrast(1.15) brightness(0.9);
+    pointer-events: none;
+    transition: transform 1.5s ease;
+  }
+  .gold-gate-cover:hover .gold-real-bg {
+    transform: scale(1.03);
+  }
+  .gold-gate-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(18, 18, 20, 0.45) 0%, rgba(18, 18, 20, 0.88) 100%);
+    pointer-events: none;
   }
   .gate-border-frame {
     width: 100%;
     border: 1px solid var(--border-gold);
     padding: 6px;
     border-radius: 12px;
+    position: relative;
+    z-index: 2;
+    background: rgba(28, 27, 31, 0.65);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6), 0 0 25px rgba(197, 160, 89, 0.1);
   }
   .gate-inner-border {
     border: 1px solid var(--border-gold);

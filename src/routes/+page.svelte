@@ -1,6 +1,75 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { wedding } from '#lib/stores/wedding';
+  import { resolveMusicSrc } from '#lib/utils/music';
+
+  let audioRef = $state<HTMLAudioElement | null>(null);
+  let isPlaying = $state(false);
+
+  const resolvedMusicUrl = $derived(
+    resolveMusicSrc($wedding?.invitation?.musicUrl || '/music/the-way-you-look-at-me.mp3')
+  );
+
+  onMount(() => {
+    let cleanupGesture: (() => void) | null = null;
+
+    const startAudio = () => {
+      if (audioRef && !isPlaying) {
+        audioRef.play().then(() => {
+          isPlaying = true;
+          if (cleanupGesture) cleanupGesture();
+        }).catch(() => {
+          // Autoplay policy prevented immediate unmuted playback:
+          // trigger playback on first user touch/click/scroll anywhere
+          const onFirstInteraction = () => {
+            if (audioRef && !isPlaying) {
+              audioRef.play().then(() => {
+                isPlaying = true;
+              }).catch(() => {});
+            }
+            if (cleanupGesture) cleanupGesture();
+          };
+
+          cleanupGesture = () => {
+            window.removeEventListener('click', onFirstInteraction);
+            window.removeEventListener('touchstart', onFirstInteraction);
+            window.removeEventListener('scroll', onFirstInteraction);
+            window.removeEventListener('keydown', onFirstInteraction);
+          };
+
+          window.addEventListener('click', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('scroll', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
+        });
+      }
+    };
+
+    const timer = setTimeout(startAudio, 200);
+
+    return () => {
+      clearTimeout(timer);
+      if (cleanupGesture) cleanupGesture();
+      if (audioRef) {
+        audioRef.pause();
+      }
+    };
+  });
+
+  function toggleAudio() {
+    if (!audioRef) return;
+    if (isPlaying) {
+      audioRef.pause();
+      isPlaying = false;
+    } else {
+      audioRef.play().then(() => {
+        isPlaying = true;
+      }).catch(() => {
+        isPlaying = false;
+      });
+    }
+  }
 
   function handleStart() {
     if ($wedding.wizardCompleted) {
@@ -16,7 +85,173 @@
   <meta name="description" content="Rencanakan pernikahan dengan mudah. Atur anggaran, undang tamu, pantau tabungan — semua dalam satu tempat." />
 </svelte:head>
 
+{#snippet iconSvg(name: string, size = 20)}
+  {#if name === 'ring'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="14" r="5"></circle>
+      <circle cx="16" cy="14" r="5"></circle>
+      <path d="M12 9l.6-1.8l1.8-.6l-1.8-.6l-.6-1.8l-.6 1.8l-1.8.6l1.8.6z"></path>
+    </svg>
+  {:else if name === 'sparkles'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M12 2l2.2 6.8a1.5 1.5 0 0 0 .95.95L22 12l-6.8 2.2a1.5 1.5 0 0 0-.95.95L12 22l-2.2-6.8a1.5 1.5 0 0 0-.95-.95L2 12l6.8-2.2a1.5 1.5 0 0 0 .95-.95L12 2z"></path>
+    </svg>
+  {:else if name === 'wizard'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 4V2"></path>
+      <path d="M15 16v-2"></path>
+      <path d="M8 9h2"></path>
+      <path d="M20 9h2"></path>
+      <path d="M17.8 11.8L19 13"></path>
+      <path d="M17.8 6.2L19 5"></path>
+      <path d="M3 21l9-9"></path>
+      <path d="M12.2 6.2L11 5"></path>
+    </svg>
+  {:else if name === 'budget'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+      <line x1="2" y1="10" x2="22" y2="10"></line>
+      <line x1="6" y1="15" x2="10" y2="15"></line>
+    </svg>
+  {:else if name === 'savings'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 21h18"></path>
+      <path d="M3 10h18"></path>
+      <path d="M5 6l7-3 7 3"></path>
+      <path d="M4 10v11"></path>
+      <path d="M20 10v11"></path>
+      <circle cx="12" cy="15.5" r="1.5"></circle>
+    </svg>
+  {:else if name === 'guests'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+  {:else if name === 'invitation'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+      <polyline points="22,6 12,13 2,6"></polyline>
+    </svg>
+  {:else if name === 'checklist'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 11l3 3L22 4"></path>
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+    </svg>
+  {:else if name === 'catering'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+      <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+      <line x1="6" y1="1" x2="6" y2="4"></line>
+      <line x1="10" y1="1" x2="10" y2="4"></line>
+      <line x1="14" y1="1" x2="14" y2="4"></line>
+    </svg>
+  {:else if name === 'venue'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 21h18"></path>
+      <path d="M5 21V7l7-4 7 4v14"></path>
+      <path d="M9 10h1"></path>
+      <path d="M9 14h1"></path>
+      <path d="M14 10h1"></path>
+      <path d="M14 14h1"></path>
+    </svg>
+  {:else if name === 'camera'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+      <circle cx="12" cy="13" r="4"></circle>
+    </svg>
+  {:else if name === 'check'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  {:else if name === 'cross'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  {:else if name === 'heart'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+    </svg>
+  {:else if name === 'leaf'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 21c3.5-3.5 6-7.5 7.5-13.5"></path>
+      <path d="M6 14.5c-.8-2.2-.2-4.5 1.8-5.5 2-.8 3.8.2 4.2 2.2.5 2-1 3.8-3 4.2-.8.2-2.2-.2-3-.9z" fill="currentColor" fill-opacity="0.25"></path>
+      <path d="M10.5 7.5c-.5-2.2.4-4.2 2.5-4.8 2-.5 3.8.6 4 2.8.2 2-1.2 3.8-3.2 4-1 .2-2.5-.5-3.3-2z" fill="currentColor" fill-opacity="0.25"></path>
+      <path d="M10.5 17c1.8-1.2 4-.8 5 .8 1 1.8.4 3.8-1.5 4.5-1.8.8-3.8-.2-4.5-2-.3-.8-.2-2.5 1-3.3z" fill="currentColor" fill-opacity="0.25"></path>
+    </svg>
+  {:else if name === 'petal'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M12 2C8 6.5 4.5 11.5 5.5 16A6.5 6.5 0 0 0 17.5 17C19.5 12.5 16 6.5 12 2z" opacity="0.9"></path>
+    </svg>
+  {:else if name === 'arrow-right'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+      <polyline points="12 5 19 12 12 19"></polyline>
+    </svg>
+  {:else if name === 'arrow-down'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <polyline points="19 12 12 19 5 12"></polyline>
+    </svg>
+  {:else if name === 'disc'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  {:else if name === 'volume-2'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+    </svg>
+  {:else if name === 'volume-x'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <line x1="23" y1="9" x2="17" y2="15"></line>
+      <line x1="17" y1="9" x2="23" y2="15"></line>
+    </svg>
+  {/if}
+{/snippet}
+
 <div class="landing">
+  <!-- Background Music Audio Element -->
+  <audio
+    bind:this={audioRef}
+    src={resolvedMusicUrl}
+    loop
+    preload="auto"
+  ></audio>
+
+  <!-- Floating Romantic Music Player Pill -->
+  <button
+    type="button"
+    class="landing-music-pill {isPlaying ? 'playing' : 'paused'}"
+    onclick={toggleAudio}
+    title={isPlaying ? 'Jeda Musik (The Way You Look At Me)' : 'Putar Musik (The Way You Look At Me)'}
+    aria-label={isPlaying ? 'Jeda Musik' : 'Putar Musik'}
+  >
+    <span class="music-disc-box">
+      <span class="disc-icon">{@render iconSvg('disc', 18)}</span>
+    </span>
+    <span class="music-info-text hide-mobile">
+      <span class="music-track-title">The Way You Look At Me</span>
+      <span class="music-track-sub">Paul Aro & Andi Rianto</span>
+    </span>
+    <span class="sound-wave" aria-hidden="true">
+      <span class="sound-bar bar-1"></span>
+      <span class="sound-bar bar-2"></span>
+      <span class="sound-bar bar-3"></span>
+    </span>
+    <span class="music-action-icon">
+      {#if isPlaying}
+        {@render iconSvg('volume-2', 16)}
+      {:else}
+        {@render iconSvg('volume-x', 16)}
+      {/if}
+    </span>
+  </button>
   <!-- ============================================== -->
   <!-- FULL-WIDTH STICKY TOP NAVBAR                   -->
   <!-- ============================================== -->
@@ -24,7 +259,7 @@
     <div class="landing-header-container">
       <a href="/" class="header-brand" aria-label="Nikahku Beranda">
         <div class="brand-icon-box">
-          <span class="brand-icon">💍</span>
+          <span class="brand-icon">{@render iconSvg('ring', 20)}</span>
         </div>
         <div class="brand-text">
           <span class="brand-name">Nikahku</span>
@@ -44,7 +279,7 @@
         {#if $wedding.wizardCompleted}
           <button onclick={handleStart} class="header-cta-btn">
             <span>Buka Dashboard</span>
-            <span class="cta-arrow" aria-hidden="true">→</span>
+            <span class="cta-arrow" aria-hidden="true">{@render iconSvg('arrow-right', 14)}</span>
           </button>
         {:else}
           <a href="/dashboard" class="header-link-demo hide-mobile">
@@ -52,7 +287,7 @@
           </a>
           <button onclick={handleStart} class="header-cta-btn">
             <span>Mulai Gratis</span>
-            <span class="cta-sparkle" aria-hidden="true">✨</span>
+            <span class="cta-sparkle" aria-hidden="true">{@render iconSvg('sparkles', 14)}</span>
           </button>
         {/if}
       </div>
@@ -71,11 +306,11 @@
 
     <!-- Floating Breeze Petals -->
     <div class="petals-container" aria-hidden="true">
-      <span class="falling-petal petal-1">🌸</span>
-      <span class="falling-petal petal-2">🍃</span>
-      <span class="falling-petal petal-3">✨</span>
-      <span class="falling-petal petal-4">🌸</span>
-      <span class="falling-petal petal-5">🌿</span>
+      <span class="falling-petal petal-1">{@render iconSvg('petal', 22)}</span>
+      <span class="falling-petal petal-2">{@render iconSvg('leaf', 18)}</span>
+      <span class="falling-petal petal-3">{@render iconSvg('sparkles', 16)}</span>
+      <span class="falling-petal petal-4">{@render iconSvg('petal', 20)}</span>
+      <span class="falling-petal petal-5">{@render iconSvg('leaf', 20)}</span>
     </div>
 
     <!-- Soft Ambient Aura Blobs -->
@@ -99,10 +334,12 @@
 
       <div class="hero-actions">
         <button onclick={handleStart} class="btn-hero-cta">
-          <span>💍 Mulai Rencanakan Sekarang</span>
+          {@render iconSvg('ring', 18)}
+          <span>Mulai Rencanakan Sekarang</span>
         </button>
         <a href="#fitur" class="btn btn-ghost btn-lg">
-          Lihat Fitur ↓
+          <span>Lihat Fitur</span>
+          {@render iconSvg('arrow-down', 16)}
         </a>
       </div>
 
@@ -130,80 +367,106 @@
       <!-- Card 1: Anggaran -->
       <div class="preview-card preview-card-budget animate-float">
         <div class="preview-card-header">
-          <span class="preview-icon-chip">💰</span>
-          <div class="flex-1">
-            <span class="text-sm font-bold block">Anggaran Vendor</span>
-            <span class="text-xs text-subtle">Katering & Gedung</span>
+          <span class="preview-icon-chip" style="color: #C9847A;">{@render iconSvg('budget', 18)}</span>
+          <div class="preview-header-info">
+            <span class="preview-header-title">Anggaran Vendor</span>
+            <span class="preview-header-sub">Katering & Gedung</span>
           </div>
           <span class="badge badge-success badge-sm">Terpantau</span>
         </div>
-        <div class="preview-budget-item">
-          <span class="item-label">🍽️ Katering</span>
-          <div class="mini-progress-track">
-            <div class="mini-progress-fill" style="width: 65%; background: #C9847A;"></div>
+        <div class="preview-card-body">
+          <div class="preview-budget-item">
+            <span class="item-label">
+              <span class="mini-item-icon" style="color: #C9847A;">{@render iconSvg('catering', 13)}</span>
+              Katering
+            </span>
+            <div class="mini-progress-track">
+              <div class="mini-progress-fill" style="width: 65%; background: #C9847A;"></div>
+            </div>
+            <span class="badge badge-warning badge-xs">DP</span>
           </div>
-          <span class="badge badge-warning badge-xs">DP</span>
+          <div class="preview-budget-item">
+            <span class="item-label">
+              <span class="mini-item-icon" style="color: #6BAB8A;">{@render iconSvg('venue', 13)}</span>
+              Gedung
+            </span>
+            <div class="mini-progress-track">
+              <div class="mini-progress-fill" style="width: 100%; background: #6BAB8A;"></div>
+            </div>
+            <span class="badge badge-success badge-xs">Lunas</span>
+          </div>
+          <div class="preview-budget-item">
+            <span class="item-label">
+              <span class="mini-item-icon" style="color: #A88880;">{@render iconSvg('camera', 13)}</span>
+              Foto
+            </span>
+            <div class="mini-progress-track">
+              <div class="mini-progress-fill" style="width: 0%; background: #A88880;"></div>
+            </div>
+            <span class="badge badge-neutral badge-xs">Belum</span>
+          </div>
         </div>
-        <div class="preview-budget-item">
-          <span class="item-label">🏛️ Gedung</span>
-          <div class="mini-progress-track">
-            <div class="mini-progress-fill" style="width: 100%; background: #6BAB8A;"></div>
-          </div>
-          <span class="badge badge-success badge-xs">Lunas</span>
-        </div>
-        <div class="preview-budget-item">
-          <span class="item-label">📸 Dokumentasi</span>
-          <div class="mini-progress-track">
-            <div class="mini-progress-fill" style="width: 0%; background: #A88880;"></div>
-          </div>
-          <span class="badge badge-neutral badge-xs">Belum</span>
+        <div class="preview-card-note budget-note">
+          {@render iconSvg('check', 13)}
+          <span>2 dari 3 vendor terkonfirmasi DP</span>
         </div>
       </div>
 
       <!-- Card 2: Tabungan -->
       <div class="preview-card preview-card-savings animate-float delay-100">
         <div class="preview-card-header">
-          <span class="preview-icon-chip">🏦</span>
-          <div>
-            <span class="text-sm font-bold block">Target Tabungan</span>
-            <span class="text-xs text-subtle">Proyeksi menuju hari H</span>
+          <span class="preview-icon-chip" style="color: #6BAB8A;">{@render iconSvg('savings', 18)}</span>
+          <div class="preview-header-info">
+            <span class="preview-header-title">Target Tabungan</span>
+            <span class="preview-header-sub">Proyeksi Hari H</span>
+          </div>
+          <span class="badge badge-success badge-sm">On Track</span>
+        </div>
+        <div class="preview-card-body">
+          <div class="preview-savings-amount">Rp 85.000.000</div>
+          <div class="preview-savings-label">dari target Rp 150.000.000 (56%)</div>
+          <div class="mini-progress-track mt-3">
+            <div class="mini-progress-fill" style="width: 56.6%; background: linear-gradient(90deg, #6BAB8A, #C9847A);"></div>
           </div>
         </div>
-        <div class="preview-savings-amount">Rp 85.000.000</div>
-        <div class="preview-savings-label text-subtle text-xs">dari target Rp 150.000.000</div>
-        <div class="progress-bar mt-2">
-          <div class="progress-fill" style="width: 56.6%"></div>
-        </div>
-        <div class="preview-savings-note">
-          ✨ Perlu nabung Rp 2,1 jt / bulan
+        <div class="preview-card-note savings-note">
+          {@render iconSvg('sparkles', 13)}
+          <span>Perlu nabung Rp 2,1 jt / bulan</span>
         </div>
       </div>
 
       <!-- Card 3: Tamu & RSVP -->
       <div class="preview-card preview-card-rsvp animate-float delay-200">
         <div class="preview-card-header">
-          <span class="preview-icon-chip">👥</span>
-          <div>
-            <span class="text-sm font-bold block">Konfirmasi Tamu</span>
-            <span class="text-xs text-subtle">Link RSVP Online</span>
+          <span class="preview-icon-chip" style="color: #6A8AB8;">{@render iconSvg('guests', 18)}</span>
+          <div class="preview-header-info">
+            <span class="preview-header-title">Konfirmasi Tamu</span>
+            <span class="preview-header-sub">RSVP Online</span>
+          </div>
+          <span class="badge badge-neutral badge-sm">192 Tamu</span>
+        </div>
+        <div class="preview-card-body">
+          <div class="preview-rsvp-grid">
+            <div class="preview-rsvp-stat">
+              <span class="preview-rsvp-num text-success">142</span>
+              <span class="preview-rsvp-label">Hadir</span>
+            </div>
+            <div class="preview-rsvp-stat">
+              <span class="preview-rsvp-num text-warning">38</span>
+              <span class="preview-rsvp-label">Pending</span>
+            </div>
+            <div class="preview-rsvp-stat">
+              <span class="preview-rsvp-num text-muted">12</span>
+              <span class="preview-rsvp-label">Berhalangan</span>
+            </div>
+          </div>
+          <div class="mini-progress-track mt-3">
+            <div class="mini-progress-fill" style="width: 74%; background: linear-gradient(90deg, #6BAB8A, #6A8AB8);"></div>
           </div>
         </div>
-        <div class="preview-rsvp-grid">
-          <div class="preview-rsvp-stat">
-            <span class="preview-rsvp-num text-success">142</span>
-            <span class="text-xs text-subtle font-medium">Hadir</span>
-          </div>
-          <div class="preview-rsvp-stat">
-            <span class="preview-rsvp-num text-warning">38</span>
-            <span class="text-xs text-subtle font-medium">Pending</span>
-          </div>
-          <div class="preview-rsvp-stat">
-            <span class="preview-rsvp-num text-muted">12</span>
-            <span class="text-xs text-subtle font-medium">Berhalangan</span>
-          </div>
-        </div>
-        <div class="rsvp-mini-bar mt-3">
-          <div class="rsvp-mini-fill" style="width: 74%"></div>
+        <div class="preview-card-note rsvp-note">
+          {@render iconSvg('invitation', 13)}
+          <span>74% tamu telah konfirmasi</span>
         </div>
       </div>
     </div>
@@ -215,9 +478,9 @@
   <div class="wedding-filigree-divider" aria-hidden="true">
     <div class="filigree-line"></div>
     <div class="filigree-center">
-      <span class="filigree-leaf">🌿</span>
-      <span class="filigree-rings">💍</span>
-      <span class="filigree-leaf flip">🌿</span>
+      <span class="filigree-leaf">{@render iconSvg('leaf', 22)}</span>
+      <span class="filigree-rings" style="color: var(--color-primary);">{@render iconSvg('ring', 22)}</span>
+      <span class="filigree-leaf flip">{@render iconSvg('leaf', 22)}</span>
     </div>
     <div class="filigree-line"></div>
   </div>
@@ -233,7 +496,7 @@
           <div class="bouquet-frame">
             <img src="/wedding-bouquet.jpg" alt="Buket Bunga Pernikahan" class="bouquet-img" />
             <div class="bouquet-badge">
-              <span class="badge-icon">💐</span>
+              <span class="badge-icon">{@render iconSvg('heart', 16)}</span>
               <span class="badge-text">Dirancang dengan Kasih untuk Pasangan</span>
             </div>
           </div>
@@ -241,7 +504,7 @@
 
         <!-- Comparison Cards -->
         <div class="spotlight-text animate-fade-in delay-100">
-          <span class="section-tag">✨ Kenapa Nikahku?</span>
+          <span class="section-tag">{@render iconSvg('sparkles', 13)} Kenapa Nikahku?</span>
           <h2 class="spotlight-title">Pernikahanmu terlalu istimewa untuk lembar kerja yang membosankan</h2>
           <p class="text-muted mb-6">
             Buku catatan hilang, rumus Excel rusak, dan lupa kapan jatuh tempo pelunasan katering.
@@ -250,7 +513,7 @@
 
           <div class="comparison-boxes">
             <div class="comparison-box negative">
-              <div class="comp-icon">❌</div>
+              <div class="comp-icon">{@render iconSvg('cross', 16)}</div>
               <div>
                 <h4 class="comp-title">Pakai Excel Tradisional</h4>
                 <p class="comp-desc">Rumus mudah terhapus, tidak ada reminder jatuh tempo DP, dan link RSVP manual satu per satu lewat pesan chat.</p>
@@ -258,7 +521,7 @@
             </div>
 
             <div class="comparison-box positive">
-              <div class="comp-icon">✨</div>
+              <div class="comp-icon">{@render iconSvg('check', 16)}</div>
               <div>
                 <h4 class="comp-title">Pakai Nikahku</h4>
                 <p class="comp-desc">Alokasi anggaran otomatis, status pelunasan per vendor langsung terlacak, dan tamu konfirmasi kehadiran lewat link unik.</p>
@@ -286,9 +549,11 @@
       <div class="features-grid">
         {#each features as feature, i}
           <div class="feature-card animate-fade-in" style="animation-delay: {i * 0.08}s">
-            <div class="feature-card-ornament" aria-hidden="true">🌸</div>
-            <div class="feature-icon" style="background: {feature.color}18; color: {feature.color}">
-              {feature.icon}
+            <div class="feature-card-ornament" aria-hidden="true" style="color: {feature.color};">
+              {@render iconSvg('sparkles', 16)}
+            </div>
+            <div class="feature-icon" style="background: {feature.color}15; color: {feature.color}; border: 1.5px solid {feature.color}30;">
+              {@render iconSvg(feature.id, 24)}
             </div>
             <h3 class="feature-title">{feature.title}</h3>
             <p class="feature-desc">{feature.desc}</p>
@@ -329,15 +594,18 @@
   <section class="cta">
     <div class="container">
       <div class="cta-card">
-        <div class="cta-floral-bg" aria-hidden="true">🌸</div>
+        <div class="cta-floral-bg" aria-hidden="true">
+          {@render iconSvg('sparkles', 140)}
+        </div>
         <div class="cta-content">
-          <span class="cta-sparkle-pill">✨ Mulai Perjalanan Bahagiamu</span>
+          <span class="cta-sparkle-pill">{@render iconSvg('sparkles', 14)} Mulai Perjalanan Bahagiamu</span>
           <h2>Wujudkan pernikahan impian<br />dengan hati yang tenang</h2>
           <p class="cta-desc">
             Sepenuhnya gratis untuk calon pengantin. Tanpa perlu download atau install aplikasi.
           </p>
           <button onclick={handleStart} class="btn-hero-cta">
-            <span>💍 Mulai Rencanakan Sekarang</span>
+            {@render iconSvg('ring', 18)}
+            <span>Mulai Rencanakan Sekarang</span>
           </button>
         </div>
       </div>
@@ -351,11 +619,11 @@
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
-          <span class="brand-icon">💍</span>
+          <span class="brand-icon">{@render iconSvg('ring', 20)}</span>
           <span class="brand-name">Nikahku</span>
         </div>
         <p class="footer-copy">
-          Dibuat dengan ❤️ untuk calon pengantin di seluruh Indonesia.
+          Dibuat dengan sepenuh hati untuk calon pengantin di seluruh Indonesia.
         </p>
       </div>
     </div>
@@ -364,12 +632,12 @@
 
 <script module lang="ts">
   const features = [
-    { icon: '🧙‍♀️', title: 'Wizard Percakapan', desc: 'Jawab beberapa pertanyaan ramah, dan rencana anggaran awal langsung terbentuk otomatis tanpa halaman kosong yang membingungkan.', color: '#C9847A' },
-    { icon: '💰', title: 'Budget Tracker Kategori', desc: 'Pantau pengeluaran per kategori (Katering, Gedung, Busana). Catat DP dan tanggal jatuh tempo pelunasan per vendor.', color: '#8B5E52' },
-    { icon: '🏦', title: 'Proyeksi Tabungan', desc: 'Cari tahu apakah uang kalian cukup. Sistem menghitung proyeksi bulanan dan mengingatkan bila perlu menabung lebih.', color: '#6BAB8A' },
-    { icon: '👥', title: 'Manajemen Tamu & RSVP', desc: 'Kirimkan link RSVP unik untuk setiap tamu secara online. Pantau konfirmasi kehadiran seketika tanpa mencatat manual.', color: '#6A8AB8' },
-    { icon: '👫', title: 'Akses Bersama Pasangan', desc: 'Akses rencana pernikahan berdua. Tidak ada lagi momen kebingungan saling tanya file atau catatan terbaru.', color: '#D4956A' },
-    { icon: '✅', title: 'Checklist Persiapan H-Day', desc: 'Dari booking gedung hingga kesiapan cincin H-1. Pastikan setiap detail penting tidak ada yang terlewat.', color: '#A88880' },
+    { id: 'wizard', title: 'Wizard Percakapan', desc: 'Jawab beberapa pertanyaan ramah, dan rencana anggaran awal langsung terbentuk otomatis tanpa halaman kosong yang membingungkan.', color: '#C9847A' },
+    { id: 'budget', title: 'Budget Tracker Kategori', desc: 'Pantau pengeluaran per kategori (Katering, Gedung, Busana). Catat DP dan tanggal jatuh tempo pelunasan per vendor.', color: '#8B5E52' },
+    { id: 'savings', title: 'Proyeksi Tabungan', desc: 'Cari tahu apakah uang kalian cukup. Sistem menghitung proyeksi bulanan dan mengingatkan bila perlu menabung lebih.', color: '#6BAB8A' },
+    { id: 'guests', title: 'Manajemen Tamu & RSVP', desc: 'Kirimkan link RSVP unik untuk setiap tamu secara online. Pantau konfirmasi kehadiran seketika tanpa mencatat manual.', color: '#6A8AB8' },
+    { id: 'invitation', title: 'Undangan Digital Interaktif', desc: 'Pilihan tema elegan (Romantic, Royal Gold, Emerald Botanical) dengan audio musik latar, galeri cinta, dan amplop digital.', color: '#B36D74' },
+    { id: 'checklist', title: 'Checklist Persiapan H-Day', desc: 'Dari booking gedung hingga kesiapan cincin H-1. Pastikan setiap detail penting tidak ada yang terlewat.', color: '#A88880' },
   ];
 
   const steps = [
@@ -442,16 +710,18 @@
 
   .falling-petal {
     position: absolute;
-    font-size: 1.25rem;
-    opacity: 0.35;
-    animation: driftDown 12s linear infinite;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.38;
+    animation: driftDown 14s linear infinite;
   }
 
-  .petal-1 { top: -20px; left: 15%; animation-duration: 14s; animation-delay: 0s; }
-  .petal-2 { top: -20px; left: 45%; animation-duration: 18s; animation-delay: 3s; font-size: 1.1rem; }
-  .petal-3 { top: -20px; left: 78%; animation-duration: 16s; animation-delay: 5s; font-size: 1rem; }
-  .petal-4 { top: -20px; left: 28%; animation-duration: 15s; animation-delay: 8s; }
-  .petal-5 { top: -20px; left: 88%; animation-duration: 20s; animation-delay: 2s; font-size: 1.1rem; }
+  .petal-1 { top: -24px; left: 15%; animation-duration: 14s; animation-delay: 0s; color: #E8A29A; }
+  .petal-2 { top: -24px; left: 45%; animation-duration: 18s; animation-delay: 3s; color: #8CA895; }
+  .petal-3 { top: -24px; left: 78%; animation-duration: 16s; animation-delay: 5s; color: #D4AF37; }
+  .petal-4 { top: -24px; left: 28%; animation-duration: 15s; animation-delay: 8s; color: #F0B8B2; }
+  .petal-5 { top: -24px; left: 88%; animation-duration: 20s; animation-delay: 2s; color: #7E9F88; }
 
   @keyframes driftDown {
     0% {
@@ -657,7 +927,8 @@
   }
 
   .cta-arrow {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     transition: transform 0.2s ease;
   }
 
@@ -795,32 +1066,43 @@
   .hero-preview {
     position: relative;
     z-index: 10;
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--space-6);
-    padding: var(--space-6) var(--space-6) var(--space-8);
+    padding: var(--space-4) var(--space-6) var(--space-8);
     margin-top: var(--space-6);
-    flex-wrap: wrap;
-    max-width: 1080px;
+    max-width: 1060px;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
   }
 
+  @media (max-width: 992px) {
+    .hero-preview {
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      max-width: 720px;
+    }
+  }
+
   .preview-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(237, 213, 206, 0.85);
+    border: 1px solid rgba(237, 213, 206, 0.88);
     border-radius: var(--radius-2xl);
     padding: var(--space-6);
     box-shadow: 0 14px 36px -4px rgba(139, 94, 82, 0.09), 0 2px 6px rgba(0, 0, 0, 0.02);
-    width: 270px;
-    flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     text-align: left;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   }
 
   .preview-card:hover {
     transform: translateY(-4px);
+    box-shadow: 0 18px 40px -4px rgba(139, 94, 82, 0.14), 0 4px 10px rgba(0, 0, 0, 0.03);
   }
 
   .preview-card-header {
@@ -831,83 +1113,175 @@
   }
 
   .preview-icon-chip {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: var(--radius-lg);
     background: var(--color-surface);
     border: 1px solid var(--color-border-light);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
     flex-shrink: 0;
+  }
+
+  .preview-header-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .preview-header-title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .preview-header-sub {
+    font-size: 11.5px;
+    color: var(--color-text-subtle);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .preview-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-1) 0;
+    min-height: 86px;
   }
 
   .preview-budget-item {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    margin-bottom: var(--space-2);
+    gap: var(--space-3);
+    margin-bottom: 8px;
     font-size: var(--font-size-xs);
   }
 
-  .item-label { width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-  .mini-progress-track { flex: 1; height: 5px; background: var(--color-secondary); border-radius: var(--radius-full); overflow: hidden; }
-  .mini-progress-fill { height: 100%; border-radius: var(--radius-full); }
+  .preview-budget-item:last-child {
+    margin-bottom: 0;
+  }
 
-  .badge-xs { font-size: 9px; padding: 1px 6px; }
+  .item-label {
+    width: 82px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    color: var(--color-text);
+    flex-shrink: 0;
+  }
+
+  .mini-item-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .mini-progress-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(139, 94, 82, 0.08);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .mini-progress-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+  }
+
+  .badge-xs {
+    font-size: 9.5px;
+    padding: 1px 7px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
 
   .preview-savings-amount {
     font-family: var(--font-numeric);
     font-variant-numeric: tabular-nums lining-nums;
-    font-size: var(--font-size-xl);
+    font-size: 1.35rem;
     font-weight: 800;
     color: var(--color-text);
-    margin: 4px 0 2px;
+    line-height: 1.2;
+    margin: 0 0 3px;
   }
 
-  .preview-savings-note {
-    margin-top: var(--space-3);
-    font-size: 11px;
-    color: var(--color-accent);
-    background: rgba(201, 132, 122, 0.12);
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-md);
+  .preview-savings-label {
+    font-size: 11.5px;
+    color: var(--color-text-subtle);
     font-weight: 500;
   }
 
   .preview-rsvp-grid {
     display: flex;
     justify-content: space-between;
-    margin-top: var(--space-2);
     text-align: center;
+    margin-bottom: 2px;
   }
 
   .preview-rsvp-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 2px;
   }
 
   .preview-rsvp-num {
     font-family: var(--font-numeric);
     font-variant-numeric: tabular-nums lining-nums;
-    font-size: var(--font-size-xl);
+    font-size: 1.35rem;
     font-weight: 800;
     line-height: 1.2;
   }
 
-  .rsvp-mini-bar {
-    height: 5px;
-    background: var(--color-border-light);
-    border-radius: var(--radius-full);
-    overflow: hidden;
+  .preview-rsvp-label {
+    font-size: 11px;
+    color: var(--color-text-subtle);
+    font-weight: 500;
   }
 
-  .rsvp-mini-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--color-success), var(--color-primary));
-    border-radius: var(--radius-full);
+  .preview-card-note {
+    margin-top: var(--space-4);
+    font-size: 11.5px;
+    padding: 7px 11px;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    line-height: 1.3;
+  }
+
+  .preview-card-note.budget-note {
+    color: #9E5B52;
+    background: rgba(201, 132, 122, 0.12);
+  }
+
+  .preview-card-note.savings-note {
+    color: #387652;
+    background: rgba(107, 171, 138, 0.12);
+  }
+
+  .preview-card-note.rsvp-note {
+    color: #426490;
+    background: rgba(106, 138, 184, 0.12);
   }
 
   /* ========================================= */
@@ -936,9 +1310,17 @@
     font-size: 1.2rem;
   }
 
-  .filigree-leaf { font-size: 1.1rem; opacity: 0.7; }
+  .filigree-leaf {
+    display: inline-flex;
+    align-items: center;
+    color: #8CA895;
+    opacity: 0.85;
+  }
   .filigree-leaf.flip { transform: scaleX(-1); }
-  .filigree-rings { font-size: 1.3rem; }
+  .filigree-rings {
+    display: inline-flex;
+    align-items: center;
+  }
 
   /* ========================================= */
   /* SPOTLIGHT COMPARISON SECTION              */
@@ -991,7 +1373,17 @@
     border: 1px solid var(--color-border-light);
   }
 
-  .badge-icon { font-size: 1.4rem; }
+  .badge-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: rgba(201, 132, 122, 0.15);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
   .badge-text { font-size: var(--font-size-xs); font-weight: 700; color: var(--color-accent); }
 
   .section-tag {
@@ -1047,9 +1439,30 @@
   }
 
   .comp-icon {
-    font-size: 1.5rem;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
     margin-top: 2px;
+  }
+  .comparison-box.negative .comp-icon {
+    background: #FDEAEB;
+    color: var(--color-danger);
+  }
+  .comparison-box.positive .comp-icon {
+    background: #EBF7F1;
+    color: var(--color-success);
+  }
+
+  .mini-item-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+    flex-shrink: 0;
   }
 
   .comp-title {
@@ -1464,6 +1877,151 @@
     .footer-inner {
       flex-direction: column;
       text-align: center;
+    }
+  }
+
+  /* ========================================= */
+  /* FLOATING ROMANTIC MUSIC PLAYER            */
+  /* ========================================= */
+  .landing-music-pill {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(237, 213, 206, 0.9);
+    padding: 7px 15px 7px 9px;
+    border-radius: var(--radius-full);
+    box-shadow: 0 10px 30px rgba(139, 94, 82, 0.16), 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--color-text);
+    font-family: var(--font-body);
+  }
+
+  .landing-music-pill:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 14px 36px rgba(139, 94, 82, 0.22);
+    border-color: rgba(201, 132, 122, 0.6);
+  }
+
+  .landing-music-pill.playing {
+    border-color: rgba(201, 132, 122, 0.5);
+  }
+
+  .music-disc-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #C9847A 0%, #8B5E52 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(201, 132, 122, 0.35);
+  }
+
+  .disc-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .landing-music-pill.playing .disc-icon {
+    animation: rotateVinyl 4s linear infinite;
+  }
+
+  @keyframes rotateVinyl {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .music-info-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    gap: 1px;
+    max-width: 155px;
+  }
+
+  .music-track-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.25;
+  }
+
+  .music-track-sub {
+    font-size: 10px;
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .sound-wave {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2.5px;
+    height: 13px;
+    color: #C9847A;
+    padding: 0 2px;
+  }
+
+  .sound-bar {
+    width: 2.5px;
+    background: currentColor;
+    border-radius: 1px;
+    transition: transform 0.2s ease;
+  }
+
+  .sound-bar.bar-1 { height: 6px; }
+  .sound-bar.bar-2 { height: 13px; }
+  .sound-bar.bar-3 { height: 9px; }
+
+  .landing-music-pill.playing .sound-bar.bar-1 {
+    animation: waveBounce 1s ease-in-out infinite 0.1s;
+  }
+  .landing-music-pill.playing .sound-bar.bar-2 {
+    animation: waveBounce 1s ease-in-out infinite 0.3s;
+  }
+  .landing-music-pill.playing .sound-bar.bar-3 {
+    animation: waveBounce 1s ease-in-out infinite 0.2s;
+  }
+
+  @keyframes waveBounce {
+    0%, 100% { transform: scaleY(0.35); }
+    50% { transform: scaleY(1); }
+  }
+
+  .music-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-subtle);
+    transition: color 0.2s ease;
+  }
+
+  .landing-music-pill:hover .music-action-icon {
+    color: var(--color-primary);
+  }
+
+  @media (max-width: 640px) {
+    .landing-music-pill {
+      bottom: 18px;
+      right: 18px;
+      padding: 6px 12px 6px 8px;
+      gap: 8px;
     }
   }
 </style>

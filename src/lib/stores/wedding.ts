@@ -169,7 +169,7 @@ export const createDefaultInvitation = (info?: WeddingInfo): DigitalInvitation =
   cover: {
     title: 'The Wedding Of',
     subtitle: 'Kami mengundang Anda untuk merayakan momen bahagia penyatuan cinta kami',
-    bgMusicUrl: 'https://assets.mixkit.co/music/preview/mixkit-romantic-wedding-piano-melody-670.mp3',
+    bgMusicUrl: '/music/the-way-you-look-at-me.mp3',
     bgMusicAutoPlay: true,
   },
   couple: {
@@ -347,10 +347,23 @@ function loadState(): WeddingStore {
     const saved = localStorage.getItem('wedding-planner-state');
     if (!saved) return initialState;
     const parsed = JSON.parse(saved);
+    const loadedInvitation = parsed.invitation
+      ? { ...createDefaultInvitation(parsed.info), ...parsed.invitation }
+      : createDefaultInvitation(parsed.info);
+
+    // Auto-migrate legacy music or YouTube video link to local high-quality mp3
+    if (
+      !loadedInvitation.cover.bgMusicUrl ||
+      loadedInvitation.cover.bgMusicUrl.includes('mixkit-romantic-wedding-piano-melody-670.mp3') ||
+      loadedInvitation.cover.bgMusicUrl.includes('SgSOAPwTOdc')
+    ) {
+      loadedInvitation.cover.bgMusicUrl = '/music/the-way-you-look-at-me.mp3';
+    }
+
     return {
       ...initialState,
       ...parsed,
-      invitation: parsed.invitation ? { ...createDefaultInvitation(parsed.info), ...parsed.invitation } : createDefaultInvitation(parsed.info)
+      invitation: loadedInvitation,
     };
   } catch {
     return initialState;

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { DigitalInvitation } from '#lib/stores/wedding';
   import { onMount } from 'svelte';
+  import { resolveMusicSrc } from '#lib/utils/music';
 
   interface Props {
     invitation: DigitalInvitation;
@@ -17,6 +18,8 @@
     isPreview = false,
     onRsvpSubmit,
   }: Props = $props();
+
+  const resolvedMusicUrl = $derived(resolveMusicSrc(invitation.cover.bgMusicUrl));
 
   let isOpen = $state(false);
   let isPlaying = $state(false);
@@ -59,7 +62,48 @@
   onMount(() => {
     updateCountdown();
     timer = setInterval(updateCountdown, 1000);
-    return () => clearInterval(timer);
+
+    // Otomatis putar musik ketika web diakses
+    let cleanupGesture: (() => void) | null = null;
+    const startAudio = () => {
+      if (audioRef && !isPlaying) {
+        audioRef.play().then(() => {
+          isPlaying = true;
+          if (cleanupGesture) cleanupGesture();
+        }).catch(() => {
+          // Jika browser membatasi autoplay tanpa interaksi (browser policy),
+          // pasang listener pada sentuhan / scroll / klik pertama di layar mana saja
+          const onFirstInteraction = () => {
+            if (audioRef && !isPlaying) {
+              audioRef.play().then(() => {
+                isPlaying = true;
+              }).catch(() => {});
+            }
+            if (cleanupGesture) cleanupGesture();
+          };
+
+          cleanupGesture = () => {
+            window.removeEventListener('click', onFirstInteraction);
+            window.removeEventListener('touchstart', onFirstInteraction);
+            window.removeEventListener('scroll', onFirstInteraction);
+            window.removeEventListener('keydown', onFirstInteraction);
+          };
+
+          window.addEventListener('click', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('scroll', onFirstInteraction, { once: true, passive: true });
+          window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
+        });
+      }
+    };
+
+    const autoTimer = setTimeout(startAudio, 250);
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(autoTimer);
+      if (cleanupGesture) cleanupGesture();
+    };
   });
 
   function handleOpenInvitation() {
@@ -146,15 +190,27 @@
 </script>
 
 <div class="emerald-theme-wrapper {isOpen ? 'is-opened' : 'is-closed'}">
-  {#if invitation.cover.bgMusicUrl}
+  <!-- Ambient Floating Botanical Leaves -->
+  <div class="ambient-leaves-wrap" aria-hidden="true">
+    <div class="falling-leaf l1">🍃</div>
+    <div class="falling-leaf l2">🌿</div>
+    <div class="falling-leaf l3">🍃</div>
+    <div class="falling-leaf l4">🌱</div>
+    <div class="falling-leaf l5">🍃</div>
+    <div class="falling-leaf l6">🌿</div>
+    <div class="falling-leaf l7">🍃</div>
+    <div class="falling-leaf l8">🌱</div>
+  </div>
+
+  {#if resolvedMusicUrl}
     <audio
       bind:this={audioRef}
-      src={invitation.cover.bgMusicUrl}
+      src={resolvedMusicUrl}
       loop
-      preload="none"
+      preload="auto"
     ></audio>
 
-    {#if isOpen}
+    {#if isOpen || isPlaying}
       <button
         class="floating-audio-btn {isPlaying ? 'playing' : 'paused'}"
         onclick={toggleAudio}
@@ -170,30 +226,48 @@
   {/if}
 
   <!-- GATE COVER -->
-  <section class="emerald-gate-cover">
-    <div class="botanical-leaf-top">🌿 🍃 🌿</div>
-    <p class="emerald-tagline">{invitation.cover.title || 'THE WEDDING OF'}</p>
-
-    <h1 class="emerald-gate-couple">
-      <span class="em-name">{invitation.couple.groomNickname}</span>
-      <span class="em-amp">&amp;</span>
-      <span class="em-name">{invitation.couple.brideNickname}</span>
-    </h1>
-
-    <p class="emerald-gate-date">
-      {formatDateID(invitation.events.resepsi.date || invitation.events.akad.date)}
-    </p>
-
-    <div class="emerald-guest-card">
-      <span class="guest-lbl">Kepada Yth. Bapak/Ibu/Saudara/i:</span>
-      <h3 class="guest-name">{guestName}</h3>
-      <span class="guest-sub">Kami mengundang Anda hadir di hari bahagia kami</span>
+  <section class="emerald-gate-cover {isOpen ? 'gate-unlocked' : ''}">
+    <!-- Sliding Botanical Gate Doors -->
+    <div class="gate-door gate-door-left" aria-hidden="true">
+      <div class="door-bg-image" style="background-image: url('/images/themes/botanical-arch-real.jpg');"></div>
+      <div class="door-gradient-tint"></div>
+      <div class="door-border-trim left-trim"></div>
+    </div>
+    <div class="gate-door gate-door-right" aria-hidden="true">
+      <div class="door-bg-image" style="background-image: url('/images/themes/botanical-arch-real.jpg');"></div>
+      <div class="door-gradient-tint"></div>
+      <div class="door-border-trim right-trim"></div>
     </div>
 
-    <button class="emerald-open-btn" onclick={handleOpenInvitation}>
-      <span>Buka Undangan</span>
-      <span>🌿</span>
-    </button>
+    <div class="emerald-gate-content">
+      <div class="botanical-leaf-top">🌿 🍃 🌿</div>
+      <p class="emerald-tagline">{invitation.cover.title || 'THE WEDDING OF'}</p>
+
+      <h1 class="emerald-gate-couple">
+        <span class="em-name">{invitation.couple.groomNickname}</span>
+        <span class="em-amp">&amp;</span>
+        <span class="em-name">{invitation.couple.brideNickname}</span>
+      </h1>
+
+      <p class="emerald-gate-date">
+        {formatDateID(invitation.events.resepsi.date || invitation.events.akad.date)}
+      </p>
+
+      <div class="emerald-guest-card">
+        <span class="guest-lbl">Kepada Yth. Bapak/Ibu/Saudara/i:</span>
+        <h3 class="guest-name">{guestName}</h3>
+        <span class="guest-sub">Kami mengundang Anda hadir di hari bahagia kami</span>
+      </div>
+
+      <button class="emerald-open-btn" onclick={handleOpenInvitation}>
+        <div class="wax-seal-wrapper">
+          <img src="/images/themes/emerald-wax-seal.jpg" alt="Wax Seal" class="gate-wax-seal" />
+          <span class="wax-seal-pulse-ring"></span>
+        </div>
+        <span>Buka Undangan</span>
+        <span class="btn-sparkle-icon">🌿</span>
+      </button>
+    </div>
   </section>
 
   <!-- MAIN CONTENT -->
@@ -543,6 +617,44 @@
   .floating-audio-btn.playing .disc-icon { animation: spin 3s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Ambient Floating Botanical Leaves */
+  .ambient-leaves-wrap {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99;
+    overflow: hidden;
+  }
+  .falling-leaf {
+    position: absolute;
+    top: -30px;
+    font-size: 1.25rem;
+    opacity: 0.7;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+    animation: leafFall linear infinite;
+  }
+  .l1 { left: 10%; animation-duration: 10s; animation-delay: 0s; }
+  .l2 { left: 24%; animation-duration: 13s; animation-delay: 2s; }
+  .l3 { left: 40%; animation-duration: 9s; animation-delay: 4s; }
+  .l4 { left: 55%; animation-duration: 11s; animation-delay: 1s; }
+  .l5 { left: 70%; animation-duration: 12s; animation-delay: 3s; }
+  .l6 { left: 85%; animation-duration: 14s; animation-delay: 5s; }
+  .l7 { left: 32%; animation-duration: 9.5s; animation-delay: 6s; }
+  .l8 { left: 78%; animation-duration: 11.5s; animation-delay: 7s; }
+
+  @keyframes leafFall {
+    0% {
+      transform: translateY(0) rotate(0deg) translateX(0);
+      opacity: 0;
+    }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% {
+      transform: translateY(105vh) rotate(360deg) translateX(35px);
+      opacity: 0;
+    }
+  }
+
   /* Gate Cover */
   .emerald-gate-cover {
     min-height: 100vh;
@@ -554,7 +666,103 @@
     text-align: center;
     background: radial-gradient(circle at center, #FFFFFF 0%, #EBF2EC 100%);
     box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
   }
+  .emerald-gate-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  /* Gate Doors */
+  .gate-door {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 1;
+    overflow: hidden;
+    transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  .gate-door-left {
+    left: 0;
+    transform: translateX(0);
+  }
+  .gate-door-right {
+    right: 0;
+    transform: translateX(0);
+  }
+  .gate-unlocked .gate-door-left {
+    transform: translateX(-101%);
+  }
+  .gate-unlocked .gate-door-right {
+    transform: translateX(101%);
+  }
+  .door-bg-image {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 200%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.42;
+    filter: saturate(1.1);
+  }
+  .gate-door-left .door-bg-image {
+    left: 0;
+  }
+  .gate-door-right .door-bg-image {
+    right: 0;
+  }
+  .door-gradient-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(235, 242, 236, 0.88) 100%);
+  }
+  .door-border-trim {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, rgba(59, 94, 72, 0.4), transparent);
+  }
+  .left-trim { right: 0; }
+  .right-trim { left: 0; }
+
+  /* Wax Seal on Button */
+  .wax-seal-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gate-wax-seal {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
+  }
+  .wax-seal-pulse-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 255, 255, 0.7);
+    animation: rotateSlow 8s linear infinite;
+  }
+  @keyframes rotateSlow {
+    to { transform: rotate(360deg); }
+  }
+  .btn-sparkle-icon {
+    font-size: 0.95rem;
+  }
+
   .botanical-leaf-top {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
@@ -583,13 +791,14 @@
     margin: 0 0 1.5rem;
   }
   .emerald-guest-card {
-    background: white;
-    border: 1px solid var(--border-soft);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(136, 170, 149, 0.35);
     border-radius: 16px;
     padding: 1.25rem 1.5rem;
     width: 100%;
     max-width: 360px;
-    box-shadow: 0 4px 16px rgba(45, 75, 57, 0.05);
+    box-shadow: 0 8px 24px rgba(45, 75, 57, 0.1);
     margin-bottom: 1.5rem;
   }
   .guest-lbl { font-size: 0.75rem; text-transform: uppercase; color: var(--sage); display: block; margin-bottom: 0.25rem; font-weight: 600; }
@@ -606,8 +815,13 @@
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 14px rgba(45, 75, 57, 0.25);
+    gap: 0.65rem;
+    box-shadow: 0 6px 18px rgba(45, 75, 57, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .emerald-open-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(45, 75, 57, 0.4);
   }
 
   /* Main */

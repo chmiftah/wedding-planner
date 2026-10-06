@@ -4,6 +4,7 @@
   import ClassicGold from '#lib/components/invitation/ClassicGold.svelte';
   import EmeraldBotanical from '#lib/components/invitation/EmeraldBotanical.svelte';
   import { formatDate } from '#lib/utils/format';
+  import { MUSIC_PRESETS, resolveMusicSrc } from '#lib/utils/music';
   import { browser } from '$app/environment';
 
   // Mode: 'templates' (katalog template awal) atau 'customizer' (editor isi undangan)
@@ -15,6 +16,41 @@
   // Preview guest selector
   let selectedPreviewGuest = $state<string>('Dimas & Partner');
   let copyFeedback = $state(false);
+
+  // Audio preview tester state
+  let isTestingMusic = $state(false);
+  let testAudioRef = $state<HTMLAudioElement | null>(null);
+
+  function toggleTestMusic() {
+    if (!testAudioRef) return;
+    if (isTestingMusic) {
+      testAudioRef.pause();
+      isTestingMusic = false;
+    } else {
+      testAudioRef.src = resolveMusicSrc($wedding.invitation.cover.bgMusicUrl);
+      testAudioRef.play().then(() => {
+        isTestingMusic = true;
+      }).catch(() => {
+        isTestingMusic = false;
+      });
+    }
+  }
+
+  function selectMusicPreset(presetUrl: string) {
+    updateInvitation({
+      cover: {
+        ...$wedding.invitation.cover,
+        bgMusicUrl: presetUrl,
+      }
+    });
+    if (testAudioRef) {
+      testAudioRef.src = resolveMusicSrc(presetUrl);
+      if (isTestingMusic) {
+        testAudioRef.play().catch(() => {});
+      }
+    }
+    showToast('✓ Musik latar berhasil diganti');
+  }
 
   // Toast notification
   let toastMessage = $state<string | null>(null);
@@ -603,16 +639,62 @@
                         placeholder="Contoh: THE WEDDING OF"
                       />
                     </div>
+                    <!-- Music Selection Section -->
                     <div class="form-group mb-3">
-                      <label for="cover-music-input" class="form-label">Musik Latar (Audio URL)</label>
-                      <input
-                        id="cover-music-input"
-                        type="text"
-                        class="form-input"
-                        bind:value={$wedding.invitation.cover.bgMusicUrl}
-                        placeholder="URL file audio mp3"
-                      />
-                      <span class="text-xs text-subtle mt-1 block">Default: Instrumen piano romantis bebas royalti.</span>
+                      <div class="flex items-center justify-between mb-1.5">
+                        <label for="cover-music-input" class="form-label mb-0">Musik Latar Undangan</label>
+                        <button
+                          type="button"
+                          class="btn btn-ghost btn-xs text-xs flex items-center gap-1"
+                          onclick={toggleTestMusic}
+                          title={isTestingMusic ? 'Hentikan Preview' : 'Putar Musik'}
+                        >
+                          <span>{isTestingMusic ? '⏹️ Hentikan' : '▶️ Tes Musik'}</span>
+                        </button>
+                      </div>
+
+                      <!-- Hidden audio element for preview tester -->
+                      <audio bind:this={testAudioRef} loop></audio>
+
+                      <!-- Presets Grid -->
+                      <div class="music-presets-grid mb-2">
+                        {#each MUSIC_PRESETS as preset}
+                          {@const isSelected = $wedding.invitation.cover.bgMusicUrl === preset.url || ($wedding.invitation.cover.bgMusicUrl?.includes('SgSOAPwTOdc') && preset.id === 'the-way-you-look-at-me')}
+                          <button
+                            type="button"
+                            class="music-preset-card {isSelected ? 'selected' : ''}"
+                            onclick={() => selectMusicPreset(preset.url)}
+                          >
+                            <div class="preset-icon">{isSelected ? '🎵' : '💿'}</div>
+                            <div class="preset-info">
+                              <strong class="preset-title">{preset.title}</strong>
+                              <span class="preset-artist">{preset.artist}</span>
+                            </div>
+                            {#if isSelected}
+                              <span class="preset-check">✓</span>
+                            {/if}
+                          </button>
+                        {/each}
+                      </div>
+
+                      <!-- URL Input / Custom YouTube / MP3 link -->
+                      <div class="custom-music-input-wrap">
+                        <input
+                          id="cover-music-input"
+                          type="text"
+                          class="form-input text-xs"
+                          bind:value={$wedding.invitation.cover.bgMusicUrl}
+                          placeholder="Atau tempel link YouTube / file .mp3..."
+                        />
+                      </div>
+                      {#if $wedding.invitation.cover.bgMusicUrl?.includes('SgSOAPwTOdc') || $wedding.invitation.cover.bgMusicUrl?.includes('the-way-you-look-at-me')}
+                        <div class="text-xs text-success mt-1.5 flex items-center gap-1 font-medium">
+                          <span>✓</span>
+                          <span>Musik Terpasang: <strong>Paul Aro, Andi Rianto — The Way You Look At Me</strong> (Langsung diputar saat web diakses)</span>
+                        </div>
+                      {:else}
+                        <span class="text-xs text-subtle mt-1 block">Musik otomatis diputar saat tamu mengakses website undangan.</span>
+                      {/if}
                     </div>
                   </div>
 
@@ -1562,13 +1644,13 @@
     border-bottom: 1px solid var(--color-border);
   }
   .theme-style-romantic_terracotta {
-    background: linear-gradient(135deg, #FFF8F6 0%, #FDF0EC 50%, #F5D8D4 100%);
+    background: linear-gradient(135deg, rgba(255, 248, 246, 0.6) 0%, rgba(245, 230, 224, 0.82) 100%), url('/images/themes/romantic-arch-real.jpg') center/cover no-repeat;
   }
   .theme-style-classic_gold {
-    background: linear-gradient(135deg, #1C1B1F 0%, #151417 60%, #2A241C 100%);
+    background: linear-gradient(135deg, rgba(18, 18, 20, 0.72) 0%, rgba(18, 18, 20, 0.9) 100%), url('/images/themes/gold-marble-1.jpg') center/cover no-repeat;
   }
   .theme-style-emerald_botanical {
-    background: linear-gradient(135deg, #F7F9F6 0%, #EBF2EC 50%, #DCE8DE 100%);
+    background: linear-gradient(135deg, rgba(247, 249, 246, 0.65) 0%, rgba(220, 232, 222, 0.85) 100%), url('/images/themes/botanical-arch-real.jpg') center/cover no-repeat;
   }
 
   /* Mini Mockup Frame Inside Window */
@@ -1581,7 +1663,7 @@
     align-items: center;
     text-align: center;
     position: relative;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
     transition: transform var(--transition-base);
   }
   .invitation-preview-window:hover .mini-mockup-frame {
@@ -1590,7 +1672,8 @@
 
   /* Specific theme styling for mini mockup */
   .theme-style-romantic_terracotta .mini-mockup-frame {
-    background: white;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
     border: 1px solid #EDD5CE;
     color: #2C1810;
   }
@@ -1608,10 +1691,11 @@
   }
 
   .theme-style-classic_gold .mini-mockup-frame {
-    background: #18171B;
+    background: rgba(24, 23, 27, 0.85);
+    backdrop-filter: blur(8px);
     border: 1px solid #C5A059;
     color: #F5E6E0;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(197, 160, 89, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(197, 160, 89, 0.2);
   }
   .theme-style-classic_gold .mini-mockup-names {
     color: #E6CA85;
@@ -1626,9 +1710,11 @@
   }
 
   .theme-style-emerald_botanical .mini-mockup-frame {
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
     border: 1px solid #A8C4B0;
     color: #1E3326;
+    box-shadow: 0 10px 25px rgba(30, 51, 38, 0.15);
   }
   .theme-style-emerald_botanical .mini-mockup-names {
     color: #2D5039;
@@ -1961,6 +2047,64 @@
     font-weight: 600;
     color: var(--color-text);
     margin: 0;
+  }
+  /* Music Preset Selector */
+  .music-presets-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .music-preset-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--radius-md);
+    background: white;
+    border: 1.5px solid var(--color-border);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+  }
+  .music-preset-card:hover {
+    border-color: var(--color-primary);
+    background: rgba(201, 132, 122, 0.04);
+  }
+  .music-preset-card.selected {
+    border-color: var(--color-primary);
+    background: rgba(201, 132, 122, 0.08);
+    box-shadow: 0 2px 8px rgba(201, 132, 122, 0.15);
+  }
+  .preset-icon {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .preset-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .preset-title {
+    font-size: 0.82rem;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preset-artist {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+  .preset-check {
+    color: var(--color-primary);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .custom-music-input-wrap {
+    margin-top: 0.25rem;
   }
   .story-edit-card {
     background: white;
