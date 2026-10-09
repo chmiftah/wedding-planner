@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
   import type { ActionData } from './$types';
 
@@ -10,6 +11,39 @@
 
   let showPassword = $state(false);
   let isLoading = $state(false);
+  let localWeddingPayload = $state('');
+
+  onMount(() => {
+    try {
+      const saved = localStorage.getItem('wedding-planner-state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.info && (parsed.wizardCompleted || parsed.info.brideName || parsed.info.groomName)) {
+          const submission = {
+            brideName: parsed.info.brideName || 'Mempelai Wanita',
+            groomName: parsed.info.groomName || 'Mempelai Pria',
+            weddingDate: parsed.info.weddingDate || null,
+            dateNote: parsed.info.dateNote || '',
+            venueType: parsed.info.venueType || 'gedung',
+            style: parsed.info.style || 'menengah',
+            guestCount: parsed.info.guestCount || 100,
+            totalBudget: parsed.info.totalBudget || 0,
+            monthlySavingsTarget: parsed.monthlySavingsTarget || 0,
+            fundingSources: (parsed.fundingSources || []).map((f: any) => ({
+              type: f.type,
+              name: f.name,
+              confirmedAmount: f.confirmedAmount,
+              isEstimate: f.isEstimate,
+              notes: f.notes || '',
+            })),
+          };
+          localWeddingPayload = JSON.stringify(submission);
+        }
+      }
+    } catch (e) {
+      console.warn('Gagal membaca rencana pernikahan lokal:', e);
+    }
+  });
 </script>
 
 <svelte:head>
@@ -51,6 +85,9 @@
         };
       }}
     >
+      {#if localWeddingPayload}
+        <input type="hidden" name="localWeddingData" value={localWeddingPayload} />
+      {/if}
       <div class="form-group">
         <label for="email" class="form-label">Alamat Email</label>
         <div class="input-wrapper">

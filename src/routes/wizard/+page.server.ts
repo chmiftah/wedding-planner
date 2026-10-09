@@ -3,37 +3,30 @@ import type { Actions, PageServerLoad } from './$types';
 import { saveWizardSubmission, type WizardSubmission } from '#lib/server/weddingService';
 
 export const load: PageServerLoad = async ({ locals }) => {
-  if (!locals.user) {
-    throw redirect(303, '/daftar');
-  }
   return {
-    user: locals.user,
+    user: locals.user || null,
   };
 };
 
 export const actions: Actions = {
   default: async ({ request, locals }) => {
-    if (!locals.user) {
-      return fail(401, { error: 'Anda harus masuk terlebih dahulu.' });
-    }
+    // Jika user sudah login, sinkronkan langsung ke PostgreSQL
+    if (locals.user) {
+      try {
+        const data = await request.formData();
+        const rawPayload = data.get('payload')?.toString();
 
-    try {
-      const data = await request.formData();
-      const rawPayload = data.get('payload')?.toString();
-
-      let submission: WizardSubmission;
-      if (rawPayload) {
-        submission = JSON.parse(rawPayload);
-      } else {
-        return fail(400, { error: 'Data rencana pernikahan tidak lengkap.' });
+        if (rawPayload) {
+          const submission: WizardSubmission = JSON.parse(rawPayload);
+          await saveWizardSubmission(locals.user.id, submission);
+        }
+      } catch (err) {
+        console.error('Error saving wizard submission:', err);
+        return fail(500, { error: 'Gagal menyimpan rencana pernikahan ke database.' });
       }
-
-      await saveWizardSubmission(locals.user.id, submission);
-    } catch (err) {
-      console.error('Error saving wizard submission:', err);
-      return fail(500, { error: 'Gagal menyimpan rencana pernikahan ke database.' });
     }
 
+    // Untuk user tamu, data sudah tersimpan di localStorage browser via store client
     throw redirect(303, '/dashboard');
   },
 };

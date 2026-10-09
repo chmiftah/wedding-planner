@@ -4,6 +4,7 @@ import { db } from '#lib/server/db';
 import { users } from '#lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { hashPassword, setSessionCookie } from '#lib/server/auth';
+import { saveWizardSubmission, type WizardSubmission } from '#lib/server/weddingService';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals.user) {
@@ -19,6 +20,7 @@ export const actions: Actions = {
     const email = data.get('email')?.toString().trim().toLowerCase();
     const password = data.get('password')?.toString();
     const confirmPassword = data.get('confirmPassword')?.toString();
+    const rawLocalData = data.get('localWeddingData')?.toString();
 
     if (!name || name.length < 2) {
       return fail(400, { error: 'Nama lengkap wajib diisi minimal 2 karakter.', name, email });
@@ -35,6 +37,8 @@ export const actions: Actions = {
     if (password !== confirmPassword) {
       return fail(400, { error: 'Konfirmasi kata sandi tidak cocok.', name, email });
     }
+
+    let hasLocalPlan = false;
 
     try {
       // Periksa apakah email sudah terdaftar
@@ -65,6 +69,17 @@ export const actions: Actions = {
 
       // Pasang cookie sesi
       setSessionCookie(cookies, newUser.id);
+
+      // Jika user sudah memiliki rencana dari mode tamu browser, langsung simpan ke database
+      if (rawLocalData) {
+        try {
+          const submission: WizardSubmission = JSON.parse(rawLocalData);
+          await saveWizardSubmission(newUser.id, submission);
+          hasLocalPlan = true;
+        } catch (syncErr) {
+          console.warn('Gagal sinkronisasi data rencana tamu saat registrasi:', syncErr);
+        }
+      }
     } catch (err) {
       console.error('Registration error:', err);
       return fail(500, {
@@ -74,7 +89,11 @@ export const actions: Actions = {
       });
     }
 
-    // Arahkan ke wizard untuk melengkapi rencana pernikahan pertama
+    // Jika sudah ada rencana yang tersinkron, langsung ke dashboard. Jika belum, buka wizard.
+    if (hasLocalPlan) {
+      throw redirect(303, '/dashboard');
+    }
+
     throw redirect(303, '/wizard');
   },
 };

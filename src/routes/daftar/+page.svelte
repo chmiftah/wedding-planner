@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
   import type { ActionData } from './$types';
 
@@ -11,6 +12,50 @@
   let showPassword = $state(false);
   let showConfirmPassword = $state(false);
   let isLoading = $state(false);
+
+  let localWeddingPayload = $state('');
+  let planCoupleNames = $state('');
+  let prefilledName = $state('');
+
+  onMount(() => {
+    try {
+      const saved = localStorage.getItem('wedding-planner-state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.info && (parsed.wizardCompleted || parsed.info.brideName || parsed.info.groomName)) {
+          const names = [parsed.info.brideName, parsed.info.groomName].filter(Boolean).join(' & ');
+          if (names) {
+            planCoupleNames = names;
+            if (!form?.name) {
+              prefilledName = names;
+            }
+          }
+
+          const submission = {
+            brideName: parsed.info.brideName || 'Mempelai Wanita',
+            groomName: parsed.info.groomName || 'Mempelai Pria',
+            weddingDate: parsed.info.weddingDate || null,
+            dateNote: parsed.info.dateNote || '',
+            venueType: parsed.info.venueType || 'gedung',
+            style: parsed.info.style || 'menengah',
+            guestCount: parsed.info.guestCount || 100,
+            totalBudget: parsed.info.totalBudget || 0,
+            monthlySavingsTarget: parsed.monthlySavingsTarget || 0,
+            fundingSources: (parsed.fundingSources || []).map((f: any) => ({
+              type: f.type,
+              name: f.name,
+              confirmedAmount: f.confirmedAmount,
+              isEstimate: f.isEstimate,
+              notes: f.notes || '',
+            })),
+          };
+          localWeddingPayload = JSON.stringify(submission);
+        }
+      }
+    } catch (e) {
+      console.warn('Gagal membaca rencana pernikahan lokal:', e);
+    }
+  });
 </script>
 
 <svelte:head>
@@ -28,6 +73,13 @@
       </a>
       <h1 class="auth-title">Buat Akun Baru</h1>
       <p class="auth-subtitle">Mulai perjalanan persiapan pernikahan impian Anda sekarang</p>
+
+      {#if planCoupleNames}
+        <div class="guest-sync-pill animate-fade-in">
+          <span class="sync-icon">✨</span>
+          <span>Rencana untuk <strong>{planCoupleNames}</strong> akan otomatis tersimpan permanen ke akun ini!</span>
+        </div>
+      {/if}
     </div>
 
     <!-- Error Alert -->
@@ -52,6 +104,10 @@
         };
       }}
     >
+      {#if localWeddingPayload}
+        <input type="hidden" name="localWeddingData" value={localWeddingPayload} />
+      {/if}
+
       <div class="form-group">
         <label for="name" class="form-label">Nama Lengkap / Panggilan</label>
         <div class="input-wrapper">
@@ -64,7 +120,7 @@
             autocomplete="name"
             placeholder="Contoh: Sarah & Danu"
             class="form-input"
-            value={form?.name ?? ''}
+            value={form?.name ?? prefilledName}
           />
         </div>
       </div>
@@ -230,6 +286,26 @@
     color: var(--color-text-muted);
     margin: 0;
     line-height: 1.5;
+  }
+
+  .guest-sync-pill {
+    margin-top: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, rgba(201, 132, 122, 0.14), rgba(212, 163, 115, 0.16));
+    border: 1px solid rgba(201, 132, 122, 0.35);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--color-primary-dark, #8B5E52);
+    text-align: left;
+    line-height: 1.4;
+  }
+
+  .sync-icon {
+    font-size: 14px;
+    flex-shrink: 0;
   }
 
   .auth-error-banner {

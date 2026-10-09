@@ -4,6 +4,7 @@ import { db } from '#lib/server/db';
 import { users, weddings } from '#lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifyPassword, setSessionCookie } from '#lib/server/auth';
+import { saveWizardSubmission, type WizardSubmission } from '#lib/server/weddingService';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals.user) {
@@ -17,6 +18,7 @@ export const actions: Actions = {
     const data = await request.formData();
     const email = data.get('email')?.toString().trim().toLowerCase();
     const password = data.get('password')?.toString();
+    const rawLocalData = data.get('localWeddingData')?.toString();
 
     if (!email || !password) {
       return fail(400, { error: 'Email dan kata sandi wajib diisi.', email });
@@ -53,6 +55,20 @@ export const actions: Actions = {
         .from(weddings)
         .where(eq(weddings.userId, user.id))
         .limit(1);
+
+      // Jika belum punya pernikahan di DB tetapi membawa rencana dari sesi tamu, simpan ke akunnya
+      if ((!userWedding || !userWedding.wizardCompleted) && rawLocalData) {
+        try {
+          const submission: WizardSubmission = JSON.parse(rawLocalData);
+          await saveWizardSubmission(user.id, submission);
+          throw redirect(303, '/dashboard');
+        } catch (syncErr) {
+          if (syncErr instanceof Response || (typeof syncErr === 'object' && syncErr !== null && 'status' in syncErr)) {
+            throw syncErr;
+          }
+          console.warn('Gagal sinkronisasi data rencana tamu saat masuk:', syncErr);
+        }
+      }
 
       if (!userWedding || !userWedding.wizardCompleted) {
         throw redirect(303, '/wizard');

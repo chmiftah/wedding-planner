@@ -73,11 +73,17 @@
     }
   }
 
+  let openFaqIndex = $state<number | null>(0);
+
+  function toggleFaq(index: number) {
+    openFaqIndex = openFaqIndex === index ? null : index;
+  }
+
   function handleStart() {
     if (data?.user) {
       goto('/dashboard');
     } else {
-      goto('/daftar');
+      goto('/wizard');
     }
   }
 </script>
@@ -217,6 +223,16 @@
       <line x1="23" y1="9" x2="17" y2="15"></line>
       <line x1="17" y1="9" x2="23" y2="15"></line>
     </svg>
+  {:else if name === 'chevron-down'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  {:else if name === 'help-circle'}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
   {/if}
 {/snippet}
 
@@ -277,6 +293,7 @@
         <a href="#keunggulan" class="header-nav-link">Keunggulan</a>
         <a href="#fitur" class="header-nav-link">Fitur Lengkap</a>
         <a href="#cara-kerja" class="header-nav-link">Cara Kerja</a>
+        <a href="#faq" class="header-nav-link">FAQ</a>
       </nav>
 
       <!-- Right Action Buttons -->
@@ -293,10 +310,10 @@
           <a href="/masuk" class="header-link-demo">
             Masuk
           </a>
-          <a href="/daftar" class="header-cta-btn">
-            <span>Daftar Gratis</span>
+          <button onclick={handleStart} class="header-cta-btn">
+            <span>Mulai Rencana</span>
             <span class="cta-sparkle" aria-hidden="true">{@render iconSvg('sparkles', 14)}</span>
-          </a>
+          </button>
         {/if}
       </div>
     </div>
@@ -597,6 +614,84 @@
   </section>
 
   <!-- ============================================== -->
+  <!-- FAQ SECTION                                    -->
+  <!-- ============================================== -->
+  <section class="faq-section" id="faq">
+    <div class="container">
+      <div class="section-header text-center animate-fade-in">
+        <span class="section-tag mb-3">
+          {@render iconSvg('help-circle', 14)}
+          Tanya Jawab
+        </span>
+        <h2>Pertanyaan yang Sering Diajukan</h2>
+        <p class="section-subtitle">
+          Semua hal yang perlu kamu ketahui tentang cara kerja, kemudahan akses, dan keamanan rencana pernikahanmu di Nikahku.
+        </p>
+      </div>
+
+      <div class="faq-accordion-container">
+        {#each faqs as faq, i}
+          {@const isOpen = openFaqIndex === i}
+          <div class="faq-card {isOpen ? 'is-open' : ''} animate-fade-in" style="animation-delay: {i * 0.05}s">
+            <button
+              type="button"
+              class="faq-question-btn"
+              onclick={() => toggleFaq(i)}
+              aria-expanded={isOpen}
+              aria-controls="faq-answer-{i}"
+            >
+              <div class="faq-q-left">
+                <span class="faq-q-num" aria-hidden="true">{i + 1 < 10 ? `0${i + 1}` : i + 1}</span>
+                <span class="faq-q-text">{faq.question}</span>
+              </div>
+              <span class="faq-chevron {isOpen ? 'rotated' : ''}" aria-hidden="true">
+                {@render iconSvg('chevron-down', 18)}
+              </span>
+            </button>
+
+            {#if isOpen}
+              <div id="faq-answer-{i}" class="faq-answer-panel" role="region">
+                <div class="faq-answer-inner">
+                  <p class="faq-answer-text">{faq.answer}</p>
+                  {#if faq.action}
+                    <div class="faq-answer-action">
+                      <button onclick={handleStart} class="btn-faq-action">
+                        <span>{faq.action.label}</span>
+                        <span aria-hidden="true">{@render iconSvg('arrow-right', 13)}</span>
+                      </button>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+
+      <!-- FAQ Bottom Banner -->
+      <div class="faq-footer-card animate-fade-in">
+        <div class="faq-footer-left">
+          <div class="faq-footer-icon-box">
+            {@render iconSvg('ring', 24)}
+          </div>
+          <div class="faq-footer-text">
+            <h4 class="faq-footer-title">Masih ada pertanyaan yang belum terjawab?</h4>
+            <p class="faq-footer-desc">
+              Coba langsung wizard perencanaan secara gratis tanpa perlu membuat akun, dan lihat hasilnya dalam hitungan menit!
+            </p>
+          </div>
+        </div>
+        <div class="faq-footer-actions">
+          <button onclick={handleStart} class="btn-faq-start">
+            <span>Mulai Rencana Sekarang</span>
+            <span aria-hidden="true">{@render iconSvg('arrow-right', 14)}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================== -->
   <!-- CTA SECTION                                    -->
   <!-- ============================================== -->
   <section class="cta">
@@ -652,6 +747,34 @@
     { title: 'Ceritakan Rencanamu', desc: 'Ikuti wizard percakapan singkat mengenai tanggal perkiraan, konsep acara, dan jumlah undangan.' },
     { title: 'Dapatkan Rencana Otomatis', desc: 'Anggaran belanja, pos pengeluaran, dan daftar tugas langsung terisi otomatis sesuai skala acaramu.' },
     { title: 'Kelola Bersama Santai', desc: 'Catat pembayaran DP, pantau konfirmasi tamu online, dan nikmati masa-masa persiapan dengan bahagia.' },
+  ];
+
+  const faqs = [
+    {
+      question: 'Apakah saya harus mendaftar akun sebelum mulai merencanakan?',
+      answer: 'Sama sekali tidak! Anda bisa langsung menekan tombol "Mulai Rencana" dan mengisi wizard perencanaan. Seluruh estimasi anggaran otomatis, daftar tugas checklist, dan kalkulasi tabungan bulanan langsung aktif di Dasbor Anda. Akun gratis hanya diperlukan saat Anda ingin menyimpan rencana secara permanen atau mengaksesnya bersama pasangan dari perangkat lain.',
+      action: { label: 'Coba Wizard Sekarang' },
+    },
+    {
+      question: 'Apakah aplikasi Nikahku benar-benar gratis?',
+      answer: 'Ya, 100% gratis untuk calon pengantin. Anda bebas menggunakan seluruh fitur utama tanpa batas—mulai dari kalkulator alokasi anggaran, pelacak pembayaran vendor (DP & pelunasan), kalkulator tabungan bulanan, manajemen buku tamu & RSVP online, checklist persiapan H-Day, hingga undangan digital interaktif.',
+    },
+    {
+      question: 'Bagaimana cara mengelola rencana pernikahan bersama pasangan?',
+      answer: 'Cukup buat satu akun gratis. Anda dan pasangan dapat masuk (login) menggunakan akun yang sama secara bersamaan di ponsel atau laptop masing-masing. Setiap perubahan anggaran belanja, daftar tamu undangan, atau checklist yang dicentang akan otomatis tersinkronisasi secara real-time.',
+    },
+    {
+      question: 'Bagaimana sistem konfirmasi tamu (RSVP) online bekerja?',
+      answer: 'Setiap tamu yang Anda tambahkan ke daftar tamu akan memiliki tautan undangan online unik yang dapat langsung dibagikan melalui WhatsApp. Tamu cukup membuka tautan tersebut di peramban ponsel tanpa perlu mengunduh aplikasi, memilih konfirmasi kehadiran (hadir / tidak hadir), mengisi jumlah rombongan, serta mengirimkan doa restu yang langsung tercatat di Dasbor Anda.',
+    },
+    {
+      question: 'Apakah data tamu dan rincian anggaran bisa diekspor ke format Excel?',
+      answer: 'Tentu saja! Di menu Manajemen Tamu dan Anggaran, tersedia tombol "Ekspor Excel" (.xlsx). Anda dapat mengunduh berkas dengan format rapi kapan saja untuk dicetak di meja resepsi buku tamu fisik atau dibagikan ke panitia keluarga dan vendor katering.',
+    },
+    {
+      question: 'Bagaimana jika tanggal atau konsep pernikahan kami masih belum pasti?',
+      answer: 'Sangat wajar! Pada langkah awal wizard, Anda cukup memilih opsi "Belum tahu tanggal pasti". Seluruh data yang Anda buat—mulai dari estimasi anggaran, tanggal acara, hingga jumlah tamu—dapat diubah kembali kapan saja secara fleksibel sesuai perkembangan rencana Anda.',
+    },
   ];
 </script>
 
@@ -1633,6 +1756,266 @@
     color: var(--color-text-muted);
     line-height: 1.6;
     margin: 0;
+  }
+
+  /* ========================================= */
+  /* FAQ SECTION                               */
+  /* ========================================= */
+  .faq-section {
+    padding: var(--space-16) 0 var(--space-20);
+    position: relative;
+  }
+
+  .faq-accordion-container {
+    max-width: 860px;
+    margin: var(--space-10) auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .faq-card {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(201, 132, 122, 0.22);
+    border-radius: var(--radius-2xl, 20px);
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(139, 94, 82, 0.04);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .faq-card:hover {
+    border-color: rgba(201, 132, 122, 0.45);
+    box-shadow: 0 8px 24px rgba(139, 94, 82, 0.08);
+  }
+
+  .faq-card.is-open {
+    border-color: var(--color-primary, #C9847A);
+    box-shadow: 0 10px 32px rgba(201, 132, 122, 0.12);
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFDFD 100%);
+  }
+
+  .faq-question-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-6);
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--color-text);
+    transition: background var(--transition-fast);
+  }
+
+  .faq-question-btn:hover {
+    background: rgba(201, 132, 122, 0.04);
+  }
+
+  .faq-q-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: 1;
+  }
+
+  .faq-q-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-full);
+    background: rgba(201, 132, 122, 0.12);
+    color: var(--color-primary);
+    font-family: var(--font-numeric, inherit);
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+  }
+
+  .faq-card.is-open .faq-q-num {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(201, 132, 122, 0.35);
+  }
+
+  .faq-q-text {
+    font-size: var(--font-size-base, 16px);
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--color-text);
+  }
+
+  .faq-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: rgba(139, 94, 82, 0.06);
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background var(--transition-fast), color var(--transition-fast);
+  }
+
+  .faq-chevron.rotated {
+    transform: rotate(180deg);
+    background: rgba(201, 132, 122, 0.15);
+    color: var(--color-primary);
+  }
+
+  .faq-answer-panel {
+    padding: 0 var(--space-6) var(--space-6);
+    animation: fadeInDown 0.25s ease-out;
+  }
+
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .faq-answer-inner {
+    padding-left: calc(34px + var(--space-4));
+    border-top: 1px dashed rgba(201, 132, 122, 0.2);
+    padding-top: var(--space-4);
+  }
+
+  .faq-answer-text {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #5A4E4D;
+    margin: 0;
+  }
+
+  .faq-answer-action {
+    margin-top: var(--space-4);
+  }
+
+  .btn-faq-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(201, 132, 122, 0.12);
+    border: 1px solid rgba(201, 132, 122, 0.28);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .btn-faq-action:hover {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+    transform: translateX(3px);
+  }
+
+  /* FAQ Footer Support Card */
+  .faq-footer-card {
+    max-width: 860px;
+    margin: var(--space-10) auto 0;
+    padding: var(--space-6) var(--space-8);
+    background: linear-gradient(135deg, rgba(201, 132, 122, 0.1) 0%, rgba(212, 163, 115, 0.12) 100%);
+    border: 1.5px dashed rgba(201, 132, 122, 0.35);
+    border-radius: var(--radius-2xl, 20px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+
+  .faq-footer-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: 1;
+  }
+
+  .faq-footer-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-xl);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(139, 94, 82, 0.08);
+    flex-shrink: 0;
+  }
+
+  .faq-footer-title {
+    font-size: var(--font-size-base, 16px);
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 3px 0;
+  }
+
+  .faq-footer-desc {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .btn-faq-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(201, 132, 122, 0.35);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .btn-faq-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(201, 132, 122, 0.45);
+  }
+
+  @media (max-width: 768px) {
+    .faq-question-btn {
+      padding: var(--space-4);
+    }
+    .faq-answer-panel {
+      padding: 0 var(--space-4) var(--space-4);
+    }
+    .faq-answer-inner {
+      padding-left: 0;
+    }
+    .faq-q-text {
+      font-size: 14.5px;
+    }
+    .faq-footer-card {
+      flex-direction: column;
+      align-items: stretch;
+      padding: var(--space-5);
+      text-align: left;
+    }
+    .btn-faq-start {
+      width: 100%;
+      justify-content: center;
+    }
   }
 
   /* ========================================= */

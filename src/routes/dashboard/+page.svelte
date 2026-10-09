@@ -106,7 +106,37 @@
   </div>
 
   <div class="container">
-    {#if data?.user && (!data?.weddingData || !data?.weddingData?.wedding?.wizardCompleted)}
+    {#if !data?.user}
+      <div class="guest-save-banner mb-6 animate-slide-up">
+        <div class="guest-banner-left">
+          <div class="guest-banner-icon-box">
+            <span class="guest-banner-icon">💍</span>
+          </div>
+          <div class="guest-banner-content">
+            <div class="guest-banner-badge">
+              <span class="pulse-dot"></span>
+              Mode Tamu — Tersimpan Sementara
+            </div>
+            <h3 class="guest-banner-title">Amankan Rencana Pernikahan Anda</h3>
+            <p class="guest-banner-desc">
+              Rencana Anda saat ini hanya tersimpan di browser perangkat ini. Simpan ke akun gratis agar data aman tidak hilang dan dapat dibuka bersama pasangan dari smartphone/laptop lain!
+            </p>
+          </div>
+        </div>
+        <div class="guest-banner-actions">
+          <a href="/daftar" class="btn btn-primary btn-save-account">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Simpan ke Akun Gratis</span>
+          </a>
+          <a href="/masuk" class="btn-guest-login">
+            Sudah Punya Akun? Masuk
+          </a>
+        </div>
+      </div>
+    {:else if !data?.weddingData || !data?.weddingData?.wedding?.wizardCompleted}
       <div class="wizard-prompt-banner mb-6 animate-slide-up">
         <div class="wizard-prompt-text">
           <span class="prompt-icon">✨</span>
@@ -573,6 +603,142 @@
   .upcoming-info { display: flex; flex-direction: column; gap: 2px; }
   .upcoming-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 
+  /* Guest Save Banner */
+  .guest-save-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-5) var(--space-6);
+    background: linear-gradient(135deg, rgba(201, 132, 122, 0.16) 0%, rgba(212, 163, 115, 0.14) 50%, rgba(201, 132, 122, 0.09) 100%);
+    border: 1.5px solid rgba(201, 132, 122, 0.35);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 8px 24px rgba(139, 94, 82, 0.07);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .guest-save-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+  }
+
+  .guest-banner-left {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    flex: 1;
+  }
+
+  .guest-banner-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(201, 132, 122, 0.25), rgba(212, 163, 115, 0.25));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(139, 94, 82, 0.1);
+  }
+
+  .guest-banner-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .guest-banner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    background: rgba(201, 132, 122, 0.18);
+    color: var(--color-primary);
+    margin-bottom: 2px;
+  }
+
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 0 rgba(201, 132, 122, 0.7);
+    animation: pulse 1.8s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(201, 132, 122, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(201, 132, 122, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(201, 132, 122, 0); }
+  }
+
+  .guest-banner-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .guest-banner-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+    max-width: 640px;
+  }
+
+  .guest-banner-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn-save-account {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(201, 132, 122, 0.35);
+    transition: all var(--transition-fast);
+  }
+
+  .btn-save-account:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(201, 132, 122, 0.45);
+  }
+
+  .btn-guest-login {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color var(--transition-fast);
+    padding: 2px 4px;
+  }
+
+  .btn-guest-login:hover {
+    color: var(--color-primary);
+  }
+
   /* Wizard Prompt Banner */
   .wizard-prompt-banner {
     display: flex;
@@ -608,6 +774,25 @@
     margin: 0;
     font-size: 12.5px;
     color: var(--color-text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .guest-save-banner {
+      flex-direction: column;
+      align-items: stretch;
+      padding: var(--space-4);
+    }
+    .guest-banner-actions {
+      align-items: stretch;
+      margin-top: var(--space-2);
+    }
+    .btn-save-account {
+      justify-content: center;
+      width: 100%;
+    }
+    .btn-guest-login {
+      text-align: center;
+    }
   }
 
   @media (max-width: 640px) {

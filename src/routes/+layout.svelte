@@ -172,6 +172,13 @@
               <span class="hide-mobile">Keluar</span>
             </a>
           {:else}
+            <a href="/daftar" class="nav-save-btn hide-mobile">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Simpan Akun</span>
+            </a>
             <a href="/masuk" class="nav-login-btn">Masuk</a>
           {/if}
         </div>
@@ -448,23 +455,44 @@
     color: var(--color-danger);
   }
 
-  .nav-login-btn {
+  .nav-save-btn {
     display: inline-flex;
     align-items: center;
-    padding: 6px 14px;
+    gap: 6px;
+    padding: 6px 13px;
     background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     color: #ffffff;
     border-radius: var(--radius-full);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     text-decoration: none;
     box-shadow: 0 2px 6px rgba(201, 132, 122, 0.3);
     transition: all var(--transition-fast);
   }
 
-  .nav-login-btn:hover {
+  .nav-save-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(201, 132, 122, 0.4);
+    box-shadow: 0 4px 10px rgba(201, 132, 122, 0.45);
+  }
+
+  .nav-login-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .nav-login-btn:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-primary);
+    border-color: var(--color-primary-light);
   }
 
   /* Main Content */
