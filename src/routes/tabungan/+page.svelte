@@ -40,28 +40,27 @@
   <title>Tabungan & Proyeksi — Nikahku</title>
 </svelte:head>
 
-<div class="page-container">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="container">
-      <h1 class="page-title-with-icon">
-        <span class="page-title-icon" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18"></path>
-            <path d="M3 10h18"></path>
-            <path d="M5 6l7-3 7 3"></path>
-            <path d="M4 10v11"></path>
-            <path d="M20 10v11"></path>
-            <circle cx="12" cy="15.5" r="1.5"></circle>
-          </svg>
-        </span>
-        Tabungan & Proyeksi
-      </h1>
-      <p class="text-muted text-sm mt-1">Pantau apakah tabunganmu cukup untuk hari H</p>
-    </div>
-  </div>
+<div class="tabungan-page animate-fade-in">
+  <div class="container">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <div class="badge-tag mb-2">
+          <span>🏦 Tabungan & Finansial</span>
+        </div>
+        <h1 class="page-title">Tabungan Bersama & Proyeksi</h1>
+        <p class="page-subtitle">
+          Pantau akumulasi tabungan kedua calon mempelai dan pastikan dana tercukupi hingga hari-H.
+        </p>
+      </div>
 
-  <div class="container mt-6">
+      <div class="header-actions">
+        <button class="btn btn-primary btn-sm flex items-center gap-1.5" onclick={() => showAddEntry = true}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>+ Catat Setoran</span>
+        </button>
+      </div>
+    </div>
     <!-- Status Alert -->
     {#if ss.target > 0}
       {#if ss.isOnTrack}
@@ -320,13 +319,6 @@
 </div>
 
 <style>
-  .page-container { padding-bottom: var(--space-12); }
-
-  .page-header {
-    background: white; border-bottom: 1px solid var(--color-border-light);
-    padding: var(--space-8) 0 var(--space-6);
-  }
-
   .savings-main-card {
     background: linear-gradient(135deg, var(--color-primary-xlight), white);
     border-color: var(--color-primary-light);

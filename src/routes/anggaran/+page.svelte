@@ -3,7 +3,8 @@
     wedding, budgetSummary,
     addBudgetItem, deleteBudgetItem, updateBudgetItem,
     addBudgetCategory, deleteBudgetCategory,
-    addPayment, markItemPaid
+    addPayment, markItemPaid,
+    addVendor
   } from '#lib/stores/wedding';
   import { formatRupiah, formatRupiahShort, formatDate, getPaymentStatus } from '#lib/utils/format';
   import { exportWeddingToExcel } from '#lib/utils/exportExcel';
@@ -12,6 +13,85 @@
   // Navigation states
   let activeView = $state<'grid' | 'all'>('grid');
   let selectedCategoryId = $state<string | null>(null);
+
+  // Quick Add Vendor modal state
+  let showQuickVendorModal = $state(false);
+  let quickVendorTarget = $state<{ categoryId: string; itemId: string; categoryName: string; defaultCost: number } | null>(null);
+  let quickVendorName = $state('');
+  let quickVendorCategory = $state('Katering & Konsumsi');
+  let quickVendorPhone = $state('');
+  let quickVendorContact = $state('');
+  let quickVendorStatus = $state<'riset' | 'diskusi' | 'deal' | 'lunas' | 'selesai'>('deal');
+  let quickVendorCost = $state(0);
+  let quickVendorNotes = $state('');
+
+  function openQuickVendor(categoryId: string, itemId: string, categoryName: string, defaultCost: number = 0) {
+    quickVendorTarget = { categoryId, itemId, categoryName, defaultCost };
+    quickVendorName = '';
+    quickVendorCategory = categoryName || 'Katering & Konsumsi';
+    quickVendorPhone = '';
+    quickVendorContact = '';
+    quickVendorStatus = 'deal';
+    quickVendorCost = defaultCost;
+    quickVendorNotes = '';
+    showQuickVendorModal = true;
+  }
+
+  async function submitQuickVendor() {
+    if (!quickVendorName.trim() || !quickVendorTarget) return;
+
+    const newVen = addVendor({
+      name: quickVendorName.trim(),
+      category: quickVendorCategory || quickVendorTarget.categoryName || 'Lainnya',
+      contactPerson: quickVendorContact.trim(),
+      phone: quickVendorPhone.trim(),
+      email: '',
+      instagram: '',
+      address: '',
+      status: quickVendorStatus,
+      estimatedCost: quickVendorCost || 0,
+      actualCost: quickVendorStatus === 'deal' || quickVendorStatus === 'lunas' ? quickVendorCost : 0,
+      notes: quickVendorNotes.trim(),
+    });
+
+    updateBudgetItem(quickVendorTarget.categoryId, quickVendorTarget.itemId, {
+      vendorName: newVen.name,
+    });
+
+    try {
+      await fetch('/api/vendor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newVen),
+      });
+    } catch (err) {
+      console.error('Error syncing new vendor:', err);
+    }
+
+    showQuickVendorModal = false;
+    quickVendorTarget = null;
+  }
+
+  function findVendorByName(name: string) {
+    if (!name) return null;
+    return ($wedding.vendors || []).find(v => v.name.toLowerCase() === name.toLowerCase()) || null;
+  }
+
+  function handleVendorDropdownChange(categoryId: string, itemId: string, value: string, categoryName: string, defaultCost: number) {
+    if (value === '__new__') {
+      openQuickVendor(categoryId, itemId, categoryName, defaultCost);
+      return;
+    }
+    updateBudgetItem(categoryId, itemId, { vendorName: value });
+  }
+
+  function formatWaNumber(phone: string): string {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) {
+      return '62' + cleaned.slice(1);
+    }
+    return cleaned;
+  }
 
   // Accordion states for "Rekap Semua" & item details
   let expandedCategories = $state<Set<string>>(new Set());
@@ -137,35 +217,35 @@
   <title>Anggaran — Nikahku</title>
 </svelte:head>
 
-<div class="page-container">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="container">
-      <div class="page-header-inner">
-        <div>
-          <h1 class="page-title-with-icon">
-          <span class="page-title-icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
-              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
-              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
-            </svg>
-          </span>
-          Anggaran Pernikahan
-        </h1>
-          <p class="text-muted text-sm mt-1">Rencana alokasi dan realisasi pembayaran per vendor</p>
+<div class="anggaran-page animate-fade-in">
+  <div class="container">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <div class="badge-tag mb-2">
+          <span>💰 Anggaran & Keuangan</span>
         </div>
-        <div class="header-actions flex gap-2">
-          <button class="btn btn-secondary btn-sm flex items-center gap-1.5" onclick={() => exportWeddingToExcel()} title="Export seluruh data pernikahan ke Excel (.xls)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
-            Export Excel
-          </button>
-          <button class="btn btn-secondary btn-sm flex items-center gap-1.5" onclick={() => window.print()}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15h6"></path><path d="M9 11h6"></path></svg>
-            Export PDF
-          </button>
-        </div>
+        <h1 class="page-title">Anggaran Biaya Pernikahan</h1>
+        <p class="page-subtitle">
+          Rencana alokasi dan realisasi pembayaran per vendor terhubung langsung dengan sistem tabungan bersama.
+        </p>
       </div>
+
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm flex items-center gap-1.5" onclick={() => exportWeddingToExcel()} title="Export seluruh data pernikahan ke Excel (.xls)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+          <span class="hide-mobile">Export Excel</span>
+        </button>
+        <button class="btn btn-secondary btn-sm flex items-center gap-1.5" onclick={() => window.print()} title="Cetak atau simpan format PDF">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          <span class="hide-mobile">Cetak / PDF</span>
+        </button>
+        <button class="btn btn-primary btn-sm flex items-center gap-1.5" onclick={() => showAddCategoryModal = true}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>+ Tambah Kategori</span>
+        </button>
+      </div>
+    </div>
 
       <!-- Summary Bar -->
       <div class="summary-bar mt-6">
@@ -561,11 +641,66 @@
                     {#if isItemOpen}
                       <div class="item-detail animate-fade-in">
                         <div class="form-group mb-3">
-                          <label class="form-label" for="vendor-{item.id}">Nama Vendor / Catatan</label>
-                          <input id="vendor-{item.id}" type="text" class="form-input" value={item.vendorName}
-                            oninput={(e) => updateBudgetItem(cat.id, item.id, { vendorName: (e.target as HTMLInputElement).value })}
-                            placeholder="Misal: Bu Rudy Catering, PIC: Budi, WA: 0812xxx"
-                          />
+                          <div class="flex items-center justify-between mb-1.5">
+                            <label class="form-label mb-0" for="vendor-{item.id}">Vendor Terhubung</label>
+                            <button
+                              type="button"
+                              class="text-xs text-accent font-semibold hover:underline bg-none border-0 p-0 cursor-pointer"
+                              onclick={() => openQuickVendor(cat.id, item.id, cat.name, item.quantity * item.unitPrice)}
+                            >
+                              + Tambah Vendor Baru
+                            </button>
+                          </div>
+
+                          <div class="grid-2 gap-2">
+                            <select
+                              class="form-select text-xs"
+                              value={findVendorByName(item.vendorName) ? item.vendorName : (item.vendorName ? '__custom__' : '')}
+                              onchange={(e) => handleVendorDropdownChange(cat.id, item.id, (e.target as HTMLSelectElement).value, cat.name, item.quantity * item.unitPrice)}
+                            >
+                              <option value="">-- Pilih dari Vendor --</option>
+                              {#each $wedding.vendors as v}
+                                <option value={v.name}>{v.name} ({v.category} • {v.status.toUpperCase()})</option>
+                              {/each}
+                              {#if item.vendorName && !findVendorByName(item.vendorName)}
+                                <option value="__custom__">Nama Manual: {item.vendorName}</option>
+                              {/if}
+                              <option value="__new__">+ Tambah Vendor Baru...</option>
+                            </select>
+
+                            <input
+                              id="vendor-{item.id}"
+                              type="text"
+                              class="form-input text-xs"
+                              value={item.vendorName}
+                              oninput={(e) => updateBudgetItem(cat.id, item.id, { vendorName: (e.target as HTMLInputElement).value })}
+                              placeholder="Ketik manual nama vendor..."
+                            />
+                          </div>
+
+                          {#if findVendorByName(item.vendorName)}
+                            {@const mv = findVendorByName(item.vendorName)!}
+                            <div class="vendor-connected-chip mt-2">
+                              <span class="badge badge-{mv.status === 'deal' || mv.status === 'lunas' ? 'success' : mv.status === 'diskusi' ? 'warning' : 'info'} text-xs">
+                                {mv.status.toUpperCase()}
+                              </span>
+                              <span class="text-xs text-muted">Kategori: {mv.category}</span>
+                              {#if mv.phone}
+                                <a
+                                  href="https://wa.me/{formatWaNumber(mv.phone)}"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="text-xs text-success hover:underline flex items-center gap-1 font-medium"
+                                  title="Chat WhatsApp"
+                                >
+                                  💬 WA: {mv.phone}
+                                </a>
+                              {/if}
+                              <a href="/vendor" class="text-xs text-accent hover:underline ml-auto font-medium">
+                                Kelola Vendor ↗
+                              </a>
+                            </div>
+                          {/if}
                         </div>
 
                         {#if item.payments.length > 0}
@@ -838,11 +973,66 @@
                         {#if isItemOpen}
                           <div class="item-detail animate-fade-in">
                             <div class="form-group mb-3">
-                              <label class="form-label" for="all-vendor-{item.id}">Nama Vendor / Catatan</label>
-                              <input id="all-vendor-{item.id}" type="text" class="form-input" value={item.vendorName}
-                                oninput={(e) => updateBudgetItem(cat.id, item.id, { vendorName: (e.target as HTMLInputElement).value })}
-                                placeholder="Misal: Bu Rudy Catering, PIC: Budi, WA: 0812xxx"
-                              />
+                              <div class="flex items-center justify-between mb-1.5">
+                                <label class="form-label mb-0" for="all-vendor-{item.id}">Vendor Terhubung</label>
+                                <button
+                                  type="button"
+                                  class="text-xs text-accent font-semibold hover:underline bg-none border-0 p-0 cursor-pointer"
+                                  onclick={() => openQuickVendor(cat.id, item.id, cat.name, item.quantity * item.unitPrice)}
+                                >
+                                  + Tambah Vendor Baru
+                                </button>
+                              </div>
+
+                              <div class="grid-2 gap-2">
+                                <select
+                                  class="form-select text-xs"
+                                  value={findVendorByName(item.vendorName) ? item.vendorName : (item.vendorName ? '__custom__' : '')}
+                                  onchange={(e) => handleVendorDropdownChange(cat.id, item.id, (e.target as HTMLSelectElement).value, cat.name, item.quantity * item.unitPrice)}
+                                >
+                                  <option value="">-- Pilih dari Vendor --</option>
+                                  {#each $wedding.vendors as v}
+                                    <option value={v.name}>{v.name} ({v.category} • {v.status.toUpperCase()})</option>
+                                  {/each}
+                                  {#if item.vendorName && !findVendorByName(item.vendorName)}
+                                    <option value="__custom__">Nama Manual: {item.vendorName}</option>
+                                  {/if}
+                                  <option value="__new__">+ Tambah Vendor Baru...</option>
+                                </select>
+
+                                <input
+                                  id="all-vendor-{item.id}"
+                                  type="text"
+                                  class="form-input text-xs"
+                                  value={item.vendorName}
+                                  oninput={(e) => updateBudgetItem(cat.id, item.id, { vendorName: (e.target as HTMLInputElement).value })}
+                                  placeholder="Ketik manual nama vendor..."
+                                />
+                              </div>
+
+                              {#if findVendorByName(item.vendorName)}
+                                {@const mv = findVendorByName(item.vendorName)!}
+                                <div class="vendor-connected-chip mt-2">
+                                  <span class="badge badge-{mv.status === 'deal' || mv.status === 'lunas' ? 'success' : mv.status === 'diskusi' ? 'warning' : 'info'} text-xs">
+                                    {mv.status.toUpperCase()}
+                                  </span>
+                                  <span class="text-xs text-muted">Kategori: {mv.category}</span>
+                                  {#if mv.phone}
+                                    <a
+                                      href="https://wa.me/{formatWaNumber(mv.phone)}"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      class="text-xs text-success hover:underline flex items-center gap-1 font-medium"
+                                      title="Chat WhatsApp"
+                                    >
+                                      💬 WA: {mv.phone}
+                                    </a>
+                                  {/if}
+                                  <a href="/vendor" class="text-xs text-accent hover:underline ml-auto font-medium">
+                                    Kelola Vendor ↗
+                                  </a>
+                                </div>
+                              {/if}
                             </div>
 
                             {#if item.payments.length > 0}
@@ -910,7 +1100,6 @@
       {/if}
     {/if}
   </div>
-</div>
 
 <!-- ============================================== -->
 <!-- PAYMENT MODAL                                  -->
@@ -1039,22 +1228,130 @@
   </div>
 {/if}
 
+<!-- ============================================== -->
+<!-- QUICK ADD VENDOR MODAL                         -->
+<!-- ============================================== -->
+{#if showQuickVendorModal && quickVendorTarget}
+  <div class="modal-overlay animate-fade-in" onclick={() => showQuickVendorModal = false} role="dialog" aria-modal="true" tabindex="-1">
+    <div class="modal card max-w-lg" onclick={(e) => e.stopPropagation()}>
+      <div class="modal-header">
+        <h3 class="modal-title">Tambah Vendor Baru ke Manajemen</h3>
+        <button class="btn-icon btn-ghost" onclick={() => showQuickVendorModal = false}>✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="text-xs text-muted mb-3">
+          Vendor ini akan otomatis tersimpan ke <strong>Manajemen Vendor</strong> dan terhubung ke item anggaran ini.
+        </p>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="qvName">Nama Vendor / Bisnis *</label>
+          <input
+            id="qvName"
+            type="text"
+            class="form-input"
+            placeholder="Misal: Bu Rudy Catering, Sanggar Anggun MUA"
+            bind:value={quickVendorName}
+            autofocus
+          />
+        </div>
+
+        <div class="grid-2 mb-3">
+          <div class="form-group">
+            <label class="form-label" for="qvCat">Kategori</label>
+            <input
+              id="qvCat"
+              type="text"
+              class="form-input"
+              bind:value={quickVendorCategory}
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="qvStatus">Status</label>
+            <select id="qvStatus" class="form-select" bind:value={quickVendorStatus}>
+              <option value="deal">Sudah Deal / DP</option>
+              <option value="diskusi">Dalam Diskusi</option>
+              <option value="riset">Riset / Tanya</option>
+              <option value="lunas">Lunas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-3">
+          <div class="form-group">
+            <label class="form-label" for="qvContact">Nama Kontak / PIC</label>
+            <input
+              id="qvContact"
+              type="text"
+              class="form-input"
+              placeholder="PIC Vendor"
+              bind:value={quickVendorContact}
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="qvPhone">Nomor WhatsApp / HP</label>
+            <input
+              id="qvPhone"
+              type="tel"
+              class="form-input"
+              placeholder="08123456789"
+              bind:value={quickVendorPhone}
+            />
+          </div>
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="qvCost">Perkiraan Biaya (Rp)</label>
+          <input
+            id="qvCost"
+            type="number"
+            class="form-input"
+            min="0"
+            step="100000"
+            bind:value={quickVendorCost}
+          />
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="qvNotes">Catatan Tambahan (opsional)</label>
+          <input
+            id="qvNotes"
+            type="text"
+            class="form-input"
+            placeholder="Catatan paket / no invoice..."
+            bind:value={quickVendorNotes}
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick={() => showQuickVendorModal = false}>Batal</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick={submitQuickVendor}
+          disabled={!quickVendorName.trim()}
+        >
+          Simpan & Hubungkan
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
-  /* Header & Summary */
-  .page-header {
-    background: white;
-    border-bottom: 1px solid var(--color-border-light);
-    padding: var(--space-8) 0 var(--space-8);
-  }
-
-  .page-header-inner {
+  .vendor-connected-chip {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--space-4);
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(201, 132, 122, 0.08);
+    border: 1px solid rgba(201, 132, 122, 0.2);
+    border-radius: var(--radius-sm);
+    flex-wrap: wrap;
   }
-
-  .header-actions { display: flex; gap: var(--space-2); }
 
   .summary-bar {
     display: flex;

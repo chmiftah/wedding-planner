@@ -7,6 +7,10 @@ import {
   checklistItems,
   guests,
   invitations,
+  vendors,
+  rundowns,
+  calendarEvents,
+  documents,
 } from './db/schema';
 import { eq, asc } from 'drizzle-orm';
 
@@ -227,10 +231,26 @@ export async function saveWizardSubmission(userId: string, data: WizardSubmissio
   return weddingId;
 }
 
+// In-memory cache for getFullWeddingData (prevents repeated slow DB roundtrips)
+const weddingCache = new Map<string, { data: any; expiry: number }>();
+
+export function invalidateWeddingCache(userId?: string) {
+  if (userId) {
+    weddingCache.delete(userId);
+  } else {
+    weddingCache.clear();
+  }
+}
+
 /**
  * Mengambil data lengkap pernikahan milik user untuk di-load ke Dashboard
  */
 export async function getFullWeddingData(userId: string) {
+  const cached = weddingCache.get(userId);
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data;
+  }
+
   const [wedding] = await db
     .select()
     .from(weddings)
@@ -239,64 +259,96 @@ export async function getFullWeddingData(userId: string) {
 
   if (!wedding) return null;
 
-  // Ambil Kategori & Item Anggaran
-  const categoriesList = await db
-    .select()
-    .from(budgetCategories)
-    .where(eq(budgetCategories.weddingId, wedding.id))
-    .orderBy(asc(budgetCategories.order));
+  // Run all independent queries in parallel at once
+  const [
+    categoriesList,
+    sources,
+    tasks,
+    guestList,
+    vendorList,
+    rundownList,
+    calendarList,
+    invitationList,
+    documentList,
+  ] = await Promise.all([
+    db
+      .select()
+      .from(budgetCategories)
+      .where(eq(budgetCategories.weddingId, wedding.id))
+      .orderBy(asc(budgetCategories.order)),
+    db
+      .select()
+      .from(fundingSources)
+      .where(eq(fundingSources.weddingId, wedding.id)),
+    db
+      .select()
+      .from(checklistItems)
+      .where(eq(checklistItems.weddingId, wedding.id)),
+    db
+      .select()
+      .from(guests)
+      .where(eq(guests.weddingId, wedding.id)),
+    db
+      .select()
+      .from(vendors)
+      .where(eq(vendors.weddingId, wedding.id)),
+    db
+      .select()
+      .from(rundowns)
+      .where(eq(rundowns.weddingId, wedding.id))
+      .orderBy(asc(rundowns.order), asc(rundowns.startTime)),
+    db
+      .select()
+      .from(calendarEvents)
+      .where(eq(calendarEvents.weddingId, wedding.id))
+      .orderBy(asc(calendarEvents.date), asc(calendarEvents.startTime)),
+    db
+      .select()
+      .from(invitations)
+      .where(eq(invitations.weddingId, wedding.id))
+      .limit(1),
+    db
+      .select()
+      .from(documents)
+      .where(eq(documents.weddingId, wedding.id))
+      .orderBy(asc(documents.order)),
+  ]);
 
-  const fullCategories = await Promise.all(
-    categoriesList.map(async (cat) => {
-      const items = await db
-        .select()
-        .from(budgetItems)
-        .where(eq(budgetItems.categoryId, cat.id));
+  const catIds = categoriesList.map((c) => c.id);
+  const allItems =
+    catIds.length > 0
+      ? await db.select().from(budgetItems)
+      : [];
 
-      return {
-        id: cat.id,
-        name: cat.name,
-        color: cat.color || '#C9847A',
-        icon: cat.icon || 'catering',
-        items: items.map((it) => ({
-          id: it.id,
-          categoryId: it.categoryId,
-          name: it.name,
-          quantity: it.quantity,
-          unit: it.unit,
-          unitPrice: Number(it.unitPrice),
-          vendorName: it.vendorName || '',
-          notes: it.notes || '',
-          payments: [],
-        })),
-      };
-    })
-  );
+  const itemsByCat = new Map<string, typeof allItems>();
+  for (const it of allItems) {
+    const list = itemsByCat.get(it.categoryId) || [];
+    list.push(it);
+    itemsByCat.set(it.categoryId, list);
+  }
 
-  // Ambil Sumber Pendanaan
-  const sources = await db
-    .select()
-    .from(fundingSources)
-    .where(eq(fundingSources.weddingId, wedding.id));
+  const fullCategories = categoriesList.map((cat) => {
+    const items = itemsByCat.get(cat.id) || [];
+    return {
+      id: cat.id,
+      name: cat.name,
+      color: cat.color || '#C9847A',
+      icon: cat.icon || 'catering',
+      items: items.map((it) => ({
+        id: it.id,
+        categoryId: it.categoryId,
+        name: it.name,
+        quantity: it.quantity,
+        unit: it.unit,
+        unitPrice: Number(it.unitPrice),
+        vendorName: it.vendorName || '',
+        notes: it.notes || '',
+        payments: [],
+      })),
+    };
+  });
 
-  // Ambil Checklist
-  const tasks = await db
-    .select()
-    .from(checklistItems)
-    .where(eq(checklistItems.weddingId, wedding.id));
-
-  // Ambil Tamu
-  const guestList = await db
-    .select()
-    .from(guests)
-    .where(eq(guests.weddingId, wedding.id));
-
-  // Ambil Undangan Digital
-  const [invitationRecord] = await db
-    .select()
-    .from(invitations)
-    .where(eq(invitations.weddingId, wedding.id))
-    .limit(1);
+  const invitationRecord = invitationList[0] || null;
 
   return {
     wedding,
@@ -330,6 +382,55 @@ export async function getFullWeddingData(userId: string) {
       rsvpMessage: g.rsvpMessage || '',
       rsvpRespondedAt: g.rsvpRespondedAt ? g.rsvpRespondedAt.toISOString() : null,
     })),
+    vendors: vendorList.map((v) => ({
+      id: v.id,
+      name: v.name,
+      category: v.category,
+      contactPerson: v.contactPerson || '',
+      phone: v.phone || '',
+      email: v.email || '',
+      instagram: v.instagram || '',
+      address: v.address || '',
+      status: v.status,
+      estimatedCost: Number(v.estimatedCost) || 0,
+      actualCost: Number(v.actualCost) || 0,
+      notes: v.notes || '',
+    })),
+    rundowns: rundownList.map((r) => ({
+      id: r.id,
+      session: r.session,
+      startTime: r.startTime,
+      endTime: r.endTime,
+      title: r.title,
+      description: r.description || '',
+      pic: r.pic || '',
+      location: r.location || '',
+      order: r.order,
+    })),
+    calendarEvents: calendarList.map((c) => ({
+      id: c.id,
+      title: c.title,
+      date: c.date,
+      startTime: c.startTime || '',
+      endTime: c.endTime || '',
+      category: c.category,
+      location: c.location || '',
+      notes: c.notes || '',
+      completed: c.completed,
+    })),
+    documents: documentList.map((d) => ({
+      id: d.id,
+      title: d.title,
+      forParty: d.forParty,
+      completed: d.completed,
+      order: d.order,
+      notes: d.notes || '',
+      dueDate: d.dueDate ? String(d.dueDate) : '',
+    })),
     invitation: invitationRecord || null,
   };
+
+  weddingCache.set(userId, { data: result, expiry: Date.now() + 60_000 });
+
+  return result;
 }

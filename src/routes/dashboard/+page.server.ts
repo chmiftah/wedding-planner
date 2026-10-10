@@ -10,7 +10,12 @@ export const load: PageServerLoad = async ({ locals }) => {
   }
 
   try {
-    const weddingData = await getFullWeddingData(locals.user.id);
+    // 2-second timeout so page navigation never hangs if remote DB is slow
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
+    const weddingData = await Promise.race([
+      getFullWeddingData(locals.user.id),
+      timeoutPromise,
+    ]);
 
     return {
       user: locals.user,

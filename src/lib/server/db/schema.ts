@@ -179,6 +179,69 @@ export const invitations = pgTable('wedding_invitations', {
 });
 
 // ============================================================================
+// 11. VENDORS TABLE
+// ============================================================================
+export const vendors = pgTable('wedding_vendors', {
+  id: uuid('wedding_vendors_id').defaultRandom().primaryKey(),
+  weddingId: uuid('wedding_vendors_wedding_id')
+    .references(() => weddings.id, { onDelete: 'cascade' })
+    .notNull(),
+  name: varchar('wedding_vendors_name', { length: 150 }).notNull(),
+  category: varchar('wedding_vendors_category', { length: 80 }).default('Lainnya').notNull(),
+  contactPerson: varchar('wedding_vendors_contact_person', { length: 100 }),
+  phone: varchar('wedding_vendors_phone', { length: 50 }),
+  email: varchar('wedding_vendors_email', { length: 150 }),
+  instagram: varchar('wedding_vendors_instagram', { length: 100 }),
+  address: text('wedding_vendors_address'),
+  status: varchar('wedding_vendors_status', { length: 50 }).default('riset').notNull(), // 'riset' | 'diskusi' | 'deal' | 'lunas' | 'selesai'
+  estimatedCost: bigint('wedding_vendors_estimated_cost', { mode: 'number' }).default(0).notNull(),
+  actualCost: bigint('wedding_vendors_actual_cost', { mode: 'number' }).default(0).notNull(),
+  notes: text('wedding_vendors_notes'),
+  createdAt: timestamp('wedding_vendors_created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('wedding_vendors_updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ============================================================================
+// 12. RUNDOWNS TABLE
+// ============================================================================
+export const rundowns = pgTable('wedding_rundowns', {
+  id: uuid('wedding_rundowns_id').defaultRandom().primaryKey(),
+  weddingId: uuid('wedding_rundowns_wedding_id')
+    .references(() => weddings.id, { onDelete: 'cascade' })
+    .notNull(),
+  session: varchar('wedding_rundowns_session', { length: 80 }).default('Akad Nikah').notNull(), // 'Akad Nikah', 'Resepsi', 'Gladi Resik', dll.
+  startTime: varchar('wedding_rundowns_start_time', { length: 10 }).notNull(), // '08:00'
+  endTime: varchar('wedding_rundowns_end_time', { length: 10 }).notNull(), // '09:00'
+  title: varchar('wedding_rundowns_title', { length: 200 }).notNull(),
+  description: text('wedding_rundowns_description'),
+  pic: varchar('wedding_rundowns_pic', { length: 100 }),
+  location: varchar('wedding_rundowns_location', { length: 150 }),
+  order: integer('wedding_rundowns_order').default(0).notNull(),
+  createdAt: timestamp('wedding_rundowns_created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('wedding_rundowns_updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ============================================================================
+// 13. CALENDAR EVENTS TABLE
+// ============================================================================
+export const calendarEvents = pgTable('wedding_calendar_events', {
+  id: uuid('wedding_calendar_events_id').defaultRandom().primaryKey(),
+  weddingId: uuid('wedding_calendar_events_wedding_id')
+    .references(() => weddings.id, { onDelete: 'cascade' })
+    .notNull(),
+  title: varchar('wedding_calendar_events_title', { length: 200 }).notNull(),
+  date: date('wedding_calendar_events_date').notNull(),
+  startTime: varchar('wedding_calendar_events_start_time', { length: 10 }),
+  endTime: varchar('wedding_calendar_events_end_time', { length: 10 }),
+  category: varchar('wedding_calendar_events_category', { length: 60 }).default('meeting').notNull(), // 'meeting', 'fitting', 'test_food', 'survey', 'kua', 'hari_h', 'lainnya'
+  location: varchar('wedding_calendar_events_location', { length: 150 }),
+  notes: text('wedding_calendar_events_notes'),
+  completed: boolean('wedding_calendar_events_completed').default(false).notNull(),
+  createdAt: timestamp('wedding_calendar_events_created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('wedding_calendar_events_updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -194,6 +257,9 @@ export const weddingsRelations = relations(weddings, ({ one, many }) => ({
   fundingSources: many(fundingSources),
   guests: many(guests),
   checklistItems: many(checklistItems),
+  vendors: many(vendors),
+  rundowns: many(rundowns),
+  calendarEvents: many(calendarEvents),
   invitation: one(invitations, {
     fields: [weddings.id],
     references: [invitations.weddingId],
@@ -248,6 +314,52 @@ export const guestsRelations = relations(guests, ({ one }) => ({
 export const checklistItemsRelations = relations(checklistItems, ({ one }) => ({
   wedding: one(weddings, {
     fields: [checklistItems.weddingId],
+    references: [weddings.id],
+  }),
+}));
+
+export const vendorsRelations = relations(vendors, ({ one }) => ({
+  wedding: one(weddings, {
+    fields: [vendors.weddingId],
+    references: [weddings.id],
+  }),
+}));
+
+export const rundownsRelations = relations(rundowns, ({ one }) => ({
+  wedding: one(weddings, {
+    fields: [rundowns.weddingId],
+    references: [weddings.id],
+  }),
+}));
+
+export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+  wedding: one(weddings, {
+    fields: [calendarEvents.weddingId],
+    references: [weddings.id],
+  }),
+}));
+
+// ============================================================================
+// 14. DOCUMENTS TABLE
+// ============================================================================
+export const documents = pgTable('wedding_documents', {
+  id: uuid('wedding_documents_id').defaultRandom().primaryKey(),
+  weddingId: uuid('wedding_documents_wedding_id')
+    .references(() => weddings.id, { onDelete: 'cascade' })
+    .notNull(),
+  title: varchar('wedding_documents_title', { length: 255 }).notNull(),
+  forParty: varchar('wedding_documents_for_party', { length: 30 }).default('wanita').notNull(), // 'wanita' | 'pria' | 'bersama'
+  completed: boolean('wedding_documents_completed').default(false).notNull(),
+  order: integer('wedding_documents_order').default(0).notNull(),
+  notes: text('wedding_documents_notes'),
+  dueDate: date('wedding_documents_due_date'),
+  createdAt: timestamp('wedding_documents_created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('wedding_documents_updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const documentsRelations = relations(documents, ({ one }) => ({
+  wedding: one(weddings, {
+    fields: [documents.weddingId],
     references: [weddings.id],
   }),
 }));

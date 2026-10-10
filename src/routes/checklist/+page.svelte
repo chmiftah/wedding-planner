@@ -326,54 +326,48 @@
   </div>
 {/if}
 
-<div class="page-container">
-  <!-- Header Page -->
-  <header class="page-header">
-    <div class="container">
-      <div class="page-header-inner">
-        <div>
-          <h1 class="page-title-with-icon">
-            <span class="page-title-icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11l3 3L22 4"></path>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-              </svg>
-            </span>
-            Checklist Persiapan Pernikahan
-          </h1>
-          <p class="text-muted text-sm mt-1">
-            Pantau seluruh progres dan kelola tugas pernikahanmu dengan kontrol CRUD lengkap
-          </p>
+<div class="checklist-page animate-fade-in">
+  <div class="container">
+    <!-- Header Page -->
+    <div class="page-header">
+      <div class="header-left">
+        <div class="badge-tag mb-2">
+          <span>✅ Checklist & Tugas</span>
         </div>
-
-        <div class="header-action-btns">
-          <button
-            class="btn btn-secondary btn-sm flex items-center gap-1.5"
-            onclick={() => exportChecklistToExcel($wedding)}
-            title="Download Checklist ke format Excel"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
-            <span>Export Excel</span>
-          </button>
-
-          <button
-            class="btn btn-secondary btn-sm flex items-center gap-1.5"
-            onclick={() => showResetModal = true}
-            title="Gunakan 12 template tugas pernikahan siap pakai"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-            <span>Template Standar</span>
-          </button>
-
-          <button class="btn btn-primary btn-sm flex items-center gap-1.5" onclick={openAddModal}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            <span>+ Tambah Tugas</span>
-          </button>
-        </div>
+        <h1 class="page-title">Checklist Persiapan Pernikahan</h1>
+        <p class="page-subtitle">
+          Pantau seluruh progres dan kelola tugas pernikahanmu dengan kontrol CRUD lengkap.
+        </p>
       </div>
 
-      <!-- Stats Summary Cards & Progress -->
-      <div class="stats-overview-grid mt-6">
+      <div class="header-actions">
+        <button
+          class="btn btn-secondary btn-sm flex items-center gap-1.5"
+          onclick={() => exportChecklistToExcel($wedding)}
+          title="Download Checklist ke format Excel"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+          <span class="hide-mobile">Export Excel</span>
+        </button>
+
+        <button
+          class="btn btn-secondary btn-sm flex items-center gap-1.5"
+          onclick={() => showResetModal = true}
+          title="Gunakan 12 template tugas pernikahan siap pakai"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          <span class="hide-mobile">Template Standar</span>
+        </button>
+
+        <button class="btn btn-primary btn-sm flex items-center gap-1.5" onclick={openAddModal}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Tambah Tugas</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Summary Cards & Progress -->
+    <div class="stats-overview-grid mb-6">
         <div class="stat-card">
           <div class="stat-card-label">Total Tugas</div>
           <div class="stat-card-value">{totalAll}</div>
@@ -400,7 +394,7 @@
       </div>
 
       <!-- Master Progress Bar -->
-      <div class="checklist-progress mt-4">
+      <div class="checklist-progress mt-4 mb-6">
         <div class="flex justify-between items-center mb-1.5">
           <span class="text-xs font-semibold text-muted">Progres Kesiapan Pernikahan</span>
           <span class="badge badge-{pct === 100 ? 'success' : 'primary'}">{pct}% Tercapai</span>
@@ -409,12 +403,9 @@
           <div class="progress-fill" style="width: {pct}%"></div>
         </div>
       </div>
-    </div>
-  </header>
 
-  <main class="container mt-6">
-    <!-- Quick Add Bar -->
-    <div class="quick-add-card mb-6">
+      <!-- Quick Add Bar -->
+      <div class="quick-add-card mb-6">
       <div class="quick-add-inner">
         <span class="quick-add-icon">⚡</span>
         <input
@@ -623,7 +614,7 @@
         </div>
       {/if}
     {/if}
-  </main>
+  </div>
 </div>
 
 <!-- SNIPPET FOR A SINGLE TASK ROW -->
@@ -977,31 +968,6 @@
 {/if}
 
 <style>
-  .page-container {
-    padding-bottom: var(--space-12);
-  }
-
-  .page-header {
-    background: white;
-    border-bottom: 1px solid var(--color-border);
-    padding: var(--space-8) 0 var(--space-6);
-  }
-
-  .page-header-inner {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-  }
-
-  .header-action-btns {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
   /* Stats Overview Cards */
   .stats-overview-grid {
     display: grid;

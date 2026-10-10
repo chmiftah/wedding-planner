@@ -1,20 +1,25 @@
 <script lang="ts">
-  import { wedding, updateInvitation, addInvitationWish } from '#lib/stores/wedding';
-  import RomanticFloral from '#lib/components/invitation/RomanticFloral.svelte';
-  import ClassicGold from '#lib/components/invitation/ClassicGold.svelte';
-  import EmeraldBotanical from '#lib/components/invitation/EmeraldBotanical.svelte';
-  import { formatDate } from '#lib/utils/format';
-  import { MUSIC_PRESETS, resolveMusicSrc } from '#lib/utils/music';
-  import { browser } from '$app/environment';
+  import {
+    wedding,
+    updateInvitation,
+    addInvitationWish,
+  } from "#lib/stores/wedding";
+  import RomanticFloral from "#lib/components/invitation/RomanticFloral.svelte";
+  import ClassicGold from "#lib/components/invitation/ClassicGold.svelte";
+  import EmeraldBotanical from "#lib/components/invitation/EmeraldBotanical.svelte";
+  import DustyLavender from "#lib/components/invitation/DustyLavender.svelte";
+  import { formatDate } from "#lib/utils/format";
+  import { MUSIC_PRESETS, resolveMusicSrc } from "#lib/utils/music";
+  import { browser } from "$app/environment";
 
   // Mode: 'templates' (katalog template awal) atau 'customizer' (editor isi undangan)
-  let currentView = $state<'templates' | 'customizer'>('templates');
+  let currentView = $state<"templates" | "customizer">("templates");
 
   // Active settings tab di customizer
-  let activeTab = $state<'couple' | 'events' | 'story' | 'gift'>('couple');
+  let activeTab = $state<"couple" | "events" | "story" | "gift">("couple");
 
   // Preview guest selector
-  let selectedPreviewGuest = $state<string>('Dimas & Partner');
+  let selectedPreviewGuest = $state<string>("Dimas & Partner");
   let copyFeedback = $state(false);
 
   // Audio preview tester state
@@ -28,11 +33,14 @@
       isTestingMusic = false;
     } else {
       testAudioRef.src = resolveMusicSrc($wedding.invitation.cover.bgMusicUrl);
-      testAudioRef.play().then(() => {
-        isTestingMusic = true;
-      }).catch(() => {
-        isTestingMusic = false;
-      });
+      testAudioRef
+        .play()
+        .then(() => {
+          isTestingMusic = true;
+        })
+        .catch(() => {
+          isTestingMusic = false;
+        });
     }
   }
 
@@ -41,7 +49,7 @@
       cover: {
         ...$wedding.invitation.cover,
         bgMusicUrl: presetUrl,
-      }
+      },
     });
     if (testAudioRef) {
       testAudioRef.src = resolveMusicSrc(presetUrl);
@@ -49,46 +57,52 @@
         testAudioRef.play().catch(() => {});
       }
     }
-    showToast('✓ Musik latar berhasil diganti');
+    showToast("✓ Musik latar berhasil diganti");
   }
 
   // Cover photo presets and upload
   const COVER_PHOTO_PRESETS = [
     {
-      id: 'romantic-arch',
-      title: 'Romantic Arch Boho',
-      tag: 'Terracotta',
-      url: '/images/themes/romantic-arch-real.jpg',
+      id: "romantic-arch",
+      title: "Romantic Arch Boho",
+      tag: "Terracotta",
+      url: "/images/themes/romantic-arch-real.jpg",
     },
     {
-      id: 'terracotta-arch',
-      title: 'Terracotta Floral Arch',
-      tag: 'Warm Rustic',
-      url: '/images/themes/terracotta-arch.jpg',
+      id: "terracotta-arch",
+      title: "Terracotta Floral Arch",
+      tag: "Warm Rustic",
+      url: "/images/themes/terracotta-arch.jpg",
     },
     {
-      id: 'botanical-arch',
-      title: 'Botanical Garden Arch',
-      tag: 'Sage Green',
-      url: '/images/themes/botanical-arch-real.jpg',
+      id: "botanical-arch",
+      title: "Botanical Garden Arch",
+      tag: "Sage Green",
+      url: "/images/themes/botanical-arch-real.jpg",
     },
     {
-      id: 'gold-arch',
-      title: 'Royal Gold Luxury',
-      tag: 'Glamour',
-      url: '/images/themes/gold-luxury-real.jpg',
+      id: "lavender-arch",
+      title: "Bohemian Lavender Arch",
+      tag: "Dusty Lavender",
+      url: "/images/themes/lavender-arch-real.jpg",
     },
     {
-      id: 'couple-prewed',
-      title: 'Pasangan Prewedding',
-      tag: 'Golden Hour',
-      url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+      id: "gold-arch",
+      title: "Royal Gold Luxury",
+      tag: "Glamour",
+      url: "/images/themes/gold-luxury-real.jpg",
     },
     {
-      id: 'sunset-prewed',
-      title: 'Sunset Beach Romance',
-      tag: 'Pantai & Senja',
-      url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
+      id: "couple-prewed",
+      title: "Pasangan Prewedding",
+      tag: "Golden Hour",
+      url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      id: "sunset-prewed",
+      title: "Sunset Beach Romance",
+      tag: "Pantai & Senja",
+      url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
     },
   ];
 
@@ -97,9 +111,9 @@
       cover: {
         ...$wedding.invitation.cover,
         coverPhoto: presetUrl,
-      }
+      },
     });
-    showToast('✓ Foto cover berhasil dipilih!');
+    showToast("✓ Foto cover berhasil dipilih!");
   }
 
   function handleCoverFileUpload(event: Event) {
@@ -107,7 +121,7 @@
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
     if (file.size > 5 * 1024 * 1024) {
-      showToast('⚠️ Ukuran foto maksimal 5MB');
+      showToast("⚠️ Ukuran foto maksimal 5MB");
       return;
     }
     const reader = new FileReader();
@@ -118,9 +132,9 @@
           cover: {
             ...$wedding.invitation.cover,
             coverPhoto: result,
-          }
+          },
         });
-        showToast('✓ Foto cover berhasil diunggah!');
+        showToast("✓ Foto cover berhasil diunggah!");
       }
     };
     reader.readAsDataURL(file);
@@ -139,14 +153,24 @@
   }
 
   // Modal preview state
-  let previewModalTheme = $state<'romantic_terracotta' | 'classic_gold' | 'emerald_botanical' | null>(null);
+  let previewModalTheme = $state<
+    | "romantic_terracotta"
+    | "classic_gold"
+    | "emerald_botanical"
+    | "dusty_lavender"
+    | null
+  >(null);
 
   // Invitation local draft bindable state
   let invitation = $derived($wedding.invitation);
 
   // Template definitions
   interface TemplateMeta {
-    id: 'romantic_terracotta' | 'classic_gold' | 'emerald_botanical';
+    id:
+      | "romantic_terracotta"
+      | "classic_gold"
+      | "emerald_botanical"
+      | "dusty_lavender";
     title: string;
     subtitle: string;
     tag: string;
@@ -162,46 +186,89 @@
 
   const templates: TemplateMeta[] = [
     {
-      id: 'romantic_terracotta',
-      title: 'Romantic Terracotta',
-      subtitle: 'Warm Floral & Blush Elegance',
-      tag: 'Populer & Romantis',
-      vibes: '🌸 Hangat, Manis & Anggun',
-      description: 'Paduan warna terracotta lembut, rose blush, dan ilustrasi bunga cat air yang memberi kesan intim dan hangat.',
-      colors: ['#C9847A', '#F5D8D4', '#8B5E52', '#FFF8F6'],
-      features: ['Animasi Bunga Mekar', 'Aksen Rose Gold', 'Countdown Timer', 'Cerita Cinta & RSVP'],
-      bestFor: 'Pernikahan Intimate, Semi-Outdoor, Rustic Modern',
-      accentColor: '#C9847A',
-      bgGradient: 'linear-gradient(135deg, #FFF8F6 0%, #FBEBE8 50%, #F5D8D4 100%)',
-      textColor: '#2C1810',
+      id: "romantic_terracotta",
+      title: "Romantic Terracotta",
+      subtitle: "Warm Floral & Blush Elegance",
+      tag: "Populer & Romantis",
+      vibes: "🌸 Hangat, Manis & Anggun",
+      description:
+        "Paduan warna terracotta lembut, rose blush, dan ilustrasi bunga cat air yang memberi kesan intim dan hangat.",
+      colors: ["#C9847A", "#F5D8D4", "#8B5E52", "#FFF8F6"],
+      features: [
+        "Animasi Bunga Mekar",
+        "Aksen Rose Gold",
+        "Countdown Timer",
+        "Cerita Cinta & RSVP",
+      ],
+      bestFor: "Pernikahan Intimate, Semi-Outdoor, Rustic Modern",
+      accentColor: "#C9847A",
+      bgGradient:
+        "linear-gradient(135deg, #FFF8F6 0%, #FBEBE8 50%, #F5D8D4 100%)",
+      textColor: "#2C1810",
     },
     {
-      id: 'classic_gold',
-      title: 'Classic Royal Gold',
-      subtitle: 'Dark Charcoal & Luxurious Gold',
-      tag: 'Mewah & Eksklusif',
-      vibes: '⚜️ Glamor, Aristokrat & Berkelas',
-      description: 'Desain monokrom gelap eksklusif berpadu garis ukiran emas berkilau, memancarkan kemegahan pesta pernikahan agung.',
-      colors: ['#1C1B1F', '#C5A059', '#E6CA85', '#0E0E10'],
-      features: ['Dark Mode Glamour', 'Gold Shimmer Accents', 'Monogram Elegan', 'Amplop & Galeri'],
-      bestFor: 'Gedung / Grand Ballroom, Resepsi Malam Hari, Black Tie',
-      accentColor: '#C5A059',
-      bgGradient: 'linear-gradient(135deg, #1C1B1F 0%, #121214 60%, #2A241C 100%)',
-      textColor: '#F5E6E0',
+      id: "classic_gold",
+      title: "Classic Royal Gold",
+      subtitle: "Dark Charcoal & Luxurious Gold",
+      tag: "Mewah & Eksklusif",
+      vibes: "⚜️ Glamor, Aristokrat & Berkelas",
+      description:
+        "Desain monokrom gelap eksklusif berpadu garis ukiran emas berkilau, memancarkan kemegahan pesta pernikahan agung.",
+      colors: ["#1C1B1F", "#C5A059", "#E6CA85", "#0E0E10"],
+      features: [
+        "Dark Mode Glamour",
+        "Gold Shimmer Accents",
+        "Monogram Elegan",
+        "Amplop & Galeri",
+      ],
+      bestFor: "Gedung / Grand Ballroom, Resepsi Malam Hari, Black Tie",
+      accentColor: "#C5A059",
+      bgGradient:
+        "linear-gradient(135deg, #1C1B1F 0%, #121214 60%, #2A241C 100%)",
+      textColor: "#F5E6E0",
     },
     {
-      id: 'emerald_botanical',
-      title: 'Emerald Botanical',
-      subtitle: 'Sage Green & Fresh Foliage',
-      tag: 'Segar & Asri',
-      vibes: '🌿 Alami, Asri & Estetik',
-      description: 'Nuansa hijau sage, daun eucalyptus botani, dan palet alam yang menenangkan jiwa, menghadirkan suasana sejuk penuh cinta.',
-      colors: ['#3B5E48', '#88AA95', '#EBF2EC', '#F7F9F6'],
-      features: ['Bingkai Daun Botani', 'Sage Natural Palette', 'Tipografi Kalem', 'RSVP & Peta Lokasi'],
-      bestFor: 'Outdoor / Garden Party, Botanical Hall, Eco-Friendly',
-      accentColor: '#3B5E48',
-      bgGradient: 'linear-gradient(135deg, #F7F9F6 0%, #EBF2EC 50%, #DCE8DE 100%)',
-      textColor: '#1E3326',
+      id: "emerald_botanical",
+      title: "Emerald Botanical",
+      subtitle: "Sage Green & Fresh Foliage",
+      tag: "Segar & Asri",
+      vibes: "🌿 Alami, Asri & Estetik",
+      description:
+        "Nuansa hijau sage, daun eucalyptus botani, dan palet alam yang menenangkan jiwa, menghadirkan suasana sejuk penuh cinta.",
+      colors: ["#3B5E48", "#88AA95", "#EBF2EC", "#F7F9F6"],
+      features: [
+        "Bingkai Daun Botani",
+        "Sage Natural Palette",
+        "Tipografi Kalem",
+        "RSVP & Peta Lokasi",
+      ],
+      bestFor: "Outdoor / Garden Party, Botanical Hall, Eco-Friendly",
+      accentColor: "#3B5E48",
+      bgGradient:
+        "linear-gradient(135deg, #F7F9F6 0%, #EBF2EC 50%, #DCE8DE 100%)",
+      textColor: "#1E3326",
+    },
+    {
+      id: "dusty_lavender",
+      title: "Dusty Slate Lavender",
+      subtitle: "Bohemian Arch & Serene Violet Elegance",
+      tag: "Boho & Modern",
+      vibes: "🪻 Anggun, Kalem & Estetik Bohemian",
+      description:
+        "Terinspirasi kit Kunikaa Bohemian: perpaduan slate lavender, dusty lilac, lengkung kubah boho, dan aksen bunga lembut yang menyejukkan hati.",
+      colors: ["#676483", "#8B88A8", "#B3B1C6", "#F3F1FA"],
+      features: [
+        "Lengkung Bohemian Arch",
+        "Slate Lavender Palette",
+        "Tipografi Alex Brush & Cinzel",
+        "Countdown, Galeri & RSVP",
+      ],
+      bestFor:
+        "Pernikahan Bohemian Chic, Modern Indoor/Outdoor, Intimate Wedding",
+      accentColor: "#676483",
+      bgGradient:
+        "linear-gradient(135deg, #F3F1FA 0%, #EBE9F4 50%, #DDD9EB 100%)",
+      textColor: "#2D2B3A",
     },
   ];
 
@@ -216,31 +283,54 @@
   });
 
   let currentActiveTemplate = $derived(
-    templates.find(t => t.id === $wedding.invitation.theme) || templates[0]
+    templates.find((t) => t.id === $wedding.invitation.theme) || templates[0],
   );
 
   let formattedWeddingDate = $derived.by(() => {
-    const d = $wedding.invitation.events.resepsi.date || $wedding.invitation.events.akad.date || $wedding.weddingDate;
-    return d ? formatDate(d) : 'Sabtu, 24 Oktober 2026';
+    const d =
+      $wedding.invitation.events.resepsi.date ||
+      $wedding.invitation.events.akad.date ||
+      $wedding.weddingDate;
+    return d ? formatDate(d) : "Sabtu, 24 Oktober 2026";
   });
 
-  function setActiveTheme(themeId: 'romantic_terracotta' | 'classic_gold' | 'emerald_botanical') {
+  function setActiveTheme(
+    themeId:
+      | "romantic_terracotta"
+      | "classic_gold"
+      | "emerald_botanical"
+      | "dusty_lavender",
+  ) {
     updateInvitation({ theme: themeId });
-    const tmpl = templates.find(t => t.id === themeId);
-    showToast(`✨ Template "${tmpl?.title}" aktif dan dipindahkan ke urutan pertama!`);
+    const tmpl = templates.find((t) => t.id === themeId);
+    showToast(
+      `✨ Template "${tmpl?.title}" aktif dan dipindahkan ke urutan pertama!`,
+    );
   }
 
-  function openCustomizer(themeId?: 'romantic_terracotta' | 'classic_gold' | 'emerald_botanical') {
+  function openCustomizer(
+    themeId?:
+      | "romantic_terracotta"
+      | "classic_gold"
+      | "emerald_botanical"
+      | "dusty_lavender",
+  ) {
     if (themeId && themeId !== $wedding.invitation.theme) {
       updateInvitation({ theme: themeId });
     }
-    currentView = 'customizer';
+    currentView = "customizer";
     if (browser) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
 
-  function openPreviewModal(themeId: 'romantic_terracotta' | 'classic_gold' | 'emerald_botanical') {
+  function openPreviewModal(
+    themeId:
+      | "romantic_terracotta"
+      | "classic_gold"
+      | "emerald_botanical"
+      | "dusty_lavender",
+  ) {
     previewModalTheme = themeId;
   }
 
@@ -253,11 +343,18 @@
     const url = `${window.location.origin}/undangan/tamu-spesial`;
     navigator.clipboard.writeText(url);
     copyFeedback = true;
-    showToast('✓ Link undangan tamu berhasil disalin!');
-    setTimeout(() => { copyFeedback = false; }, 2500);
+    showToast("✓ Link undangan tamu berhasil disalin!");
+    setTimeout(() => {
+      copyFeedback = false;
+    }, 2500);
   }
 
-  function handlePreviewRsvp(data: { attendance: 'hadir' | 'tidak_hadir'; count: number; message: string; name: string }) {
+  function handlePreviewRsvp(data: {
+    attendance: "hadir" | "tidak_hadir";
+    count: number;
+    message: string;
+    name: string;
+  }) {
     addInvitationWish({
       name: data.name,
       message: data.message,
@@ -270,14 +367,14 @@
     const current = invitation.loveStory.stories;
     const newItem = {
       year: new Date().getFullYear().toString(),
-      title: 'Babak Baru',
-      story: 'Ceritakan momen istimewa perjalanan cinta kalian di sini...'
+      title: "Babak Baru",
+      story: "Ceritakan momen istimewa perjalanan cinta kalian di sini...",
     };
     updateInvitation({
       loveStory: {
         ...invitation.loveStory,
-        stories: [...current, newItem]
-      }
+        stories: [...current, newItem],
+      },
     });
   }
 
@@ -287,19 +384,23 @@
     updateInvitation({
       loveStory: {
         ...invitation.loveStory,
-        stories: current
-      }
+        stories: current,
+      },
     });
   }
 
   function addBankAccount() {
     const current = invitation.gift.bankAccounts;
-    const newAcc = { bank: 'BCA', accountNumber: '1234567890', accountHolder: invitation.couple.groomNickname };
+    const newAcc = {
+      bank: "BCA",
+      accountNumber: "1234567890",
+      accountHolder: invitation.couple.groomNickname,
+    };
     updateInvitation({
       gift: {
         ...invitation.gift,
-        bankAccounts: [...current, newAcc]
-      }
+        bankAccounts: [...current, newAcc],
+      },
     });
   }
 
@@ -309,8 +410,8 @@
     updateInvitation({
       gift: {
         ...invitation.gift,
-        bankAccounts: current
-      }
+        bankAccounts: current,
+      },
     });
   }
 </script>
@@ -324,49 +425,76 @@
   <div class="toast-floating animate-fade-in" role="status" aria-live="polite">
     <div class="toast-content">
       <span>{toastMessage}</span>
-      <button class="toast-close-btn" onclick={() => toastMessage = null} aria-label="Tutup notifikasi">✕</button>
+      <button
+        class="toast-close-btn"
+        onclick={() => (toastMessage = null)}
+        aria-label="Tutup notifikasi">✕</button
+      >
     </div>
   </div>
 {/if}
 
 <div class="page-container studio-page">
   <!-- Page Header -->
-  <div class="page-header">
-    <div class="container">
-      <div class="page-header-inner">
-        <div>
-          <h1 class="page-title-with-icon">
-            <span class="page-title-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-            </span>
-            Undangan Digital
-          </h1>
-          <p class="text-muted text-sm mt-1">
-            Kustomisasi desain dan bagikan link website undangan pernikahan Anda
-          </p>
+  <div class="container">
+    <div class="page-header">
+      <div class="header-left">
+        <div class="badge-tag mb-2">
+          <span>💌 Desain Undangan Digital</span>
         </div>
+        <h1 class="page-title">Undangan Digital</h1>
+        <p class="page-subtitle">
+          Kustomisasi tema desain, foto prewedding, dan bagikan tautan website undangan pernikahan Anda.
+        </p>
+      </div>
 
-        <div class="header-actions flex gap-2">
-          <button class="btn btn-secondary btn-sm flex items-center gap-1.5" onclick={copyGeneralLink}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-            {copyFeedback ? '✓ Link Tersalin!' : 'Salin Link Undangan'}
-          </button>
+      <div class="header-actions">
+        <button
+          class="btn btn-secondary btn-sm flex items-center gap-1.5"
+          onclick={copyGeneralLink}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+            ></path>
+            <path
+              d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+            ></path>
+          </svg>
+          <span>{copyFeedback ? "✓ Link Tersalin!" : "Salin Link Undangan"}</span>
+        </button>
 
-          <a href="/undangan/tamu-spesial" target="_blank" class="btn btn-primary btn-sm flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
-            Buka Halaman Tamu
-          </a>
-        </div>
+        <a
+          href="/undangan/tamu-spesial"
+          target="_blank"
+          class="btn btn-primary btn-sm flex items-center gap-1.5"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+            ></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          <span>Buka Halaman Tamu</span>
+        </a>
       </div>
     </div>
   </div>
@@ -377,53 +505,91 @@
       <div class="flow-nav-tabs">
         <button
           class="flow-nav-btn {currentView === 'templates' ? 'active' : ''}"
-          onclick={() => currentView = 'templates'}
+          onclick={() => (currentView = "templates")}
         >
           <span class="flow-step-number">1</span>
           <span class="flow-btn-icon">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
               <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
               <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
               <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
-              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"></path>
+              <path
+                d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"
+              ></path>
             </svg>
           </span>
           <div class="flow-btn-text">
             <strong>Pilih Template Undangan</strong>
-            <span class="flow-btn-desc">{templates.length} pilihan desain cantik</span>
+            <span class="flow-btn-desc"
+              >{templates.length} pilihan desain cantik</span
+            >
           </div>
         </button>
 
         <button
           class="flow-nav-btn {currentView === 'customizer' ? 'active' : ''}"
-          onclick={() => currentView = 'customizer'}
+          onclick={() => (currentView = "customizer")}
         >
           <span class="flow-step-number">2</span>
           <span class="flow-btn-icon">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+              ></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+              ></path>
             </svg>
           </span>
           <div class="flow-btn-text">
             <strong>Kustomisasi Isi &amp; Detail</strong>
-            <span class="flow-btn-desc">Mempelai, acara, cerita cinta, kado</span>
+            <span class="flow-btn-desc"
+              >Mempelai, acara, cerita cinta, kado</span
+            >
           </div>
         </button>
       </div>
 
-      {#if currentView === 'templates'}
+      {#if currentView === "templates"}
         <div class="flow-nav-info-banner">
           <span class="info-icon">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
           </span>
           <span>
-            Template yang <strong>sedang aktif berada di urutan pertama</strong>. Klik <strong>Preview</strong> untuk mencoba interaktif atau klik <strong>Kustomisasi</strong> untuk mengisi data.
+            Template yang <strong>sedang aktif berada di urutan pertama</strong
+            >. Klik <strong>Preview</strong> untuk mencoba interaktif atau klik
+            <strong>Kustomisasi</strong> untuk mengisi data.
           </span>
         </div>
       {/if}
@@ -433,19 +599,28 @@
   <!-- ============================================================== -->
   <!-- VIEW 1: KATALOG & PEMILIHAN TEMPLATE (FLOW UTAMA)              -->
   <!-- ============================================================== -->
-  {#if currentView === 'templates'}
+  {#if currentView === "templates"}
     <div class="container mt-6 animate-fade-in">
       <!-- Active Theme Highlight Banner -->
       <div class="active-summary-card card mb-6">
         <div class="active-summary-content">
           <div class="active-indicator-pulse"></div>
           <div>
-            <div class="text-xs font-semibold text-muted uppercase tracking-wider">Template Undangan Yang Sedang Aktif:</div>
-            <div class="active-summary-title">
-              {currentActiveTemplate.vibes.split(' ')[0]} {currentActiveTemplate.title}
-              <span class="badge badge-success text-xs ml-2">✓ Aktif Digunakan</span>
+            <div
+              class="text-xs font-semibold text-muted uppercase tracking-wider"
+            >
+              Template Undangan Yang Sedang Aktif:
             </div>
-            <p class="text-xs text-muted mt-0.5">{currentActiveTemplate.description}</p>
+            <div class="active-summary-title">
+              {currentActiveTemplate.vibes.split(" ")[0]}
+              {currentActiveTemplate.title}
+              <span class="badge badge-success text-xs ml-2"
+                >✓ Aktif Digunakan</span
+              >
+            </div>
+            <p class="text-xs text-muted mt-0.5">
+              {currentActiveTemplate.description}
+            </p>
           </div>
         </div>
 
@@ -469,7 +644,11 @@
       <div class="template-catalog-grid">
         {#each sortedTemplates as template, index (template.id)}
           {@const isActive = template.id === $wedding.invitation.theme}
-          <div class="template-catalog-card card {isActive ? 'is-active-card' : ''}">
+          <div
+            class="template-catalog-card card {isActive
+              ? 'is-active-card'
+              : ''}"
+          >
             <!-- Top Status Badge Ribbon -->
             {#if isActive}
               <div class="card-ribbon-active">
@@ -488,33 +667,39 @@
               onclick={() => openPreviewModal(template.id)}
               role="button"
               tabindex="0"
-              onkeydown={(e) => e.key === 'Enter' && openPreviewModal(template.id)}
+              onkeydown={(e) =>
+                e.key === "Enter" && openPreviewModal(template.id)}
               title="Klik untuk membuka pratinjau interaktif smartphone"
             >
               <!-- Mini Invitation Mockup Card -->
               <div class="mini-mockup-frame">
                 <!-- Theme Motifs -->
-                {#if template.id === 'romantic_terracotta'}
+                {#if template.id === "romantic_terracotta"}
                   <div class="mini-motif-romantic">
                     <span class="flower-icon">🌸</span>
                     <span class="leaf-icon">🌿</span>
                   </div>
-                {:else if template.id === 'classic_gold'}
+                {:else if template.id === "classic_gold"}
                   <div class="mini-motif-gold">
                     <div class="gold-shield">⚜️</div>
                   </div>
-                {:else}
+                {:else if template.id === "emerald_botanical"}
                   <div class="mini-motif-emerald">
                     <span class="leaf-icon-left">🌿</span>
                     <span class="leaf-icon-right">🍃</span>
+                  </div>
+                {:else}
+                  <div class="mini-motif-lavender">
+                    <span class="lavender-icon">🪻</span>
+                    <span class="sparkle-icon">✨</span>
                   </div>
                 {/if}
 
                 <div class="mini-badge-sub">THE WEDDING OF</div>
                 <div class="mini-mockup-names">
-                  {$wedding.invitation.couple.groomNickname || 'Rama'}
+                  {$wedding.invitation.couple.groomNickname || "Rama"}
                   <span class="mini-amp">&amp;</span>
-                  {$wedding.invitation.couple.brideNickname || 'Sinta'}
+                  {$wedding.invitation.couple.brideNickname || "Sinta"}
                 </div>
 
                 <div class="mini-mockup-divider">
@@ -528,7 +713,9 @@
                 </div>
 
                 <div class="mini-mockup-venue">
-                  📍 {$wedding.invitation.events.resepsi.venueName || $wedding.invitation.events.akad.venueName || 'Grand Ballroom'}
+                  📍 {$wedding.invitation.events.resepsi.venueName ||
+                    $wedding.invitation.events.akad.venueName ||
+                    "Grand Ballroom"}
                 </div>
 
                 <div class="mini-open-pill">
@@ -539,7 +726,14 @@
               <!-- Hover Overlay with CTA -->
               <div class="preview-hover-cta">
                 <div class="hover-cta-badge">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
@@ -552,7 +746,11 @@
             <div class="template-card-body">
               <div class="flex items-center justify-between mb-2">
                 <span class="theme-vibes-chip">{template.vibes}</span>
-                <span class="badge {isActive ? 'badge-primary' : 'badge-subtle'} text-xs">
+                <span
+                  class="badge {isActive
+                    ? 'badge-primary'
+                    : 'badge-subtle'} text-xs"
+                >
                   {template.tag}
                 </span>
               </div>
@@ -583,14 +781,18 @@
               </div>
 
               <div class="best-for-note mb-4">
-                <strong>Sangat Cocok:</strong> {template.bestFor}
+                <strong>Sangat Cocok:</strong>
+                {template.bestFor}
               </div>
 
               <!-- Action Buttons -->
               <div class="template-card-footer">
                 <div class="footer-btn-grid">
                   {#if isActive}
-                    <button class="btn btn-secondary btn-active-indicator" disabled>
+                    <button
+                      class="btn btn-secondary btn-active-indicator"
+                      disabled
+                    >
                       <span class="check-icon">✓</span> Sedang Aktif
                     </button>
                   {:else}
@@ -606,9 +808,18 @@
                     class="btn btn-secondary btn-edit-action"
                     onclick={() => openCustomizer(template.id)}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
                       <path d="M12 20h9"></path>
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                      <path
+                        d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                      ></path>
                     </svg>
                     Kustomisasi
                   </button>
@@ -632,16 +843,23 @@
   <!-- ============================================================== -->
   <!-- VIEW 2: STUDIO KUSTOMISASI DETAIL ISI UNDANGAN                 -->
   <!-- ============================================================== -->
-  {#if currentView === 'customizer'}
+  {#if currentView === "customizer"}
     <div class="container studio-body-container mt-6 animate-fade-in">
       <!-- Customizer Breadcrumb & Theme Bar -->
       <div class="customizer-header-card card mb-4">
         <div class="customizer-header-left">
           <button
             class="btn btn-ghost btn-sm flex items-center gap-1"
-            onclick={() => currentView = 'templates'}
+            onclick={() => (currentView = "templates")}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
@@ -649,7 +867,9 @@
           </button>
           <div class="customizer-editing-info">
             <span class="text-xs text-muted">Sedang mengedit tema:</span>
-            <strong class="text-sm font-bold text-accent">{currentActiveTemplate.title}</strong>
+            <strong class="text-sm font-bold text-accent"
+              >{currentActiveTemplate.title}</strong
+            >
           </div>
         </div>
 
@@ -657,11 +877,13 @@
         <div class="customizer-theme-pills">
           {#each templates as t}
             <button
-              class="theme-pill-btn {t.id === $wedding.invitation.theme ? 'active' : ''}"
+              class="theme-pill-btn {t.id === $wedding.invitation.theme
+                ? 'active'
+                : ''}"
               onclick={() => setActiveTheme(t.id)}
               title="Ganti ke tema {t.title}"
             >
-              <span>{t.vibes.split(' ')[0]}</span>
+              <span>{t.vibes.split(" ")[0]}</span>
               <span>{t.title}</span>
               {#if t.id === $wedding.invitation.theme}
                 <span class="active-dot">●</span>
@@ -681,7 +903,7 @@
             <div class="editor-tabs-nav">
               <button
                 class="editor-tab-btn {activeTab === 'couple' ? 'active' : ''}"
-                onclick={() => activeTab = 'couple'}
+                onclick={() => (activeTab = "couple")}
               >
                 <span>💍</span>
                 <span>Mempelai &amp; Cover</span>
@@ -689,7 +911,7 @@
 
               <button
                 class="editor-tab-btn {activeTab === 'events' ? 'active' : ''}"
-                onclick={() => activeTab = 'events'}
+                onclick={() => (activeTab = "events")}
               >
                 <span>📅</span>
                 <span>Rangkaian Acara</span>
@@ -697,7 +919,7 @@
 
               <button
                 class="editor-tab-btn {activeTab === 'story' ? 'active' : ''}"
-                onclick={() => activeTab = 'story'}
+                onclick={() => (activeTab = "story")}
               >
                 <span>✨</span>
                 <span>Kutipan &amp; Cerita</span>
@@ -705,7 +927,7 @@
 
               <button
                 class="editor-tab-btn {activeTab === 'gift' ? 'active' : ''}"
-                onclick={() => activeTab = 'gift'}
+                onclick={() => (activeTab = "gift")}
               >
                 <span>🎁</span>
                 <span>Kado &amp; Galeri</span>
@@ -714,15 +936,19 @@
 
             <div class="editor-tab-content">
               <!-- TAB 1: MEMPELAI & COVER -->
-              {#if activeTab === 'couple'}
+              {#if activeTab === "couple"}
                 <div class="tab-pane animate-fade-in">
-                  <h3 class="pane-title mb-4">Informasi Mempelai &amp; Cover</h3>
+                  <h3 class="pane-title mb-4">
+                    Informasi Mempelai &amp; Cover
+                  </h3>
 
                   <!-- Cover Info -->
                   <div class="form-section-box mb-6">
                     <h4 class="form-subheading mb-3">Cover Pembuka</h4>
                     <div class="form-group mb-3">
-                      <label for="cover-title-input" class="form-label">Judul Cover</label>
+                      <label for="cover-title-input" class="form-label"
+                        >Judul Cover</label
+                      >
                       <input
                         id="cover-title-input"
                         type="text"
@@ -735,12 +961,19 @@
                     <!-- Foto Cover / Kubah Prewedding Form -->
                     <div class="form-group mb-4">
                       <div class="flex items-center justify-between mb-1.5">
-                        <label class="form-label mb-0" for="cover-photo-url-input">Foto Cover Amplop / Kubah Prewedding</label>
-                        {#if $wedding.invitation.cover.coverPhoto && $wedding.invitation.cover.coverPhoto !== '/images/themes/romantic-arch-real.jpg'}
+                        <label
+                          class="form-label mb-0"
+                          for="cover-photo-url-input"
+                          >Foto Cover Amplop / Kubah Prewedding</label
+                        >
+                        {#if $wedding.invitation.cover.coverPhoto && $wedding.invitation.cover.coverPhoto !== "/images/themes/romantic-arch-real.jpg"}
                           <button
                             type="button"
                             class="text-xs text-primary underline"
-                            onclick={() => selectCoverPreset('/images/themes/romantic-arch-real.jpg')}
+                            onclick={() =>
+                              selectCoverPreset(
+                                "/images/themes/romantic-arch-real.jpg",
+                              )}
                           >
                             Reset ke Bawaan
                           </button>
@@ -751,18 +984,24 @@
                       <div class="cover-photo-preview-bar mb-3">
                         <div class="cover-preview-arch">
                           <img
-                            src={$wedding.invitation.cover.coverPhoto || '/images/themes/romantic-arch-real.jpg'}
+                            src={$wedding.invitation.cover.coverPhoto ||
+                              "/images/themes/romantic-arch-real.jpg"}
                             alt="Cover Preview"
                             class="cover-preview-img"
                           />
                         </div>
                         <div class="cover-preview-info">
-                          <strong class="text-sm block text-heading mb-0.5">Foto Kubah Amplop Aktif</strong>
+                          <strong class="text-sm block text-heading mb-0.5"
+                            >Foto Kubah Amplop Aktif</strong
+                          >
                           <span class="text-xs text-muted block mb-2">
-                            Foto ini muncul di bingkai kubah (*arched dome*) pada cover pembuka undangan.
+                            Foto ini muncul di bingkai kubah (*arched dome*)
+                            pada cover pembuka undangan.
                           </span>
                           <div class="flex items-center gap-2">
-                            <label class="btn btn-secondary btn-xs cursor-pointer">
+                            <label
+                              class="btn btn-secondary btn-xs cursor-pointer"
+                            >
                               <span>📁 Unggah Foto Sendiri</span>
                               <input
                                 type="file"
@@ -776,17 +1015,28 @@
                       </div>
 
                       <!-- Presets Selection Grid -->
-                      <span class="form-label-sub mb-1.5 block text-xs">Pilih Dari Koleksi Template Siap Pakai:</span>
+                      <span class="form-label-sub mb-1.5 block text-xs"
+                        >Pilih Dari Koleksi Template Siap Pakai:</span
+                      >
                       <div class="cover-presets-grid mb-3">
                         {#each COVER_PHOTO_PRESETS as preset}
-                          {@const isSelected = ($wedding.invitation.cover.coverPhoto || '/images/themes/romantic-arch-real.jpg') === preset.url}
+                          {@const isSelected =
+                            ($wedding.invitation.cover.coverPhoto ||
+                              "/images/themes/romantic-arch-real.jpg") ===
+                            preset.url}
                           <button
                             type="button"
-                            class="cover-preset-thumb-card {isSelected ? 'selected' : ''}"
+                            class="cover-preset-thumb-card {isSelected
+                              ? 'selected'
+                              : ''}"
                             onclick={() => selectCoverPreset(preset.url)}
                             title={preset.title}
                           >
-                            <img src={preset.url} alt={preset.title} class="preset-thumb-img" />
+                            <img
+                              src={preset.url}
+                              alt={preset.title}
+                              class="preset-thumb-img"
+                            />
                             <div class="preset-overlay-label">
                               <span>{preset.tag}</span>
                             </div>
@@ -799,7 +1049,11 @@
 
                       <!-- Manual URL Input -->
                       <div class="form-group">
-                        <label for="cover-photo-url-input" class="form-label text-xs">Atau Tempel Link Gambar (URL):</label>
+                        <label
+                          for="cover-photo-url-input"
+                          class="form-label text-xs"
+                          >Atau Tempel Link Gambar (URL):</label
+                        >
                         <input
                           id="cover-photo-url-input"
                           type="text"
@@ -812,14 +1066,22 @@
                     <!-- Music Selection Section -->
                     <div class="form-group mb-3">
                       <div class="flex items-center justify-between mb-1.5">
-                        <label for="cover-music-input" class="form-label mb-0">Musik Latar Undangan</label>
+                        <label for="cover-music-input" class="form-label mb-0"
+                          >Musik Latar Undangan</label
+                        >
                         <button
                           type="button"
                           class="btn btn-ghost btn-xs text-xs flex items-center gap-1"
                           onclick={toggleTestMusic}
-                          title={isTestingMusic ? 'Hentikan Preview' : 'Putar Musik'}
+                          title={isTestingMusic
+                            ? "Hentikan Preview"
+                            : "Putar Musik"}
                         >
-                          <span>{isTestingMusic ? '⏹️ Hentikan' : '▶️ Tes Musik'}</span>
+                          <span
+                            >{isTestingMusic
+                              ? "⏹️ Hentikan"
+                              : "▶️ Tes Musik"}</span
+                          >
                         </button>
                       </div>
 
@@ -829,15 +1091,27 @@
                       <!-- Presets Grid -->
                       <div class="music-presets-grid mb-2">
                         {#each MUSIC_PRESETS as preset}
-                          {@const isSelected = $wedding.invitation.cover.bgMusicUrl === preset.url || ($wedding.invitation.cover.bgMusicUrl?.includes('SgSOAPwTOdc') && preset.id === 'the-way-you-look-at-me')}
+                          {@const isSelected =
+                            $wedding.invitation.cover.bgMusicUrl ===
+                              preset.url ||
+                            ($wedding.invitation.cover.bgMusicUrl?.includes(
+                              "SgSOAPwTOdc",
+                            ) &&
+                              preset.id === "the-way-you-look-at-me")}
                           <button
                             type="button"
-                            class="music-preset-card {isSelected ? 'selected' : ''}"
+                            class="music-preset-card {isSelected
+                              ? 'selected'
+                              : ''}"
                             onclick={() => selectMusicPreset(preset.url)}
                           >
-                            <div class="preset-icon">{isSelected ? '🎵' : '💿'}</div>
+                            <div class="preset-icon">
+                              {isSelected ? "🎵" : "💿"}
+                            </div>
                             <div class="preset-info">
-                              <strong class="preset-title">{preset.title}</strong>
+                              <strong class="preset-title"
+                                >{preset.title}</strong
+                              >
                               <span class="preset-artist">{preset.artist}</span>
                             </div>
                             {#if isSelected}
@@ -857,13 +1131,22 @@
                           placeholder="Atau tempel link YouTube / file .mp3..."
                         />
                       </div>
-                      {#if $wedding.invitation.cover.bgMusicUrl?.includes('SgSOAPwTOdc') || $wedding.invitation.cover.bgMusicUrl?.includes('the-way-you-look-at-me')}
-                        <div class="text-xs text-success mt-1.5 flex items-center gap-1 font-medium">
+                      {#if $wedding.invitation.cover.bgMusicUrl?.includes("SgSOAPwTOdc") || $wedding.invitation.cover.bgMusicUrl?.includes("the-way-you-look-at-me")}
+                        <div
+                          class="text-xs text-success mt-1.5 flex items-center gap-1 font-medium"
+                        >
                           <span>✓</span>
-                          <span>Musik Terpasang: <strong>Paul Aro, Andi Rianto — The Way You Look At Me</strong> (Langsung diputar saat web diakses)</span>
+                          <span
+                            >Musik Terpasang: <strong
+                              >Paul Aro, Andi Rianto — The Way You Look At Me</strong
+                            > (Langsung diputar saat web diakses)</span
+                          >
                         </div>
                       {:else}
-                        <span class="text-xs text-subtle mt-1 block">Musik otomatis diputar saat tamu mengakses website undangan.</span>
+                        <span class="text-xs text-subtle mt-1 block"
+                          >Musik otomatis diputar saat tamu mengakses website
+                          undangan.</span
+                        >
                       {/if}
                     </div>
                   </div>
@@ -873,7 +1156,9 @@
                     <h4 class="form-subheading mb-3">Pengantin Pria</h4>
                     <div class="grid grid-2 gap-3 mb-3">
                       <div class="form-group">
-                        <label for="groom-nick-input" class="form-label">Nama Panggilan</label>
+                        <label for="groom-nick-input" class="form-label"
+                          >Nama Panggilan</label
+                        >
                         <input
                           id="groom-nick-input"
                           type="text"
@@ -883,7 +1168,9 @@
                         />
                       </div>
                       <div class="form-group">
-                        <label for="groom-ig-input" class="form-label">Akun Instagram</label>
+                        <label for="groom-ig-input" class="form-label"
+                          >Akun Instagram</label
+                        >
                         <input
                           id="groom-ig-input"
                           type="text"
@@ -895,7 +1182,9 @@
                     </div>
 
                     <div class="form-group mb-3">
-                      <label for="groom-full-input" class="form-label">Nama Lengkap &amp; Gelar</label>
+                      <label for="groom-full-input" class="form-label"
+                        >Nama Lengkap &amp; Gelar</label
+                      >
                       <input
                         id="groom-full-input"
                         type="text"
@@ -906,7 +1195,9 @@
                     </div>
 
                     <div class="form-group mb-3">
-                      <label for="groom-parents-input" class="form-label">Nama Orang Tua</label>
+                      <label for="groom-parents-input" class="form-label"
+                        >Nama Orang Tua</label
+                      >
                       <input
                         id="groom-parents-input"
                         type="text"
@@ -917,7 +1208,9 @@
                     </div>
 
                     <div class="form-group">
-                      <label for="groom-photo-input" class="form-label">Foto Pria (URL)</label>
+                      <label for="groom-photo-input" class="form-label"
+                        >Foto Pria (URL)</label
+                      >
                       <input
                         id="groom-photo-input"
                         type="text"
@@ -933,7 +1226,9 @@
                     <h4 class="form-subheading mb-3">Pengantin Wanita</h4>
                     <div class="grid grid-2 gap-3 mb-3">
                       <div class="form-group">
-                        <label for="bride-nick-input" class="form-label">Nama Panggilan</label>
+                        <label for="bride-nick-input" class="form-label"
+                          >Nama Panggilan</label
+                        >
                         <input
                           id="bride-nick-input"
                           type="text"
@@ -943,7 +1238,9 @@
                         />
                       </div>
                       <div class="form-group">
-                        <label for="bride-ig-input" class="form-label">Akun Instagram</label>
+                        <label for="bride-ig-input" class="form-label"
+                          >Akun Instagram</label
+                        >
                         <input
                           id="bride-ig-input"
                           type="text"
@@ -955,7 +1252,9 @@
                     </div>
 
                     <div class="form-group mb-3">
-                      <label for="bride-full-input" class="form-label">Nama Lengkap &amp; Gelar</label>
+                      <label for="bride-full-input" class="form-label"
+                        >Nama Lengkap &amp; Gelar</label
+                      >
                       <input
                         id="bride-full-input"
                         type="text"
@@ -966,7 +1265,9 @@
                     </div>
 
                     <div class="form-group mb-3">
-                      <label for="bride-parents-input" class="form-label">Nama Orang Tua</label>
+                      <label for="bride-parents-input" class="form-label"
+                        >Nama Orang Tua</label
+                      >
                       <input
                         id="bride-parents-input"
                         type="text"
@@ -977,7 +1278,9 @@
                     </div>
 
                     <div class="form-group">
-                      <label for="bride-photo-input" class="form-label">Foto Wanita (URL)</label>
+                      <label for="bride-photo-input" class="form-label"
+                        >Foto Wanita (URL)</label
+                      >
                       <input
                         id="bride-photo-input"
                         type="text"
@@ -991,7 +1294,7 @@
               {/if}
 
               <!-- TAB 2: RANGKAIAN ACARA -->
-              {#if activeTab === 'events'}
+              {#if activeTab === "events"}
                 <div class="tab-pane animate-fade-in">
                   <h3 class="pane-title mb-4">Jadwal &amp; Lokasi Acara</h3>
 
@@ -999,7 +1302,9 @@
                   <div class="form-section-box mb-6">
                     <div class="flex items-center justify-between mb-3">
                       <h4 class="form-subheading">Akad Nikah / Pemberkatan</h4>
-                      <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <label
+                        class="flex items-center gap-2 text-xs font-semibold cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           bind:checked={$wedding.invitation.events.akad.enabled}
@@ -1010,7 +1315,9 @@
 
                     {#if $wedding.invitation.events.akad.enabled}
                       <div class="form-group mb-3">
-                        <label for="akad-title-input" class="form-label">Judul Acara</label>
+                        <label for="akad-title-input" class="form-label"
+                          >Judul Acara</label
+                        >
                         <input
                           id="akad-title-input"
                           type="text"
@@ -1021,7 +1328,9 @@
 
                       <div class="grid grid-3 gap-3 mb-3">
                         <div class="form-group">
-                          <label for="akad-date-input" class="form-label">Tanggal</label>
+                          <label for="akad-date-input" class="form-label"
+                            >Tanggal</label
+                          >
                           <input
                             id="akad-date-input"
                             type="date"
@@ -1030,17 +1339,23 @@
                           />
                         </div>
                         <div class="form-group">
-                          <label for="akad-start-input" class="form-label">Jam Mulai</label>
+                          <label for="akad-start-input" class="form-label"
+                            >Jam Mulai</label
+                          >
                           <input
                             id="akad-start-input"
                             type="text"
                             class="form-input"
-                            bind:value={$wedding.invitation.events.akad.startTime}
+                            bind:value={
+                              $wedding.invitation.events.akad.startTime
+                            }
                             placeholder="08:00"
                           />
                         </div>
                         <div class="form-group">
-                          <label for="akad-end-input" class="form-label">Jam Selesai</label>
+                          <label for="akad-end-input" class="form-label"
+                            >Jam Selesai</label
+                          >
                           <input
                             id="akad-end-input"
                             type="text"
@@ -1052,7 +1367,9 @@
                       </div>
 
                       <div class="form-group mb-3">
-                        <label for="akad-venue-input" class="form-label">Nama Tempat / Gedung</label>
+                        <label for="akad-venue-input" class="form-label"
+                          >Nama Tempat / Gedung</label
+                        >
                         <input
                           id="akad-venue-input"
                           type="text"
@@ -1063,18 +1380,24 @@
                       </div>
 
                       <div class="form-group mb-3">
-                        <label for="akad-address-input" class="form-label">Alamat Lengkap</label>
+                        <label for="akad-address-input" class="form-label"
+                          >Alamat Lengkap</label
+                        >
                         <textarea
                           id="akad-address-input"
                           class="form-input"
                           rows="2"
-                          bind:value={$wedding.invitation.events.akad.venueAddress}
+                          bind:value={
+                            $wedding.invitation.events.akad.venueAddress
+                          }
                           placeholder="Jl. ..."
                         ></textarea>
                       </div>
 
                       <div class="form-group">
-                        <label for="akad-maps-input" class="form-label">Link Google Maps</label>
+                        <label for="akad-maps-input" class="form-label"
+                          >Link Google Maps</label
+                        >
                         <input
                           id="akad-maps-input"
                           type="text"
@@ -1090,10 +1413,14 @@
                   <div class="form-section-box">
                     <div class="flex items-center justify-between mb-3">
                       <h4 class="form-subheading">Resepsi Pernikahan</h4>
-                      <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <label
+                        class="flex items-center gap-2 text-xs font-semibold cursor-pointer"
+                      >
                         <input
                           type="checkbox"
-                          bind:checked={$wedding.invitation.events.resepsi.enabled}
+                          bind:checked={
+                            $wedding.invitation.events.resepsi.enabled
+                          }
                         />
                         <span>Aktif</span>
                       </label>
@@ -1101,7 +1428,9 @@
 
                     {#if $wedding.invitation.events.resepsi.enabled}
                       <div class="form-group mb-3">
-                        <label for="resepsi-title-input" class="form-label">Judul Acara</label>
+                        <label for="resepsi-title-input" class="form-label"
+                          >Judul Acara</label
+                        >
                         <input
                           id="resepsi-title-input"
                           type="text"
@@ -1112,7 +1441,9 @@
 
                       <div class="grid grid-3 gap-3 mb-3">
                         <div class="form-group">
-                          <label for="resepsi-date-input" class="form-label">Tanggal</label>
+                          <label for="resepsi-date-input" class="form-label"
+                            >Tanggal</label
+                          >
                           <input
                             id="resepsi-date-input"
                             type="date"
@@ -1121,56 +1452,76 @@
                           />
                         </div>
                         <div class="form-group">
-                          <label for="resepsi-start-input" class="form-label">Jam Mulai</label>
+                          <label for="resepsi-start-input" class="form-label"
+                            >Jam Mulai</label
+                          >
                           <input
                             id="resepsi-start-input"
                             type="text"
                             class="form-input"
-                            bind:value={$wedding.invitation.events.resepsi.startTime}
+                            bind:value={
+                              $wedding.invitation.events.resepsi.startTime
+                            }
                             placeholder="11:00"
                           />
                         </div>
                         <div class="form-group">
-                          <label for="resepsi-end-input" class="form-label">Jam Selesai</label>
+                          <label for="resepsi-end-input" class="form-label"
+                            >Jam Selesai</label
+                          >
                           <input
                             id="resepsi-end-input"
                             type="text"
                             class="form-input"
-                            bind:value={$wedding.invitation.events.resepsi.endTime}
+                            bind:value={
+                              $wedding.invitation.events.resepsi.endTime
+                            }
                             placeholder="14:00 WIB"
                           />
                         </div>
                       </div>
 
                       <div class="form-group mb-3">
-                        <label for="resepsi-venue-input" class="form-label">Nama Tempat / Gedung</label>
+                        <label for="resepsi-venue-input" class="form-label"
+                          >Nama Tempat / Gedung</label
+                        >
                         <input
                           id="resepsi-venue-input"
                           type="text"
                           class="form-input"
-                          bind:value={$wedding.invitation.events.resepsi.venueName}
+                          bind:value={
+                            $wedding.invitation.events.resepsi.venueName
+                          }
                           placeholder="Grand Ballroom"
                         />
                       </div>
 
                       <div class="form-group mb-3">
-                        <label for="resepsi-address-input" class="form-label">Alamat Lengkap</label>
+                        <label for="resepsi-address-input" class="form-label"
+                          >Alamat Lengkap</label
+                        >
                         <textarea
                           id="resepsi-address-input"
                           class="form-input"
                           rows="2"
-                          bind:value={$wedding.invitation.events.resepsi.venueAddress}
+                          bind:value={
+                            $wedding.invitation.events.resepsi.venueAddress
+                          }
                           placeholder="Jl. ..."
                         ></textarea>
                       </div>
 
                       <div class="form-group">
-                        <label for="resepsi-maps-input" class="form-label">Link Google Maps</label>
+                        <label for="resepsi-maps-input" class="form-label"
+                          >Link Google Maps</label
+                        >
                         <input
                           id="resepsi-maps-input"
                           type="text"
                           class="form-input"
-                          bind:value={$wedding.invitation.events.resepsi.mapsUrl}
+                          bind:value={
+                            $wedding.invitation.events.resepsi.mapsUrl
+                          }
                           placeholder="https://maps.google.com/..."
                         />
                       </div>
@@ -1180,7 +1531,7 @@
               {/if}
 
               <!-- TAB 3: KUTIPAN & CERITA -->
-              {#if activeTab === 'story'}
+              {#if activeTab === "story"}
                 <div class="tab-pane animate-fade-in">
                   <h3 class="pane-title mb-4">Kutipan &amp; Cerita Cinta</h3>
 
@@ -1188,7 +1539,9 @@
                   <div class="form-section-box mb-6">
                     <div class="flex items-center justify-between mb-3">
                       <h4 class="form-subheading">Kutipan Suci / Romantis</h4>
-                      <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <label
+                        class="flex items-center gap-2 text-xs font-semibold cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           bind:checked={$wedding.invitation.quote.enabled}
@@ -1199,7 +1552,9 @@
 
                     {#if $wedding.invitation.quote.enabled}
                       <div class="form-group mb-3">
-                        <label for="quote-text-input" class="form-label">Isi Kutipan</label>
+                        <label for="quote-text-input" class="form-label"
+                          >Isi Kutipan</label
+                        >
                         <textarea
                           id="quote-text-input"
                           class="form-input"
@@ -1210,7 +1565,9 @@
                       </div>
 
                       <div class="form-group">
-                        <label for="quote-source-input" class="form-label">Sumber Kutipan</label>
+                        <label for="quote-source-input" class="form-label"
+                          >Sumber Kutipan</label
+                        >
                         <input
                           id="quote-source-input"
                           type="text"
@@ -1226,7 +1583,9 @@
                   <div class="form-section-box">
                     <div class="flex items-center justify-between mb-3">
                       <h4 class="form-subheading">Cerita Cinta (Timeline)</h4>
-                      <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <label
+                        class="flex items-center gap-2 text-xs font-semibold cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           bind:checked={$wedding.invitation.loveStory.enabled}
@@ -1269,7 +1628,10 @@
                         {/each}
                       </div>
 
-                      <button class="btn btn-secondary btn-sm" onclick={addStoryItem}>
+                      <button
+                        class="btn btn-secondary btn-sm"
+                        onclick={addStoryItem}
+                      >
                         + Tambah Momen Cerita
                       </button>
                     {/if}
@@ -1278,15 +1640,19 @@
               {/if}
 
               <!-- TAB 4: KADO & GALERI -->
-              {#if activeTab === 'gift'}
+              {#if activeTab === "gift"}
                 <div class="tab-pane animate-fade-in">
                   <h3 class="pane-title mb-4">Kado Digital &amp; Galeri</h3>
 
                   <!-- Bank Accounts -->
                   <div class="form-section-box mb-6">
                     <div class="flex items-center justify-between mb-3">
-                      <h4 class="form-subheading">Amplop Digital (Rekening Bank)</h4>
-                      <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <h4 class="form-subheading">
+                        Amplop Digital (Rekening Bank)
+                      </h4>
+                      <label
+                        class="flex items-center gap-2 text-xs font-semibold cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           bind:checked={$wedding.invitation.gift.enabled}
@@ -1296,7 +1662,9 @@
                     </div>
 
                     {#if $wedding.invitation.gift.enabled}
-                      <div class="bank-accounts-editor flex flex-col gap-3 mb-3">
+                      <div
+                        class="bank-accounts-editor flex flex-col gap-3 mb-3"
+                      >
                         {#each $wedding.invitation.gift.bankAccounts as acc, idx}
                           <div class="bank-edit-row">
                             <div class="grid grid-3 gap-2">
@@ -1330,41 +1698,58 @@
                         {/each}
                       </div>
 
-                      <button class="btn btn-secondary btn-sm mb-4" onclick={addBankAccount}>
+                      <button
+                        class="btn btn-secondary btn-sm mb-4"
+                        onclick={addBankAccount}
+                      >
                         + Tambah Rekening
                       </button>
 
                       <hr class="my-4 border-light" />
 
                       <!-- Shipping address -->
-                      <h4 class="form-subheading mb-3">Alamat Kirim Kado Fisik</h4>
+                      <h4 class="form-subheading mb-3">
+                        Alamat Kirim Kado Fisik
+                      </h4>
                       <div class="form-group mb-2">
-                        <label for="shipping-recipient-input" class="form-label">Nama Penerima</label>
+                        <label for="shipping-recipient-input" class="form-label"
+                          >Nama Penerima</label
+                        >
                         <input
                           id="shipping-recipient-input"
                           type="text"
                           class="form-input"
-                          bind:value={$wedding.invitation.gift.shippingAddress.recipient}
+                          bind:value={
+                            $wedding.invitation.gift.shippingAddress.recipient
+                          }
                           placeholder="Rama &amp; Sinta"
                         />
                       </div>
                       <div class="form-group mb-2">
-                        <label for="shipping-address-input" class="form-label">Alamat Lengkap</label>
+                        <label for="shipping-address-input" class="form-label"
+                          >Alamat Lengkap</label
+                        >
                         <textarea
                           id="shipping-address-input"
                           class="form-input"
                           rows="2"
-                          bind:value={$wedding.invitation.gift.shippingAddress.address}
+                          bind:value={
+                            $wedding.invitation.gift.shippingAddress.address
+                          }
                           placeholder="Alamat lengkap penerima..."
                         ></textarea>
                       </div>
                       <div class="form-group">
-                        <label for="shipping-phone-input" class="form-label">No. Telepon / WhatsApp</label>
+                        <label for="shipping-phone-input" class="form-label"
+                          >No. Telepon / WhatsApp</label
+                        >
                         <input
                           id="shipping-phone-input"
                           type="text"
                           class="form-input"
-                          bind:value={$wedding.invitation.gift.shippingAddress.phone}
+                          bind:value={
+                            $wedding.invitation.gift.shippingAddress.phone
+                          }
                           placeholder="08..."
                         />
                       </div>
@@ -1375,7 +1760,9 @@
                   <div class="form-section-box">
                     <div class="flex items-center justify-between mb-3">
                       <h4 class="form-subheading">Galeri Foto Prewedding</h4>
-                      <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <label
+                        class="flex items-center gap-2 text-xs font-semibold cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           bind:checked={$wedding.invitation.gallery.enabled}
@@ -1398,9 +1785,11 @@
                               class="btn btn-icon btn-ghost text-danger btn-sm"
                               onclick={() => {
                                 $wedding.invitation.gallery.photos.splice(i, 1);
-                                updateInvitation({ gallery: $wedding.invitation.gallery });
-                              }}
-                            >✕</button>
+                                updateInvitation({
+                                  gallery: $wedding.invitation.gallery,
+                                });
+                              }}>✕</button
+                            >
                           </div>
                         {/each}
                       </div>
@@ -1408,8 +1797,12 @@
                       <button
                         class="btn btn-secondary btn-sm"
                         onclick={() => {
-                          $wedding.invitation.gallery.photos.push('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80');
-                          updateInvitation({ gallery: $wedding.invitation.gallery });
+                          $wedding.invitation.gallery.photos.push(
+                            "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80",
+                          );
+                          updateInvitation({
+                            gallery: $wedding.invitation.gallery,
+                          });
                         }}
                       >
                         + Tambah Foto
@@ -1432,19 +1825,25 @@
                 <span class="preview-dot"></span>
                 Live Smartphone Preview
               </span>
-              <span class="text-xs text-subtle">Interaktif (dapat diklik &amp; di-scroll)</span>
+              <span class="text-xs text-subtle"
+                >Interaktif (dapat diklik &amp; di-scroll)</span
+              >
             </div>
 
             <!-- Preview Guest Selector -->
             <div class="preview-guest-select-wrap">
-              <label for="preview-guest-select" class="text-xs text-muted mr-1">Nama Tamu:</label>
+              <label for="preview-guest-select" class="text-xs text-muted mr-1"
+                >Nama Tamu:</label
+              >
               <select
                 id="preview-guest-select"
                 class="form-input form-select-sm"
                 bind:value={selectedPreviewGuest}
               >
                 <option value="Dimas &amp; Partner">Dimas &amp; Partner</option>
-                <option value="Keluarga Bpk. Santoso">Keluarga Bpk. Santoso</option>
+                <option value="Keluarga Bpk. Santoso"
+                  >Keluarga Bpk. Santoso</option
+                >
                 {#each $wedding.guests as g}
                   <option value={g.name}>{g.name}</option>
                 {/each}
@@ -1463,23 +1862,30 @@
 
               <!-- Scrollable Phone Screen -->
               <div class="phone-screen">
-                {#if invitation.theme === 'classic_gold'}
+                {#if invitation.theme === "classic_gold"}
                   <ClassicGold
-                    invitation={invitation}
+                    {invitation}
                     guestName={selectedPreviewGuest}
                     isPreview={true}
                     onRsvpSubmit={handlePreviewRsvp}
                   />
-                {:else if invitation.theme === 'emerald_botanical'}
+                {:else if invitation.theme === "emerald_botanical"}
                   <EmeraldBotanical
-                    invitation={invitation}
+                    {invitation}
+                    guestName={selectedPreviewGuest}
+                    isPreview={true}
+                    onRsvpSubmit={handlePreviewRsvp}
+                  />
+                {:else if invitation.theme === "dusty_lavender"}
+                  <DustyLavender
+                    {invitation}
                     guestName={selectedPreviewGuest}
                     isPreview={true}
                     onRsvpSubmit={handlePreviewRsvp}
                   />
                 {:else}
                   <RomanticFloral
-                    invitation={invitation}
+                    {invitation}
                     guestName={selectedPreviewGuest}
                     isPreview={true}
                     onRsvpSubmit={handlePreviewRsvp}
@@ -1498,42 +1904,47 @@
 <!-- MODAL: INTERACTIVE FULL PREVIEW DI SMARTPHONE                  -->
 <!-- ============================================================== -->
 {#if previewModalTheme}
-  {@const modalTemplate = templates.find(t => t.id === previewModalTheme)}
+  {@const modalTemplate = templates.find((t) => t.id === previewModalTheme)}
   <div
     class="modal-overlay-backdrop animate-fade-in"
-    onclick={(e) => { if (e.target === e.currentTarget) closePreviewModal(); }}
+    onclick={(e) => {
+      if (e.target === e.currentTarget) closePreviewModal();
+    }}
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    onkeydown={(e) => e.key === 'Escape' && closePreviewModal()}
+    onkeydown={(e) => e.key === "Escape" && closePreviewModal()}
   >
-    <div
-      class="modal-preview-card"
-      role="document"
-    >
+    <div class="modal-preview-card" role="document">
       <!-- Modal Header -->
       <div class="modal-preview-header">
         <div class="modal-title-left">
           <div class="flex items-center gap-2">
-            <span class="text-xl">{modalTemplate?.vibes.split(' ')[0]}</span>
+            <span class="text-xl">{modalTemplate?.vibes.split(" ")[0]}</span>
             <h3 class="modal-title-text">{modalTemplate?.title}</h3>
             {#if previewModalTheme === $wedding.invitation.theme}
               <span class="badge badge-success text-xs">✓ Sedang Aktif</span>
             {/if}
           </div>
-          <p class="modal-subtitle-text">{modalTemplate?.subtitle} • Pratinjau Interaktif Layar Penuh</p>
+          <p class="modal-subtitle-text">
+            {modalTemplate?.subtitle} • Pratinjau Interaktif Layar Penuh
+          </p>
         </div>
 
         <div class="modal-actions-right">
           <div class="modal-guest-picker">
-            <label for="modal-guest-dropdown" class="text-xs text-muted">Simulasi Tamu:</label>
+            <label for="modal-guest-dropdown" class="text-xs text-muted"
+              >Simulasi Tamu:</label
+            >
             <select
               id="modal-guest-dropdown"
               class="form-input form-select-sm"
               bind:value={selectedPreviewGuest}
             >
               <option value="Dimas &amp; Partner">Dimas &amp; Partner</option>
-              <option value="Keluarga Bpk. Santoso">Keluarga Bpk. Santoso</option>
+              <option value="Keluarga Bpk. Santoso"
+                >Keluarga Bpk. Santoso</option
+              >
               {#each $wedding.guests as g}
                 <option value={g.name}>{g.name}</option>
               {/each}
@@ -1581,23 +1992,30 @@
               <div class="phone-speaker"></div>
             </div>
             <div class="phone-screen">
-              {#if previewModalTheme === 'classic_gold'}
+              {#if previewModalTheme === "classic_gold"}
                 <ClassicGold
-                  invitation={invitation}
+                  {invitation}
                   guestName={selectedPreviewGuest}
                   isPreview={true}
                   onRsvpSubmit={handlePreviewRsvp}
                 />
-              {:else if previewModalTheme === 'emerald_botanical'}
+              {:else if previewModalTheme === "emerald_botanical"}
                 <EmeraldBotanical
-                  invitation={invitation}
+                  {invitation}
+                  guestName={selectedPreviewGuest}
+                  isPreview={true}
+                  onRsvpSubmit={handlePreviewRsvp}
+                />
+              {:else if previewModalTheme === "dusty_lavender"}
+                <DustyLavender
+                  {invitation}
                   guestName={selectedPreviewGuest}
                   isPreview={true}
                   onRsvpSubmit={handlePreviewRsvp}
                 />
               {:else}
                 <RomanticFloral
-                  invitation={invitation}
+                  {invitation}
                   guestName={selectedPreviewGuest}
                   isPreview={true}
                   onRsvpSubmit={handlePreviewRsvp}
@@ -1709,7 +2127,7 @@
     justify-content: space-between;
     gap: var(--space-4);
     padding: var(--space-4) var(--space-5);
-    background: linear-gradient(135deg, #FFFDFD 0%, #FFF5F2 100%);
+    background: linear-gradient(135deg, #fffdfd 0%, #fff5f2 100%);
     border: 2px solid var(--color-primary-light);
     box-shadow: 0 6px 20px rgba(201, 132, 122, 0.12);
   }
@@ -1722,14 +2140,20 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #6BAB8A;
+    background: #6bab8a;
     box-shadow: 0 0 0 0 rgba(107, 171, 138, 0.7);
     animation: pulseGlow 2s infinite;
   }
   @keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 0 rgba(107, 171, 138, 0.7); }
-    70% { box-shadow: 0 0 0 8px rgba(107, 171, 138, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(107, 171, 138, 0); }
+    0% {
+      box-shadow: 0 0 0 0 rgba(107, 171, 138, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 8px rgba(107, 171, 138, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(107, 171, 138, 0);
+    }
   }
   .active-summary-title {
     font-size: 1.15rem;
@@ -1769,7 +2193,7 @@
   .template-catalog-card.is-active-card {
     border-color: var(--color-primary);
     box-shadow: 0 10px 30px rgba(201, 132, 122, 0.22);
-    background: #FFFAF9;
+    background: #fffaf9;
   }
 
   /* Card Ribbon */
@@ -1778,7 +2202,11 @@
     top: 12px;
     left: 12px;
     z-index: 10;
-    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--color-accent) 0%,
+      var(--color-accent-dark) 100%
+    );
     color: white;
     font-size: 0.7rem;
     font-weight: 700;
@@ -1791,7 +2219,7 @@
     box-shadow: 0 4px 12px rgba(107, 68, 56, 0.3);
   }
   .ribbon-star {
-    color: #F8D678;
+    color: #f8d678;
     font-size: 0.85rem;
   }
   .card-ribbon-inactive {
@@ -1821,13 +2249,40 @@
     border-bottom: 1px solid var(--color-border);
   }
   .theme-style-romantic_terracotta {
-    background: linear-gradient(135deg, rgba(255, 248, 246, 0.6) 0%, rgba(245, 230, 224, 0.82) 100%), url('/images/themes/romantic-arch-real.jpg') center/cover no-repeat;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255, 248, 246, 0.6) 0%,
+        rgba(245, 230, 224, 0.82) 100%
+      ),
+      url("/images/themes/romantic-arch-real.jpg") center/cover no-repeat;
   }
   .theme-style-classic_gold {
-    background: linear-gradient(135deg, rgba(18, 18, 20, 0.72) 0%, rgba(18, 18, 20, 0.9) 100%), url('/images/themes/gold-marble-1.jpg') center/cover no-repeat;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(18, 18, 20, 0.72) 0%,
+        rgba(18, 18, 20, 0.9) 100%
+      ),
+      url("/images/themes/gold-marble-1.jpg") center/cover no-repeat;
   }
   .theme-style-emerald_botanical {
-    background: linear-gradient(135deg, rgba(247, 249, 246, 0.65) 0%, rgba(220, 232, 222, 0.85) 100%), url('/images/themes/botanical-arch-real.jpg') center/cover no-repeat;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(247, 249, 246, 0.65) 0%,
+        rgba(220, 232, 222, 0.85) 100%
+      ),
+      url("/images/themes/botanical-arch-real.jpg") center/cover no-repeat;
+  }
+  .theme-style-dusty_lavender {
+    background:
+      linear-gradient(
+        135deg,
+        rgba(243, 241, 250, 0.7) 0%,
+        rgba(221, 217, 235, 0.85) 100%
+      ),
+      url("/images/themes/lavender-arch-real.jpg") center/cover no-repeat;
   }
 
   /* Mini Mockup Frame Inside Window */
@@ -1851,11 +2306,11 @@
   .theme-style-romantic_terracotta .mini-mockup-frame {
     background: rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(8px);
-    border: 1px solid #EDD5CE;
-    color: #2C1810;
+    border: 1px solid #edd5ce;
+    color: #2c1810;
   }
   .theme-style-romantic_terracotta .mini-mockup-names {
-    color: #8B5E52;
+    color: #8b5e52;
     font-family: var(--font-display);
     font-size: 1.2rem;
     font-weight: 700;
@@ -1870,12 +2325,14 @@
   .theme-style-classic_gold .mini-mockup-frame {
     background: rgba(24, 23, 27, 0.85);
     backdrop-filter: blur(8px);
-    border: 1px solid #C5A059;
-    color: #F5E6E0;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(197, 160, 89, 0.2);
+    border: 1px solid #c5a059;
+    color: #f5e6e0;
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.5),
+      inset 0 0 15px rgba(197, 160, 89, 0.2);
   }
   .theme-style-classic_gold .mini-mockup-names {
-    color: #E6CA85;
+    color: #e6ca85;
     font-family: var(--font-display);
     font-size: 1.2rem;
     font-weight: 700;
@@ -1889,17 +2346,37 @@
   .theme-style-emerald_botanical .mini-mockup-frame {
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(8px);
-    border: 1px solid #A8C4B0;
-    color: #1E3326;
+    border: 1px solid #a8c4b0;
+    color: #1e3326;
     box-shadow: 0 10px 25px rgba(30, 51, 38, 0.15);
   }
   .theme-style-emerald_botanical .mini-mockup-names {
-    color: #2D5039;
+    color: #2d5039;
     font-family: var(--font-display);
     font-size: 1.2rem;
     font-weight: 700;
   }
   .mini-motif-emerald {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+  }
+
+  .theme-style-dusty_lavender .mini-mockup-frame {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid #c8c5dc;
+    color: #2d2b3a;
+    box-shadow: 0 10px 25px rgba(103, 100, 131, 0.15);
+  }
+  .theme-style-dusty_lavender .mini-mockup-names {
+    color: #676483;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .mini-motif-lavender {
     display: flex;
     gap: 0.25rem;
     margin-bottom: 0.25rem;
@@ -2154,12 +2631,12 @@
   }
   .active-dot {
     font-size: 0.6rem;
-    color: #6BAB8A;
+    color: #6bab8a;
   }
 
   /* --- Studio Editor Panel & Tabs --- */
   .studio-body-container {
-    max-width: 1400px;
+    max-width: 1600px;
   }
   .studio-grid {
     display: grid;
@@ -2289,7 +2766,9 @@
   }
   .cover-preset-thumb-card.selected {
     border-color: #b89358;
-    box-shadow: 0 0 0 2px rgba(184, 147, 88, 0.3), 0 6px 14px rgba(0, 0, 0, 0.15);
+    box-shadow:
+      0 0 0 2px rgba(184, 147, 88, 0.3),
+      0 6px 14px rgba(0, 0, 0, 0.15);
   }
   .preset-thumb-img {
     width: 100%;
@@ -2306,7 +2785,11 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 100%);
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.75) 0%,
+      transparent 100%
+    );
     color: #fff;
     font-size: 0.65rem;
     font-weight: 600;
@@ -2445,7 +2928,7 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #6BAB8A;
+    background: #6bab8a;
     box-shadow: 0 0 6px rgba(107, 171, 138, 0.6);
   }
   .preview-guest-select-wrap {
@@ -2462,10 +2945,12 @@
   .phone-mockup-wrapper {
     width: 380px;
     height: 740px;
-    background: #1A1412;
+    background: #1a1412;
     border-radius: 46px;
     padding: 12px;
-    box-shadow: 0 20px 60px rgba(44, 24, 16, 0.25), 0 0 0 2px #3C2C28;
+    box-shadow:
+      0 20px 60px rgba(44, 24, 16, 0.25),
+      0 0 0 2px #3c2c28;
     position: relative;
   }
   .phone-frame {
@@ -2485,7 +2970,7 @@
     transform: translateX(-50%);
     width: 110px;
     height: 24px;
-    background: #1A1412;
+    background: #1a1412;
     border-radius: 12px;
     z-index: 50;
     display: flex;
@@ -2497,13 +2982,13 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: #2D3748;
+    background: #2d3748;
   }
   .phone-speaker {
     width: 36px;
     height: 4px;
     border-radius: 2px;
-    background: #2D3748;
+    background: #2d3748;
   }
   .phone-screen {
     width: 100%;
@@ -2573,7 +3058,7 @@
     display: flex;
     justify-content: center;
     overflow-y: auto;
-    background: #FAF7F5;
+    background: #faf7f5;
   }
   .modal-phone-wrapper {
     height: 680px;

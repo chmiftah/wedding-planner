@@ -4,6 +4,7 @@
   import RomanticFloral from '#lib/components/invitation/RomanticFloral.svelte';
   import ClassicGold from '#lib/components/invitation/ClassicGold.svelte';
   import EmeraldBotanical from '#lib/components/invitation/EmeraldBotanical.svelte';
+  import DustyLavender from '#lib/components/invitation/DustyLavender.svelte';
 
   const token = $derived(page.params.token);
   const guest = $derived($wedding.guests.find(g => g.rsvpToken === token));
@@ -62,6 +63,14 @@
       isPreview={false}
       onRsvpSubmit={handleRsvp}
     />
+  {:else if $wedding.invitation.theme === 'dusty_lavender'}
+    <DustyLavender
+      invitation={$wedding.invitation}
+      guestName={guestName}
+      guestToken={token}
+      isPreview={false}
+      onRsvpSubmit={handleRsvp}
+    />
   {:else}
     <RomanticFloral
       invitation={$wedding.invitation}
@@ -87,5 +96,8 @@
   }
   .public-invitation-container.theme-emerald_botanical {
     background: #F7F9F6;
+  }
+  .public-invitation-container.theme-dusty_lavender {
+    background: #F3F1FA;
   }
 </style>

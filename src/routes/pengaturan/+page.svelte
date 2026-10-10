@@ -128,23 +128,20 @@
   <title>Pengaturan — Nikahku</title>
 </svelte:head>
 
-<div class="page-container">
+<div class="container">
   <div class="page-header">
-    <div class="container">
-      <h1 class="page-title-with-icon">
-        <span class="page-title-icon" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </span>
-        Pengaturan
-      </h1>
-      <p class="text-muted text-sm mt-1">Kelola data pernikahan, profil akun, dan ekspor laporan</p>
+    <div class="header-left">
+      <div class="badge-tag mb-2">
+        <span>⚙️ Preferensi & Akun</span>
+      </div>
+      <h1 class="page-title">Pengaturan Pernikahan</h1>
+      <p class="page-subtitle">
+        Kelola data profil pernikahan, anggaran dasar, preferensi aplikasi, dan ekspor atau cadangkan data Anda.
+      </p>
     </div>
   </div>
 
-  <div class="container mt-6">
+  <div class="mt-6">
     <div class="settings-grid">
       <!-- ============================================== -->
       <!-- KOLOM KIRI: PERENCANAAN & KEUANGAN             -->
@@ -550,22 +547,13 @@
 </div>
 
 <style>
-  .page-container {
-    padding-bottom: var(--space-12);
-  }
-  .page-header {
-    background: white;
-    border-bottom: 1px solid var(--color-border-light);
-    padding: var(--space-8) 0 var(--space-6);
-  }
-
   /* Grid yang seimbang 2 kolom simetris */
   .settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-6);
     align-items: flex-start;
-    max-width: 1120px;
+    max-width: 1400px;
     margin: 0 auto;
   }
 

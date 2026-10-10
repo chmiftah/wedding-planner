@@ -57,9 +57,11 @@ export function getPaymentStatus(item: { quantity: number; unitPrice: number; pa
 export function categoryLabel(cat: string): string {
   const map: Record<string, string> = {
     keluarga_inti: 'Keluarga Inti',
-    keluarga_jauh: 'Keluarga Jauh',
+    keluarga_jauh: 'Keluarga Besar',
     teman: 'Teman',
-    kolega: 'Kolega',
+    kolega: 'Kolega / Rekan Kerja',
+    vip: 'VIP',
+    tetangga: 'Tetangga',
     lainnya: 'Lainnya',
   };
   return map[cat] || cat;

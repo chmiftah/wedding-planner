@@ -1,5 +1,14 @@
 <script lang="ts">
-  import { wedding, budgetSummary, savingsSummary, guestSummary, hydrateWeddingFromDb } from '#lib/stores/wedding';
+  import {
+    wedding,
+    budgetSummary,
+    savingsSummary,
+    guestSummary,
+    vendorSummary,
+    calendarSummary,
+    rundownSummary,
+    hydrateWeddingFromDb
+  } from '#lib/stores/wedding';
   import { formatRupiah, formatRupiahShort, formatDate, daysUntil } from '#lib/utils/format';
   import { goto } from '$app/navigation';
   import CategoryIcon from '#lib/components/CategoryIcon.svelte';
@@ -17,6 +26,16 @@
   const bs = $derived($budgetSummary);
   const ss = $derived($savingsSummary);
   const gs = $derived($guestSummary);
+  const vs = $derived($vendorSummary);
+  const cs = $derived($calendarSummary);
+  const rs = $derived($rundownSummary);
+
+  // Next upcoming calendar event
+  const nextEvent = $derived(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const evs = ($wedding.calendarEvents || []).filter(e => !e.completed && e.date >= todayStr);
+    return evs.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))[0] || null;
+  });
 
   const budgetProgress = $derived(bs.totalRencana > 0 ? Math.min(100, (bs.totalDibayar / bs.totalRencana) * 100) : 0);
   const savingsProgress = $derived(ss.target > 0 ? Math.min(100, (ss.totalTerkumpul / ss.target) * 100) : 0);
@@ -64,48 +83,42 @@
   <title>Dashboard — Nikahku</title>
 </svelte:head>
 
-<div class="dashboard">
-  <!-- Page Hero -->
-  <div class="page-hero">
-    <div class="container">
-      <div class="page-hero-inner">
-        <div class="page-hero-text animate-fade-in">
-          <div class="page-eyebrow-pill">
-            <span class="eyebrow-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"></circle><circle cx="16" cy="16" r="5"></circle></svg></span>
-            <span class="eyebrow-text">Pernikahan Impian</span>
-          </div>
-          <h1 class="page-title">{formatCoupleNames()}</h1>
-          {#if $wedding.info.weddingDate}
-            <p class="page-date-row">
-              <span class="date-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
-              <span class="date-text">{formatDate($wedding.info.weddingDate)}</span>
-            </p>
-          {:else}
-            <p class="page-date-row text-subtle">
-              {$wedding.info.dateNote || 'Tanggal pernikahan belum ditentukan'}
-            </p>
-          {/if}
-        </div>
-
-        {#if days !== null && days > 0}
-          <div class="countdown-widget animate-fade-in">
-            <div class="countdown-circle">
-              <span class="countdown-big-num">{days}</span>
-              <span class="countdown-unit-label">HARI</span>
-            </div>
-            <div class="countdown-info">
-              <span class="countdown-headline">Menuju Akad & Resepsi</span>
-              <span class="countdown-subline">
-                {$wedding.info.weddingDate ? formatDate($wedding.info.weddingDate) : 'Hari Bahagia'}
-              </span>
-            </div>
-          </div>
-        {/if}
+<div class="container dashboard">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="badge-tag mb-2">
+        <span>💍 Pernikahan Impian</span>
       </div>
+      <h1 class="page-title">{formatCoupleNames()}</h1>
+      {#if $wedding.info.weddingDate}
+        <p class="page-subtitle">
+          Hari Bahagia: <strong>{formatDate($wedding.info.weddingDate)}</strong>
+        </p>
+      {:else}
+        <p class="page-subtitle">
+          {$wedding.info.dateNote || 'Tanggal pernikahan belum ditentukan — atur tanggal di menu Pengaturan'}
+        </p>
+      {/if}
     </div>
-  </div>
 
-  <div class="container">
+    {#if days !== null && days > 0}
+      <div class="header-actions">
+        <div class="countdown-widget animate-fade-in">
+          <div class="countdown-circle">
+            <span class="countdown-big-num">{days}</span>
+            <span class="countdown-unit-label">HARI</span>
+          </div>
+          <div class="countdown-info">
+            <span class="countdown-headline">Menuju Akad & Resepsi</span>
+            <span class="countdown-subline">
+              {$wedding.info.weddingDate ? formatDate($wedding.info.weddingDate) : 'Hari Bahagia'}
+            </span>
+          </div>
+        </div>
+      </div>
+    {/if}
+  </div>
     {#if !data?.user}
       <div class="guest-save-banner mb-6 animate-slide-up">
         <div class="guest-banner-left">
@@ -393,72 +406,74 @@
             {/each}
           </div>
         {/if}
+
+        <!-- Agenda Kalender Terdekat -->
+        <div class="card animate-fade-in mt-4">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title card-title-with-icon">
+                <span class="card-title-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                </span>
+                Agenda Terdekat
+              </h3>
+              <p class="text-subtle text-sm">Jadwal persiapan pra-nikah</p>
+            </div>
+            <a href="/kalender" class="btn btn-secondary btn-sm">Buka Kalender</a>
+          </div>
+
+          {#if nextEvent()}
+            {@const ev = nextEvent()!}
+            <div class="next-event-box mt-3 p-3 rounded" style="background: rgba(201, 132, 122, 0.08); border-left: 3px solid var(--color-accent)">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-semibold text-accent">{formatDate(ev.date)}</span>
+                {#if ev.startTime}
+                  <span class="text-xs text-muted">⏰ {ev.startTime}</span>
+                {/if}
+              </div>
+              <h4 class="text-sm font-bold m-0 text-dark">{ev.title}</h4>
+              {#if ev.location}
+                <p class="text-xs text-muted mt-1 mb-0">📍 {ev.location}</p>
+              {/if}
+            </div>
+          {:else}
+            <div class="empty-state py-3">
+              <p class="text-subtle text-xs">Belum ada agenda mendatang.</p>
+              <a href="/kalender" class="btn btn-ghost btn-sm mt-1">+ Tambah Agenda</a>
+            </div>
+          {/if}
+        </div>
+
+        <!-- Vendor & Rundown Quick Widget -->
+        <div class="grid-2 gap-3 mt-4">
+          <div class="card p-4 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-accent uppercase">Vendor</span>
+                <span class="badge badge-success text-xs">{vs.deal} Deal</span>
+              </div>
+              <p class="text-xs text-muted mb-2">Total {vs.total} mitra vendor tercatat</p>
+            </div>
+            <a href="/vendor" class="btn btn-secondary btn-sm text-center">Kelola Vendor →</a>
+          </div>
+
+          <div class="card p-4 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-accent uppercase">Rundown</span>
+                <span class="badge badge-info text-xs">{rs.total} Acara</span>
+              </div>
+              <p class="text-xs text-muted mb-2">Susunan hari-H siap cetak</p>
+            </div>
+            <a href="/rundown" class="btn btn-secondary btn-sm text-center">Buka Rundown →</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
 <style>
   .dashboard { padding-bottom: var(--space-8); }
-
-  /* Page Hero */
-  .page-hero {
-    background: linear-gradient(145deg, #FFF4F1 0%, #FBF0EB 50%, #FFFFFF 100%);
-    border-bottom: 1px solid var(--color-border-light);
-    padding: var(--space-8) 0 var(--space-6);
-    margin-bottom: var(--space-6);
-  }
-
-  .page-hero-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-6);
-  }
-
-  .page-hero-text {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .page-eyebrow-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: var(--radius-full);
-    background: rgba(201, 132, 122, 0.12);
-    border: 1px solid rgba(201, 132, 122, 0.22);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    color: var(--color-accent);
-    margin-bottom: var(--space-3);
-  }
-
-  .eyebrow-icon { font-size: 0.95rem; }
-
-  .page-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0 0 var(--space-2);
-    text-transform: capitalize;
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-  }
-
-  .page-date-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
-    font-weight: 500;
-    margin: 0;
-  }
-
-  .date-icon { font-size: 1rem; }
 
   /* Countdown Widget */
   .countdown-widget {
