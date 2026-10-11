@@ -513,7 +513,7 @@
     <div class="modal card max-w-lg" onclick={(e) => e.stopPropagation()}>
       <div class="modal-header">
         <h3 class="modal-title">{isEditing ? 'Edit Informasi Vendor' : 'Tambah Vendor Baru'}</h3>
-        <button class="btn-icon btn-ghost" onclick={() => showModal = false}>✕</button>
+        <button type="button" class="btn-close-modal" onclick={() => showModal = false} aria-label="Tutup formulir">✕</button>
       </div>
 
       <div class="modal-body">
@@ -659,6 +659,19 @@
     </div>
   </div>
 {/if}
+
+<!-- Mobile Floating Action Button (FAB) -->
+<button
+  class="mobile-fab no-print hide-desktop"
+  onclick={openAddModal}
+  aria-label="Tambah Vendor Baru"
+>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+  <span>Tambah Vendor</span>
+</button>
 
 <style>
   /* Stat cards */

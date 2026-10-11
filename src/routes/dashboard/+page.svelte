@@ -7,12 +7,17 @@
     vendorSummary,
     calendarSummary,
     rundownSummary,
-    hydrateWeddingFromDb
-  } from '#lib/stores/wedding';
-  import { formatRupiah, formatRupiahShort, formatDate, daysUntil } from '#lib/utils/format';
-  import { goto } from '$app/navigation';
-  import CategoryIcon from '#lib/components/CategoryIcon.svelte';
-  import type { PageData } from './$types';
+    hydrateWeddingFromDb,
+  } from "#lib/stores/wedding";
+  import {
+    formatRupiah,
+    formatRupiahShort,
+    formatDate,
+    daysUntil,
+  } from "#lib/utils/format";
+  import { goto } from "$app/navigation";
+  import CategoryIcon from "#lib/components/CategoryIcon.svelte";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
@@ -33,23 +38,42 @@
   // Next upcoming calendar event
   const nextEvent = $derived(() => {
     const todayStr = new Date().toISOString().slice(0, 10);
-    const evs = ($wedding.calendarEvents || []).filter(e => !e.completed && e.date >= todayStr);
-    return evs.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))[0] || null;
+    const evs = ($wedding.calendarEvents || []).filter(
+      (e) => !e.completed && e.date >= todayStr,
+    );
+    return (
+      evs.sort(
+        (a, b) =>
+          a.date.localeCompare(b.date) ||
+          a.startTime.localeCompare(b.startTime),
+      )[0] || null
+    );
   });
 
-  const budgetProgress = $derived(bs.totalRencana > 0 ? Math.min(100, (bs.totalDibayar / bs.totalRencana) * 100) : 0);
-  const savingsProgress = $derived(ss.target > 0 ? Math.min(100, (ss.totalTerkumpul / ss.target) * 100) : 0);
+  const budgetProgress = $derived(
+    bs.totalRencana > 0
+      ? Math.min(100, (bs.totalDibayar / bs.totalRencana) * 100)
+      : 0,
+  );
+  const savingsProgress = $derived(
+    ss.target > 0 ? Math.min(100, (ss.totalTerkumpul / ss.target) * 100) : 0,
+  );
 
   function formatCoupleNames() {
     const { brideName, groomName } = $wedding.info;
     if (brideName && groomName) return `${brideName} & ${groomName}`;
     if (brideName) return brideName;
-    return 'Kamu & Pasangan';
+    return "Kamu & Pasangan";
   }
 
   // Upcoming payments (items with unpaid payments due soon)
   const upcomingPayments = $derived(() => {
-    const items: Array<{ name: string; amount: number; dueDate: string; categoryName: string }> = [];
+    const items: Array<{
+      name: string;
+      amount: number;
+      dueDate: string;
+      categoryName: string;
+    }> = [];
     const today = new Date();
     const thirtyDays = new Date();
     thirtyDays.setDate(today.getDate() + 30);
@@ -60,22 +84,35 @@
           if (!p.paidAt && p.dueDate) {
             const due = new Date(p.dueDate);
             if (due <= thirtyDays) {
-              items.push({ name: item.name, amount: p.amount, dueDate: p.dueDate, categoryName: cat.name });
+              items.push({
+                name: item.name,
+                amount: p.amount,
+                dueDate: p.dueDate,
+                categoryName: cat.name,
+              });
             }
           }
         }
       }
     }
-    return items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).slice(0, 3);
+    return items
+      .sort(
+        (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
+      )
+      .slice(0, 3);
   });
 
   // Incomplete checklist
-  const pendingTasks = $derived($wedding.checklist.filter(t => !t.completed).length);
-  const completedTasks = $derived($wedding.checklist.filter(t => t.completed).length);
+  const pendingTasks = $derived(
+    $wedding.checklist.filter((t) => !t.completed).length,
+  );
+  const completedTasks = $derived(
+    $wedding.checklist.filter((t) => t.completed).length,
+  );
   const checklistProgress = $derived(
     $wedding.checklist.length > 0
       ? Math.round((completedTasks / $wedding.checklist.length) * 100)
-      : 0
+      : 0,
   );
 </script>
 
@@ -97,7 +134,8 @@
         </p>
       {:else}
         <p class="page-subtitle">
-          {$wedding.info.dateNote || 'Tanggal pernikahan belum ditentukan — atur tanggal di menu Pengaturan'}
+          {$wedding.info.dateNote ||
+            "Tanggal pernikahan belum ditentukan — atur tanggal di menu Pengaturan"}
         </p>
       {/if}
     </div>
@@ -112,368 +150,606 @@
           <div class="countdown-info">
             <span class="countdown-headline">Menuju Akad & Resepsi</span>
             <span class="countdown-subline">
-              {$wedding.info.weddingDate ? formatDate($wedding.info.weddingDate) : 'Hari Bahagia'}
+              {$wedding.info.weddingDate
+                ? formatDate($wedding.info.weddingDate)
+                : "Hari Bahagia"}
             </span>
           </div>
         </div>
       </div>
     {/if}
   </div>
-    {#if !data?.user}
-      <div class="guest-save-banner mb-6 animate-slide-up">
-        <div class="guest-banner-left">
-          <div class="guest-banner-icon-box">
-            <span class="guest-banner-icon">💍</span>
-          </div>
-          <div class="guest-banner-content">
-            <div class="guest-banner-badge">
-              <span class="pulse-dot"></span>
-              Mode Tamu — Tersimpan Sementara
-            </div>
-            <h3 class="guest-banner-title">Amankan Rencana Pernikahan Anda</h3>
-            <p class="guest-banner-desc">
-              Rencana Anda saat ini hanya tersimpan di browser perangkat ini. Simpan ke akun gratis agar data aman tidak hilang dan dapat dibuka bersama pasangan dari smartphone/laptop lain!
-            </p>
-          </div>
+  {#if !data?.user}
+    <div class="guest-save-banner mb-6 animate-slide-up">
+      <div class="guest-banner-left">
+        <div class="guest-banner-icon-box">
+          <span class="guest-banner-icon">💍</span>
         </div>
-        <div class="guest-banner-actions">
-          <a href="/daftar" class="btn btn-primary btn-save-account">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <span>Simpan ke Akun Gratis</span>
-          </a>
-          <a href="/masuk" class="btn-guest-login">
-            Sudah Punya Akun? Masuk
-          </a>
+        <div class="guest-banner-content">
+          <div class="guest-banner-badge">
+            <span class="pulse-dot"></span>
+            Mode Tamu — Tersimpan Sementara
+          </div>
+          <h3 class="guest-banner-title">Amankan Rencana Pernikahan Anda</h3>
+          <p class="guest-banner-desc">
+            Rencana Anda saat ini hanya tersimpan di browser perangkat ini.
+            Simpan ke akun gratis agar data aman tidak hilang dan dapat dibuka
+            bersama pasangan dari smartphone/laptop lain!
+          </p>
         </div>
       </div>
-    {:else if !data?.weddingData || !data?.weddingData?.wedding?.wizardCompleted}
-      <div class="wizard-prompt-banner mb-6 animate-slide-up">
-        <div class="wizard-prompt-text">
-          <span class="prompt-icon">✨</span>
-          <div>
-            <h4 class="prompt-title">Rencanakan Pernikahan Impian Anda</h4>
-            <p class="prompt-desc">Gunakan panduan Wizard untuk mengisi detail acara, anggaran, dan kalkulasi otomatis.</p>
-          </div>
-        </div>
-        <a href="/wizard" class="btn btn-primary btn-sm">
-          <span>Mulai Wizard</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
+      <div class="guest-banner-actions">
+        <a href="/daftar" class="btn btn-primary btn-save-account">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
           </svg>
+          <span>Simpan ke Akun Gratis</span>
         </a>
+        <a href="/masuk" class="btn-guest-login"> Sudah Punya Akun? Masuk </a>
       </div>
-    {/if}
-
-    <!-- Summary Cards -->
-    <div class="stats-grid animate-slide-up">
-      <div class="stat-card stat-card-primary">
-        <div class="stat-label">Target Anggaran</div>
-        <div class="stat-value">{formatRupiahShort($wedding.info.totalBudget)}</div>
-        <div class="stat-sub">Total rencana semua kategori</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-label">Sudah Dibayar</div>
-        <div class="stat-value" style="color: var(--color-success)">{formatRupiahShort(bs.totalDibayar)}</div>
-        <div class="stat-sub">dari {formatRupiahShort(bs.totalRencana)} total item</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-label">Sisa Tagihan</div>
-        <div class="stat-value" style="color: var(--color-warning)">{formatRupiahShort(bs.sisaTagihan)}</div>
-        <div class="stat-sub">belum dibayar ke vendor</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-label">Kekurangan Dana</div>
-        <div class="stat-value" style="color: {ss.kekurangan > 0 ? 'var(--color-danger)' : 'var(--color-success)'}">
-          {ss.kekurangan > 0 ? formatRupiahShort(ss.kekurangan) : 'Cukup ✓'}
+    </div>
+  {:else if !data?.weddingData || !data?.weddingData?.wedding?.wizardCompleted}
+    <div class="wizard-prompt-banner mb-6 animate-slide-up">
+      <div class="wizard-prompt-text">
+        <span class="prompt-icon">✨</span>
+        <div>
+          <h4 class="prompt-title">Rencanakan Pernikahan Impian Anda</h4>
+          <p class="prompt-desc">
+            Gunakan panduan Wizard untuk mengisi detail acara, anggaran, dan
+            kalkulasi otomatis.
+          </p>
         </div>
-        <div class="stat-sub">
-          {ss.kekurangan > 0 ? 'proyeksi kurang dari target' : 'tabungan sesuai target'}
-        </div>
+      </div>
+      <a href="/wizard" class="btn btn-primary btn-sm">
+        <span>Mulai Wizard</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+  {/if}
+
+  <!-- Summary Cards -->
+  <div class="stats-grid animate-slide-up">
+    <div class="stat-card stat-card-primary">
+      <div class="stat-label">Target Anggaran</div>
+      <div class="stat-value">
+        {formatRupiahShort($wedding.info.totalBudget)}
+      </div>
+      <div class="stat-sub">Total rencana semua kategori</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Sudah Dibayar</div>
+      <div class="stat-value" style="color: var(--color-success)">
+        {formatRupiahShort(bs.totalDibayar)}
+      </div>
+      <div class="stat-sub">
+        dari {formatRupiahShort(bs.totalRencana)} total item
       </div>
     </div>
 
-    <!-- Two Column -->
-    <div class="dashboard-grid mt-6">
-      <!-- Left Column -->
-      <div class="dashboard-col-main">
+    <div class="stat-card">
+      <div class="stat-label">Sisa Tagihan</div>
+      <div class="stat-value" style="color: var(--color-warning)">
+        {formatRupiahShort(bs.sisaTagihan)}
+      </div>
+      <div class="stat-sub">belum dibayar ke vendor</div>
+    </div>
 
-        <!-- Budget Progress -->
-        <div class="card animate-fade-in">
-          <div class="card-header">
-            <div>
-              <h3 class="card-title card-title-with-icon">
+    <div class="stat-card">
+      <div class="stat-label">Kekurangan Dana</div>
+      <div
+        class="stat-value"
+        style="color: {ss.kekurangan > 0
+          ? 'var(--color-danger)'
+          : 'var(--color-success)'}"
+      >
+        {ss.kekurangan > 0 ? formatRupiahShort(ss.kekurangan) : "Cukup ✓"}
+      </div>
+      <div class="stat-sub">
+        {ss.kekurangan > 0
+          ? "proyeksi kurang dari target"
+          : "tabungan sesuai target"}
+      </div>
+    </div>
+  </div>
+
+  <!-- Two Column -->
+  <div class="dashboard-grid mt-6">
+    <!-- Left Column -->
+    <div class="dashboard-col-main">
+      <!-- Budget Progress -->
+      <div class="card animate-fade-in">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title card-title-with-icon">
               <span class="card-title-icon" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path
+                    d="M3 5v14a2 2 0 0 0 2 2h16v-5"
+                  ></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg
+                >
               </span>
               Progress Anggaran
             </h3>
-              <p class="text-subtle text-sm">{formatRupiah(bs.totalDibayar)} dari {formatRupiah(bs.totalRencana)}</p>
-            </div>
-            <a href="/anggaran" class="btn btn-secondary btn-sm">Lihat Detail</a>
+            <p class="text-subtle text-sm">
+              {formatRupiah(bs.totalDibayar)} dari {formatRupiah(
+                bs.totalRencana,
+              )}
+            </p>
           </div>
+          <a href="/anggaran" class="btn btn-secondary btn-sm">Lihat Detail</a>
+        </div>
 
-          <div class="progress-bar mt-4">
-            <div class="progress-fill" style="width: {budgetProgress}%"></div>
-          </div>
-          <div class="flex justify-between mt-2">
-            <span class="text-xs text-subtle">{Math.round(budgetProgress)}% dibayar</span>
-            <span class="text-xs text-subtle">{formatRupiahShort(bs.sisaTagihan)} tersisa</span>
-          </div>
+        <div class="progress-bar mt-4">
+          <div class="progress-fill" style="width: {budgetProgress}%"></div>
+        </div>
+        <div class="flex justify-between mt-2">
+          <span class="text-xs text-subtle"
+            >{Math.round(budgetProgress)}% dibayar</span
+          >
+          <span class="text-xs text-subtle"
+            >{formatRupiahShort(bs.sisaTagihan)} tersisa</span
+          >
+        </div>
 
-          <!-- Categories mini -->
-          {#if $wedding.budgetCategories.length > 0}
-            <div class="divider"></div>
-            <div class="category-list">
-              {#each $wedding.budgetCategories.slice(0, 5) as cat}
-                {@const catTotal = cat.items.reduce((a, i) => a + i.quantity * i.unitPrice, 0)}
-                {@const catPaid = cat.items.reduce((a, i) => a + i.payments.filter(p => p.paidAt).reduce((b, p) => b + p.amount, 0), 0)}
-                {@const pct = catTotal > 0 ? Math.min(100, (catPaid / catTotal) * 100) : 0}
-                <div class="cat-row">
-                  <span class="cat-icon"><CategoryIcon icon={cat.icon} size={16} /></span>
-                  <div class="cat-info flex-1">
-                    <div class="flex justify-between mb-1">
-                      <span class="text-sm font-medium">{cat.name}</span>
-                      <span class="text-sm text-muted">{formatRupiahShort(catTotal)}</span>
-                    </div>
-                    <div class="progress-bar" style="height: 4px">
-                      <div class="progress-fill" style="width: {pct}%; background: {cat.color}"></div>
-                    </div>
+        <!-- Categories mini -->
+        {#if $wedding.budgetCategories.length > 0}
+          <div class="divider"></div>
+          <div class="category-list">
+            {#each $wedding.budgetCategories.slice(0, 5) as cat}
+              {@const catTotal = cat.items.reduce(
+                (a, i) => a + i.quantity * i.unitPrice,
+                0,
+              )}
+              {@const catPaid = cat.items.reduce(
+                (a, i) =>
+                  a +
+                  i.payments
+                    .filter((p) => p.paidAt)
+                    .reduce((b, p) => b + p.amount, 0),
+                0,
+              )}
+              {@const pct =
+                catTotal > 0 ? Math.min(100, (catPaid / catTotal) * 100) : 0}
+              <div class="cat-row">
+                <span class="cat-icon"
+                  ><CategoryIcon icon={cat.icon} size={16} /></span
+                >
+                <div class="cat-info flex-1">
+                  <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium">{cat.name}</span>
+                    <span class="text-sm text-muted"
+                      >{formatRupiahShort(catTotal)}</span
+                    >
                   </div>
-                </div>
-              {/each}
-              {#if $wedding.budgetCategories.length > 5}
-                <a href="/anggaran" class="text-sm text-muted text-center mt-2 block">
-                  +{$wedding.budgetCategories.length - 5} kategori lainnya →
-                </a>
-              {/if}
-            </div>
-          {:else}
-            <div class="empty-state">
-              <p class="text-subtle text-sm">Belum ada kategori anggaran.</p>
-              <a href="/anggaran" class="btn btn-primary btn-sm mt-3">Buat Anggaran</a>
-            </div>
-          {/if}
-        </div>
-
-        <!-- Tabungan Progress -->
-        <div class="card animate-fade-in delay-100 mt-4">
-          <div class="card-header">
-            <div>
-              <h3 class="card-title card-title-with-icon">
-              <span class="card-title-icon" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><circle cx="12" cy="15.5" r="1.5"></circle></svg>
-              </span>
-              Progress Tabungan
-            </h3>
-              <p class="text-subtle text-sm">{formatRupiah(ss.totalTerkumpul)} terkumpul</p>
-            </div>
-            <a href="/tabungan" class="btn btn-secondary btn-sm">Lihat Detail</a>
-          </div>
-
-          <div class="progress-bar mt-4">
-            <div class="progress-fill" style="width: {savingsProgress}%"></div>
-          </div>
-          <div class="flex justify-between mt-2">
-            <span class="text-xs text-subtle">{Math.round(savingsProgress)}% dari target</span>
-            <span class="text-xs text-subtle">Target: {formatRupiahShort(ss.target)}</span>
-          </div>
-
-          {#if !ss.isOnTrack && ss.kekurangan > 0}
-            <div class="alert alert-warning mt-4">
-              <span style="color: var(--color-warning); display: inline-flex; align-items: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></span>
-              <span class="text-sm">
-                Dengan laju menabung sekarang, proyeksi kurang <strong>{formatRupiah(ss.kekurangan)}</strong> pada hari H.
-                <a href="/tabungan" class="font-semibold"> Lihat proyeksi lengkap →</a>
-              </span>
-            </div>
-          {:else if ss.isOnTrack && ss.target > 0}
-            <div class="alert alert-success mt-4">
-              <span style="color: var(--color-success); display: inline-flex; align-items: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
-              <span class="text-sm">Tabunganmu on-track! Proyeksi total {formatRupiah(ss.proyeksiTotal)} sudah melebihi target.</span>
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      <!-- Right Column -->
-      <div class="dashboard-col-side">
-
-        <!-- Tamu -->
-        <div class="card animate-fade-in delay-200">
-          <div class="card-header">
-            <h3 class="card-title card-title-with-icon">
-            <span class="card-title-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            </span>
-            Tamu Undangan
-          </h3>
-            <a href="/tamu" class="btn btn-secondary btn-sm">Kelola</a>
-          </div>
-
-          <div class="guest-stats">
-            <div class="guest-stat">
-              <span class="guest-stat-num" style="color: var(--color-success)">{gs.hadir}</span>
-              <span class="guest-stat-label">Hadir</span>
-            </div>
-            <div class="guest-stat">
-              <span class="guest-stat-num" style="color: var(--color-warning)">{gs.pending}</span>
-              <span class="guest-stat-label">Pending</span>
-            </div>
-            <div class="guest-stat">
-              <span class="guest-stat-num" style="color: var(--color-danger)">{gs.tidakHadir}</span>
-              <span class="guest-stat-label">Tidak Hadir</span>
-            </div>
-          </div>
-
-          <div class="progress-bar mt-3">
-            <div class="progress-fill" style="width: {gs.total > 0 ? (gs.hadir / gs.total) * 100 : 0}%"></div>
-          </div>
-          <p class="text-xs text-subtle mt-2">
-            {gs.hadir} dari {gs.total} tamu sudah konfirmasi hadir
-          </p>
-
-          {#if gs.total === 0}
-            <div class="empty-state mt-3">
-              <p class="text-subtle text-sm">Belum ada tamu ditambahkan.</p>
-              <a href="/tamu" class="btn btn-primary btn-sm mt-2">Tambah Tamu</a>
-            </div>
-          {/if}
-        </div>
-
-        <!-- Checklist -->
-        <div class="card animate-fade-in delay-300 mt-4">
-          <div class="card-header">
-            <h3 class="card-title card-title-with-icon">
-            <span class="card-title-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-            </span>
-            Checklist Persiapan
-          </h3>
-            <a href="/checklist" class="btn btn-secondary btn-sm">Lihat</a>
-          </div>
-
-          {#if $wedding.checklist.length > 0}
-            <div class="flex justify-between mb-3">
-              <span class="text-sm text-muted">{completedTasks}/{$wedding.checklist.length} selesai</span>
-              <span class="badge badge-{checklistProgress === 100 ? 'success' : 'neutral'}">{checklistProgress}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: {checklistProgress}%"></div>
-            </div>
-            <div class="task-preview mt-3">
-              {#each $wedding.checklist.filter(t => !t.completed).slice(0, 3) as task}
-                <div class="task-preview-item">
-                  <span class="task-dot"></span>
-                  <span class="text-sm">{task.text}</span>
-                </div>
-              {/each}
-            </div>
-          {:else}
-            <div class="empty-state">
-              <p class="text-subtle text-sm">Belum ada tugas di checklist.</p>
-              <a href="/checklist" class="btn btn-primary btn-sm mt-2">Buat Tugas</a>
-            </div>
-          {/if}
-        </div>
-
-        <!-- Upcoming Payments -->
-        {#if upcomingPayments().length > 0}
-          <div class="card animate-fade-in delay-400 mt-4">
-            <h3 class="card-title card-title-with-icon mb-3">
-            <span class="card-title-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            </span>
-            Jatuh Tempo (30 hari)
-          </h3>
-            {#each upcomingPayments() as pay}
-              <div class="upcoming-item">
-                <div class="upcoming-info">
-                  <span class="text-sm font-medium">{pay.name}</span>
-                  <span class="text-xs text-subtle">{pay.categoryName}</span>
-                </div>
-                <div class="upcoming-amount">
-                  <span class="text-sm font-semibold" style="color: var(--color-warning)">{formatRupiahShort(pay.amount)}</span>
-                  <span class="text-xs text-subtle">{formatDate(pay.dueDate)}</span>
+                  <div class="progress-bar" style="height: 4px">
+                    <div
+                      class="progress-fill"
+                      style="width: {pct}%; background: {cat.color}"
+                    ></div>
+                  </div>
                 </div>
               </div>
             {/each}
+            {#if $wedding.budgetCategories.length > 5}
+              <a
+                href="/anggaran"
+                class="text-sm text-muted text-center mt-2 block"
+              >
+                +{$wedding.budgetCategories.length - 5} kategori lainnya →
+              </a>
+            {/if}
+          </div>
+        {:else}
+          <div class="empty-state">
+            <p class="text-subtle text-sm">Belum ada kategori anggaran.</p>
+            <a href="/anggaran" class="btn btn-primary btn-sm mt-3"
+              >Buat Anggaran</a
+            >
           </div>
         {/if}
+      </div>
 
-        <!-- Agenda Kalender Terdekat -->
-        <div class="card animate-fade-in mt-4">
-          <div class="card-header">
-            <div>
-              <h3 class="card-title card-title-with-icon">
-                <span class="card-title-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
-                </span>
-                Agenda Terdekat
-              </h3>
-              <p class="text-subtle text-sm">Jadwal persiapan pra-nikah</p>
-            </div>
-            <a href="/kalender" class="btn btn-secondary btn-sm">Buka Kalender</a>
+      <!-- Tabungan Progress -->
+      <div class="card animate-fade-in delay-100 mt-4">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title card-title-with-icon">
+              <span class="card-title-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><path d="M3 21h18"></path><path d="M3 10h18"></path><path
+                    d="M5 6l7-3 7 3"
+                  ></path><path d="M4 10v11"></path><path d="M20 10v11"
+                  ></path><circle cx="12" cy="15.5" r="1.5"></circle></svg
+                >
+              </span>
+              Progress Tabungan
+            </h3>
+            <p class="text-subtle text-sm">
+              {formatRupiah(ss.totalTerkumpul)} terkumpul
+            </p>
           </div>
-
-          {#if nextEvent()}
-            {@const ev = nextEvent()!}
-            <div class="next-event-box mt-3 p-3 rounded" style="background: rgba(201, 132, 122, 0.08); border-left: 3px solid var(--color-accent)">
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-semibold text-accent">{formatDate(ev.date)}</span>
-                {#if ev.startTime}
-                  <span class="text-xs text-muted">⏰ {ev.startTime}</span>
-                {/if}
-              </div>
-              <h4 class="text-sm font-bold m-0 text-dark">{ev.title}</h4>
-              {#if ev.location}
-                <p class="text-xs text-muted mt-1 mb-0">📍 {ev.location}</p>
-              {/if}
-            </div>
-          {:else}
-            <div class="empty-state py-3">
-              <p class="text-subtle text-xs">Belum ada agenda mendatang.</p>
-              <a href="/kalender" class="btn btn-ghost btn-sm mt-1">+ Tambah Agenda</a>
-            </div>
-          {/if}
+          <a href="/tabungan" class="btn btn-secondary btn-sm">Lihat Detail</a>
         </div>
 
-        <!-- Vendor & Rundown Quick Widget -->
-        <div class="grid-2 gap-3 mt-4">
-          <div class="card p-4 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-accent uppercase">Vendor</span>
-                <span class="badge badge-success text-xs">{vs.deal} Deal</span>
-              </div>
-              <p class="text-xs text-muted mb-2">Total {vs.total} mitra vendor tercatat</p>
-            </div>
-            <a href="/vendor" class="btn btn-secondary btn-sm text-center">Kelola Vendor →</a>
-          </div>
+        <div class="progress-bar mt-4">
+          <div class="progress-fill" style="width: {savingsProgress}%"></div>
+        </div>
+        <div class="flex justify-between mt-2">
+          <span class="text-xs text-subtle"
+            >{Math.round(savingsProgress)}% dari target</span
+          >
+          <span class="text-xs text-subtle"
+            >Target: {formatRupiahShort(ss.target)}</span
+          >
+        </div>
 
-          <div class="card p-4 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-accent uppercase">Rundown</span>
-                <span class="badge badge-info text-xs">{rs.total} Acara</span>
-              </div>
-              <p class="text-xs text-muted mb-2">Susunan hari-H siap cetak</p>
-            </div>
-            <a href="/rundown" class="btn btn-secondary btn-sm text-center">Buka Rundown →</a>
+        {#if !ss.isOnTrack && ss.kekurangan > 0}
+          <div class="alert alert-warning mt-4">
+            <span
+              style="color: var(--color-warning); display: inline-flex; align-items: center;"
+              ><svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><path
+                  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                ></path><line x1="12" y1="9" x2="12" y2="13"></line><line
+                  x1="12"
+                  y1="17"
+                  x2="12.01"
+                  y2="17"
+                ></line></svg
+              ></span
+            >
+            <span class="text-sm">
+              Dengan laju menabung sekarang, proyeksi kurang <strong
+                >{formatRupiah(ss.kekurangan)}</strong
+              >
+              pada hari H.
+              <a href="/tabungan" class="font-semibold">
+                Lihat proyeksi lengkap →</a
+              >
+            </span>
           </div>
+        {:else if ss.isOnTrack && ss.target > 0}
+          <div class="alert alert-success mt-4">
+            <span
+              style="color: var(--color-success); display: inline-flex; align-items: center;"
+              ><svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline
+                  points="22 4 12 14.01 9 11.01"
+                ></polyline></svg
+              ></span
+            >
+            <span class="text-sm"
+              >Tabunganmu on-track! Proyeksi total {formatRupiah(
+                ss.proyeksiTotal,
+              )} sudah melebihi target.</span
+            >
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="dashboard-col-side">
+      <!-- Tamu -->
+      <div class="card animate-fade-in delay-200">
+        <div class="card-header">
+          <h3 class="card-title card-title-with-icon">
+            <span class="card-title-icon" aria-hidden="true">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+                ></path><circle cx="9" cy="7" r="4"></circle><path
+                  d="M23 21v-2a4 4 0 0 0-3-3.87"
+                ></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg
+              >
+            </span>
+            Tamu Undangan
+          </h3>
+          <a href="/tamu" class="btn btn-secondary btn-sm">Kelola</a>
+        </div>
+
+        <div class="guest-stats">
+          <div class="guest-stat">
+            <span class="guest-stat-num" style="color: var(--color-success)"
+              >{gs.hadir}</span
+            >
+            <span class="guest-stat-label">Hadir</span>
+          </div>
+          <div class="guest-stat">
+            <span class="guest-stat-num" style="color: var(--color-warning)"
+              >{gs.pending}</span
+            >
+            <span class="guest-stat-label">Pending</span>
+          </div>
+          <div class="guest-stat">
+            <span class="guest-stat-num" style="color: var(--color-danger)"
+              >{gs.tidakHadir}</span
+            >
+            <span class="guest-stat-label">Tidak Hadir</span>
+          </div>
+        </div>
+
+        <div class="progress-bar mt-3">
+          <div
+            class="progress-fill"
+            style="width: {gs.total > 0 ? (gs.hadir / gs.total) * 100 : 0}%"
+          ></div>
+        </div>
+        <p class="text-xs text-subtle mt-2">
+          {gs.hadir} dari {gs.total} tamu sudah konfirmasi hadir
+        </p>
+
+        {#if gs.total === 0}
+          <div class="empty-state mt-3">
+            <p class="text-subtle text-sm">Belum ada tamu ditambahkan.</p>
+            <a href="/tamu" class="btn btn-primary btn-sm mt-2">Tambah Tamu</a>
+          </div>
+        {/if}
+      </div>
+
+      <!-- Checklist -->
+      <div class="card animate-fade-in delay-300 mt-4">
+        <div class="card-header">
+          <h3 class="card-title card-title-with-icon">
+            <span class="card-title-icon" aria-hidden="true">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><path d="M9 11l3 3L22 4"></path><path
+                  d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
+                ></path></svg
+              >
+            </span>
+            Checklist Persiapan
+          </h3>
+          <a href="/checklist" class="btn btn-secondary btn-sm">Lihat</a>
+        </div>
+
+        {#if $wedding.checklist.length > 0}
+          <div class="flex justify-between mb-3">
+            <span class="text-sm text-muted"
+              >{completedTasks}/{$wedding.checklist.length} selesai</span
+            >
+            <span
+              class="badge badge-{checklistProgress === 100
+                ? 'success'
+                : 'neutral'}">{checklistProgress}%</span
+            >
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              style="width: {checklistProgress}%"
+            ></div>
+          </div>
+          <div class="task-preview mt-3">
+            {#each $wedding.checklist
+              .filter((t) => !t.completed)
+              .slice(0, 3) as task}
+              <div class="task-preview-item">
+                <span class="task-dot"></span>
+                <span class="text-sm">{task.text}</span>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <div class="empty-state">
+            <p class="text-subtle text-sm">Belum ada tugas di checklist.</p>
+            <a href="/checklist" class="btn btn-primary btn-sm mt-2"
+              >Buat Tugas</a
+            >
+          </div>
+        {/if}
+      </div>
+
+      <!-- Upcoming Payments -->
+      {#if upcomingPayments().length > 0}
+        <div class="card animate-fade-in delay-400 mt-4">
+          <h3 class="card-title card-title-with-icon mb-3">
+            <span class="card-title-icon" aria-hidden="true">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><circle cx="12" cy="12" r="10"></circle><polyline
+                  points="12 6 12 12 16 14"
+                ></polyline></svg
+              >
+            </span>
+            Jatuh Tempo (30 hari)
+          </h3>
+          {#each upcomingPayments() as pay}
+            <div class="upcoming-item">
+              <div class="upcoming-info">
+                <span class="text-sm font-medium">{pay.name}</span>
+                <span class="text-xs text-subtle">{pay.categoryName}</span>
+              </div>
+              <div class="upcoming-amount">
+                <span
+                  class="text-sm font-semibold"
+                  style="color: var(--color-warning)"
+                  >{formatRupiahShort(pay.amount)}</span
+                >
+                <span class="text-xs text-subtle"
+                  >{formatDate(pay.dueDate)}</span
+                >
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      <!-- Agenda Kalender Terdekat -->
+      <div class="card animate-fade-in mt-4">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title card-title-with-icon">
+              <span class="card-title-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  ><rect x="3" y="4" width="18" height="18" rx="2"></rect><line
+                    x1="16"
+                    y1="2"
+                    x2="16"
+                    y2="6"
+                  ></line><line x1="8" y1="2" x2="8" y2="6"></line></svg
+                >
+              </span>
+              Agenda Terdekat
+            </h3>
+            <p class="text-subtle text-sm">Jadwal persiapan pra-nikah</p>
+          </div>
+          <a href="/kalender" class="btn btn-secondary btn-sm">Buka Kalender</a>
+        </div>
+
+        {#if nextEvent()}
+          {@const ev = nextEvent()!}
+          <div
+            class="next-event-box mt-3 p-3 rounded"
+            style="background: rgba(201, 132, 122, 0.08); border-left: 3px solid var(--color-accent)"
+          >
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs font-semibold text-accent"
+                >{formatDate(ev.date)}</span
+              >
+              {#if ev.startTime}
+                <span class="text-xs text-muted">⏰ {ev.startTime}</span>
+              {/if}
+            </div>
+            <h4 class="text-sm font-bold m-0 text-dark">{ev.title}</h4>
+            {#if ev.location}
+              <p class="text-xs text-muted mt-1 mb-0">📍 {ev.location}</p>
+            {/if}
+          </div>
+        {:else}
+          <div class="empty-state py-3">
+            <p class="text-subtle text-xs">Belum ada agenda mendatang.</p>
+            <a href="/kalender" class="btn btn-ghost btn-sm mt-1"
+              >+ Tambah Agenda</a
+            >
+          </div>
+        {/if}
+      </div>
+
+      <!-- Vendor & Rundown Quick Widget -->
+      <div class="grid-2 gap-3 mt-4">
+        <div class="card p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-accent uppercase">Vendor</span
+              >
+              <span class="badge badge-success text-xs">{vs.deal} Deal</span>
+            </div>
+            <p class="text-xs text-muted mb-2">
+              Total {vs.total} mitra vendor tercatat
+            </p>
+          </div>
+          <a href="/vendor" class="btn btn-secondary btn-sm text-center"
+            >Kelola Vendor →</a
+          >
+        </div>
+
+        <div class="card p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-accent uppercase"
+                >Rundown</span
+              >
+              <span class="badge badge-info text-xs">{rs.total} Acara</span>
+            </div>
+            <p class="text-xs text-muted mb-2">Susunan hari-H siap cetak</p>
+          </div>
+          <a href="/rundown" class="btn btn-secondary btn-sm text-center"
+            >Buka Rundown →</a
+          >
         </div>
       </div>
     </div>
   </div>
+</div>
 
 <style>
-  .dashboard { padding-bottom: var(--space-8); }
+  .dashboard {
+    padding-bottom: var(--space-8);
+  }
 
   /* Countdown Widget */
   .countdown-widget {
@@ -493,7 +769,11 @@
     width: 64px;
     height: 64px;
     border-radius: var(--radius-xl);
-    background: linear-gradient(135deg, rgba(201, 132, 122, 0.15), rgba(245, 230, 224, 0.6));
+    background: linear-gradient(
+      135deg,
+      rgba(201, 132, 122, 0.15),
+      rgba(245, 230, 224, 0.6)
+    );
     border: 1.5px solid rgba(201, 132, 122, 0.3);
     display: flex;
     flex-direction: column;
@@ -546,7 +826,11 @@
   }
 
   .stat-card-primary {
-    background: linear-gradient(135deg, var(--color-primary-xlight), var(--color-secondary));
+    background: linear-gradient(
+      135deg,
+      var(--color-primary-xlight),
+      var(--color-secondary)
+    );
     border-color: var(--color-primary-light);
   }
 
@@ -572,36 +856,69 @@
     font-family: var(--font-display);
   }
 
-  .category-list { display: flex; flex-direction: column; gap: var(--space-3); }
+  .category-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
 
-  .cat-row { display: flex; align-items: center; gap: var(--space-3); }
-  .cat-icon { font-size: 1.25rem; flex-shrink: 0; }
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .cat-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
 
   /* Guest Stats */
-  .guest-stats { display: flex; gap: var(--space-4); margin-top: var(--space-2); }
+  .guest-stats {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+  }
 
-  .guest-stat { flex: 1; text-align: center; }
+  .guest-stat {
+    flex: 1;
+    text-align: center;
+  }
 
   .guest-stat-num {
     display: block;
     font-family: var(--font-numeric);
     font-variant-numeric: tabular-nums lining-nums;
-    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-feature-settings:
+      "tnum" 1,
+      "lnum" 1;
     font-size: var(--font-size-2xl);
     font-weight: 700;
     line-height: 1;
     margin-bottom: 4px;
   }
 
-  .guest-stat-label { font-size: var(--font-size-xs); color: var(--color-text-subtle); font-weight: 500; }
+  .guest-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-subtle);
+    font-weight: 500;
+  }
 
   /* Task Preview */
-  .task-preview { display: flex; flex-direction: column; gap: var(--space-2); }
+  .task-preview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
 
-  .task-preview-item { display: flex; align-items: center; gap: var(--space-3); }
+  .task-preview-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
 
   .task-dot {
-    width: 6px; height: 6px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--color-primary);
     flex-shrink: 0;
@@ -609,14 +926,27 @@
 
   /* Upcoming Payments */
   .upcoming-item {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: var(--space-2) 0;
     border-bottom: 1px solid var(--color-border-light);
   }
 
-  .upcoming-item:last-child { border-bottom: none; }
-  .upcoming-info { display: flex; flex-direction: column; gap: 2px; }
-  .upcoming-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .upcoming-item:last-child {
+    border-bottom: none;
+  }
+  .upcoming-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .upcoming-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
 
   /* Guest Save Banner */
   .guest-save-banner {
@@ -625,7 +955,12 @@
     justify-content: space-between;
     gap: var(--space-5);
     padding: var(--space-5) var(--space-6);
-    background: linear-gradient(135deg, rgba(201, 132, 122, 0.16) 0%, rgba(212, 163, 115, 0.14) 50%, rgba(201, 132, 122, 0.09) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(201, 132, 122, 0.16) 0%,
+      rgba(212, 163, 115, 0.14) 50%,
+      rgba(201, 132, 122, 0.09) 100%
+    );
     border: 1.5px solid rgba(201, 132, 122, 0.35);
     border-radius: var(--radius-xl);
     box-shadow: 0 8px 24px rgba(139, 94, 82, 0.07);
@@ -634,13 +969,17 @@
   }
 
   .guest-save-banner::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+    background: linear-gradient(
+      180deg,
+      var(--color-primary),
+      var(--color-accent)
+    );
   }
 
   .guest-banner-left {
@@ -654,7 +993,11 @@
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: linear-gradient(135deg, rgba(201, 132, 122, 0.25), rgba(212, 163, 115, 0.25));
+    background: linear-gradient(
+      135deg,
+      rgba(201, 132, 122, 0.25),
+      rgba(212, 163, 115, 0.25)
+    );
     display: flex;
     align-items: center;
     justify-content: center;
@@ -695,9 +1038,18 @@
   }
 
   @keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(201, 132, 122, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(201, 132, 122, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(201, 132, 122, 0); }
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(201, 132, 122, 0.7);
+    }
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 6px rgba(201, 132, 122, 0);
+    }
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(201, 132, 122, 0);
+    }
   }
 
   .guest-banner-title {
@@ -761,7 +1113,11 @@
     justify-content: space-between;
     gap: var(--space-4);
     padding: var(--space-4) var(--space-5);
-    background: linear-gradient(135deg, rgba(201, 132, 122, 0.12) 0%, rgba(212, 163, 115, 0.15) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(201, 132, 122, 0.12) 0%,
+      rgba(212, 163, 115, 0.15) 100%
+    );
     border: 1px solid rgba(201, 132, 122, 0.3);
     border-radius: var(--radius-xl);
     box-shadow: 0 4px 16px rgba(139, 94, 82, 0.06);
@@ -823,16 +1179,36 @@
   }
 
   @media (max-width: 1024px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .dashboard-grid { grid-template-columns: 1fr; }
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 600px) {
-    .page-hero { padding: var(--space-6) 0 var(--space-5); }
-    .page-hero-inner { flex-direction: column; align-items: stretch; gap: var(--space-4); }
-    .countdown-widget { width: 100%; padding: var(--space-3) var(--space-4); }
-    .countdown-circle { width: 52px; height: 52px; }
-    .countdown-big-num { font-size: 1.45rem; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .page-hero {
+      padding: var(--space-6) 0 var(--space-5);
+    }
+    .page-hero-inner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-4);
+    }
+    .countdown-widget {
+      width: 100%;
+      padding: var(--space-3) var(--space-4);
+    }
+    .countdown-circle {
+      width: 52px;
+      height: 52px;
+    }
+    .countdown-big-num {
+      font-size: 1.45rem;
+    }
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 </style>

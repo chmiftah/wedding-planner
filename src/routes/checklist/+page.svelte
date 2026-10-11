@@ -967,6 +967,19 @@
   </div>
 {/if}
 
+<!-- Mobile Floating Action Button (FAB) -->
+<button
+  class="mobile-fab no-print hide-desktop"
+  onclick={openAddModal}
+  aria-label="Tambah Tugas Baru"
+>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+  <span>Tambah Tugas</span>
+</button>
+
 <style>
   /* Stats Overview Cards */
   .stats-overview-grid {
@@ -1564,5 +1577,27 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 0.65rem 0.85rem;
+  }
+
+  @media (max-width: 768px) {
+    .modal-card {
+      max-height: calc(100vh - var(--space-6));
+      max-height: calc(100dvh - var(--space-6));
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius-xl);
+    }
+    .modal-body {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      flex-direction: column-reverse;
+      gap: var(--space-2);
+    }
+    .modal-footer .btn {
+      width: 100%;
+      justify-content: center;
+    }
   }
 </style>

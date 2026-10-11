@@ -305,6 +305,35 @@
                 </div>
               {/if}
             </div>
+
+            <!-- Drawer Quick Links (Admin, Settings, Logout) -->
+            {#if !isCollapsed}
+              <div class="drawer-action-links animate-fade-in">
+                {#if data?.user?.role === 'admin'}
+                  <a href="/admin" class="drawer-link-btn admin-btn" onclick={closeMobile}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Panel Admin</span>
+                  </a>
+                {/if}
+                <a href="/pengaturan" class="drawer-link-btn" onclick={closeMobile}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                  <span>Pengaturan</span>
+                </a>
+                <a href="/keluar" class="drawer-link-btn text-danger">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  <span>Keluar</span>
+                </a>
+              </div>
+            {/if}
           {/if}
         </div>
       </div>
@@ -316,7 +345,7 @@
     <div class="main-wrapper">
       <!-- Clean & Spacious Top Header -->
       <header class="app-header">
-        <div class="header-left">
+        <div class="topbar-left">
           <!-- Mobile Hamburger Toggle -->
           <button
             type="button"
@@ -331,28 +360,34 @@
             </svg>
           </button>
 
-          <!-- Current Page Breadcrumb / Heading -->
-          <div class="header-breadcrumb">
+          <!-- Desktop Breadcrumb -->
+          <div class="header-breadcrumb hide-mobile">
             <span class="breadcrumb-sub">Perencanaan</span>
             <span class="breadcrumb-sep">/</span>
             <h2 class="breadcrumb-current">{currentNav.label}</h2>
           </div>
+
+          <!-- Mobile Compact Title -->
+          <div class="topbar-mobile-heading hide-desktop">
+            <span class="topbar-mobile-icon">💍</span>
+            <h2 class="topbar-mobile-title">{currentNav.label}</h2>
+          </div>
         </div>
 
-        <div class="header-right">
+        <div class="topbar-right">
           <!-- Minimal Countdown Pill in Topbar -->
           {#if countdownDays !== null && countdownDays > 0}
-            <div class="topbar-countdown-pill hide-mobile" title="Hari-H Pernikahan">
+            <div class="topbar-countdown-pill" title="Hari-H Pernikahan">
               <span class="pill-dot"></span>
               <span>H-{countdownDays} Hari</span>
             </div>
           {/if}
 
-          <!-- Admin Button if Role Admin -->
+          <!-- Admin Button if Role Admin (Desktop only) -->
           {#if data?.user?.role === 'admin'}
             <a
               href="/admin"
-              class="topbar-admin-btn {currentPath.startsWith('/admin') ? 'active' : ''}"
+              class="topbar-admin-btn hide-mobile {currentPath.startsWith('/admin') ? 'active' : ''}"
               title="Panel Administrator"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -362,27 +397,39 @@
             </a>
           {/if}
 
-          <!-- Settings Button -->
+          <!-- Settings Button (Desktop only) -->
           <a
             href="/pengaturan"
-            class="topbar-icon-btn {currentPath === '/pengaturan' ? 'active' : ''}"
+            class="topbar-icon-btn hide-mobile {currentPath === '/pengaturan' ? 'active' : ''}"
             title="Pengaturan Pernikahan & Akun"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
           </a>
 
-          <!-- Logout or Login Button -->
+          <!-- User Trigger (Mobile: avatar circle opens drawer) -->
           {#if data?.user}
-            <a href="/keluar" class="topbar-logout-btn" title="Keluar">
+            <button
+              type="button"
+              class="topbar-avatar-btn hide-desktop"
+              onclick={toggleMobile}
+              title="Menu Pengguna & Pengaturan"
+            >
+              <div class="user-avatar-sm">
+                {data.user.name.charAt(0).toUpperCase()}
+              </div>
+            </button>
+
+            <!-- Logout Button (Desktop only) -->
+            <a href="/keluar" class="topbar-logout-btn hide-mobile" title="Keluar">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>
                 <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
-              <span class="hide-mobile">Keluar</span>
+              <span>Keluar</span>
             </a>
           {:else}
             <a href="/masuk" class="topbar-login-btn">Masuk</a>
@@ -394,6 +441,82 @@
       <main class="page-content">
         {@render children()}
       </main>
+
+      <!-- Mobile Bottom Navigation Bar -->
+      <nav class="mobile-bottom-nav hide-desktop no-print" aria-label="Navigasi Bawah">
+        <a
+          href="/dashboard"
+          class="bottom-nav-item {currentPath === '/dashboard' ? 'active' : ''}"
+          onclick={closeMobile}
+        >
+          <span class="bottom-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </span>
+          <span class="bottom-nav-label">Dashboard</span>
+        </a>
+
+        <a
+          href="/rundown"
+          class="bottom-nav-item {currentPath.startsWith('/rundown') ? 'active' : ''}"
+          onclick={closeMobile}
+        >
+          <span class="bottom-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </span>
+          <span class="bottom-nav-label">Rundown</span>
+        </a>
+
+        <a
+          href="/checklist"
+          class="bottom-nav-item {currentPath.startsWith('/checklist') ? 'active' : ''}"
+          onclick={closeMobile}
+        >
+          <span class="bottom-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+          </span>
+          <span class="bottom-nav-label">Checklist</span>
+        </a>
+
+        <a
+          href="/anggaran"
+          class="bottom-nav-item {currentPath.startsWith('/anggaran') ? 'active' : ''}"
+          onclick={closeMobile}
+        >
+          <span class="bottom-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+              <line x1="6" y1="15" x2="10" y2="15"></line>
+            </svg>
+          </span>
+          <span class="bottom-nav-label">Anggaran</span>
+        </a>
+
+        <button
+          type="button"
+          class="bottom-nav-item bottom-nav-menu-btn {isMobileOpen ? 'active' : ''}"
+          onclick={toggleMobile}
+          aria-label="Semua Menu"
+        >
+          <span class="bottom-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </span>
+          <span class="bottom-nav-label">Menu</span>
+        </button>
+      </nav>
     </div>
   </div>
 {/if}
@@ -667,7 +790,9 @@
 
   .sidebar-user-section {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
   }
 
   .user-info-row {
@@ -675,13 +800,17 @@
     align-items: center;
     gap: var(--space-3);
     width: 100%;
-    padding: 4px;
-    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    background: rgba(201, 132, 122, 0.05);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
   }
 
   .user-info-row.compact {
     justify-content: center;
     padding: 4px 0;
+    background: none;
+    border: none;
   }
 
   .user-avatar {
@@ -751,15 +880,19 @@
     z-index: 80;
     padding: 0 var(--space-8);
     display: flex;
+    flex-direction: row !important;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 1px 4px rgba(139, 94, 82, 0.03);
   }
 
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
+  .topbar-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: var(--space-3);
+    min-width: 0;
+    flex: 1;
   }
 
   .header-toggle-btn {
@@ -772,12 +905,36 @@
     cursor: pointer;
     padding: 6px;
     border-radius: var(--radius-md);
+    flex-shrink: 0;
   }
 
   .header-breadcrumb {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+  }
+
+  .topbar-mobile-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .topbar-mobile-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .topbar-mobile-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .breadcrumb-sub {
@@ -795,12 +952,14 @@
     font-weight: 700;
     color: var(--color-text);
     margin: 0;
+    white-space: nowrap;
   }
 
-  .header-right {
+  .topbar-right {
     display: flex;
     align-items: center;
     gap: var(--space-3);
+    flex-shrink: 0;
   }
 
   .topbar-countdown-pill {
@@ -811,8 +970,9 @@
     border-radius: var(--radius-full);
     background: rgba(201, 132, 122, 0.1);
     color: var(--color-accent);
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 600;
+    white-space: nowrap;
   }
 
   .pill-dot {
@@ -820,6 +980,29 @@
     height: 6px;
     border-radius: 50%;
     background: var(--color-primary);
+  }
+
+  .topbar-avatar-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+
+  .user-avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(201, 132, 122, 0.35);
   }
 
   .topbar-admin-btn {
@@ -901,6 +1084,118 @@
     padding-bottom: var(--space-16);
   }
 
+  /* Drawer Quick Links */
+  .drawer-action-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    margin-top: 2px;
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--color-border-light);
+  }
+
+  .drawer-link-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all var(--transition-fast);
+  }
+
+  .drawer-link-btn:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-accent);
+  }
+
+  .drawer-link-btn.admin-btn {
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 600;
+    border: 1px solid #fde68a;
+  }
+
+  .drawer-link-btn.admin-btn:hover {
+    background: #fde68a;
+  }
+
+  .drawer-link-btn.text-danger {
+    color: var(--color-danger);
+  }
+
+  .drawer-link-btn.text-danger:hover {
+    background: var(--color-danger-bg);
+  }
+
+  /* Mobile Bottom Navigation Bar */
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(255, 253, 252, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--color-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 85;
+    box-shadow: 0 -3px 16px rgba(139, 94, 82, 0.06);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    height: 100%;
+    color: var(--color-text-subtle);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    padding: 4px 0;
+  }
+
+  .bottom-nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), color var(--transition-fast);
+  }
+
+  .bottom-nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--color-accent);
+  }
+
+  .bottom-nav-item.active .bottom-nav-icon {
+    color: var(--color-primary);
+    transform: translateY(-1px);
+  }
+
+  .bottom-nav-item.active .bottom-nav-label {
+    font-weight: 700;
+  }
+
   /* ========================================= */
   /* RESPONSIVE & MOBILE DRAWER                */
   /* ========================================= */
@@ -929,7 +1224,13 @@
     }
 
     .app-header {
+      height: 56px;
       padding: 0 var(--space-4);
+    }
+
+    .page-content {
+      padding-top: var(--space-5);
+      padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
     }
   }
 

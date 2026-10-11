@@ -1,39 +1,61 @@
 <script lang="ts">
   import {
-    wedding, budgetSummary,
-    addBudgetItem, deleteBudgetItem, updateBudgetItem,
-    addBudgetCategory, deleteBudgetCategory,
-    addPayment, markItemPaid,
-    addVendor
-  } from '#lib/stores/wedding';
-  import { formatRupiah, formatRupiahShort, formatDate, getPaymentStatus } from '#lib/utils/format';
-  import { exportWeddingToExcel } from '#lib/utils/exportExcel';
-  import CategoryIcon from '#lib/components/CategoryIcon.svelte';
+    wedding,
+    budgetSummary,
+    addBudgetItem,
+    deleteBudgetItem,
+    updateBudgetItem,
+    addBudgetCategory,
+    deleteBudgetCategory,
+    addPayment,
+    markItemPaid,
+    addVendor,
+  } from "#lib/stores/wedding";
+  import {
+    formatRupiah,
+    formatRupiahShort,
+    formatDate,
+    getPaymentStatus,
+  } from "#lib/utils/format";
+  import { exportWeddingToExcel } from "#lib/utils/exportExcel";
+  import CategoryIcon from "#lib/components/CategoryIcon.svelte";
 
   // Navigation states
-  let activeView = $state<'grid' | 'all'>('grid');
+  let activeView = $state<"grid" | "all">("grid");
   let selectedCategoryId = $state<string | null>(null);
 
   // Quick Add Vendor modal state
   let showQuickVendorModal = $state(false);
-  let quickVendorTarget = $state<{ categoryId: string; itemId: string; categoryName: string; defaultCost: number } | null>(null);
-  let quickVendorName = $state('');
-  let quickVendorCategory = $state('Katering & Konsumsi');
-  let quickVendorPhone = $state('');
-  let quickVendorContact = $state('');
-  let quickVendorStatus = $state<'riset' | 'diskusi' | 'deal' | 'lunas' | 'selesai'>('deal');
+  let quickVendorTarget = $state<{
+    categoryId: string;
+    itemId: string;
+    categoryName: string;
+    defaultCost: number;
+  } | null>(null);
+  let quickVendorName = $state("");
+  let quickVendorCategory = $state("Katering & Konsumsi");
+  let quickVendorPhone = $state("");
+  let quickVendorContact = $state("");
+  let quickVendorStatus = $state<
+    "riset" | "diskusi" | "deal" | "lunas" | "selesai"
+  >("deal");
   let quickVendorCost = $state(0);
-  let quickVendorNotes = $state('');
+  let quickVendorNotes = $state("");
 
-  function openQuickVendor(categoryId: string, itemId: string, categoryName: string, defaultCost: number = 0) {
+  function openQuickVendor(
+    categoryId: string,
+    itemId: string,
+    categoryName: string,
+    defaultCost: number = 0,
+  ) {
     quickVendorTarget = { categoryId, itemId, categoryName, defaultCost };
-    quickVendorName = '';
-    quickVendorCategory = categoryName || 'Katering & Konsumsi';
-    quickVendorPhone = '';
-    quickVendorContact = '';
-    quickVendorStatus = 'deal';
+    quickVendorName = "";
+    quickVendorCategory = categoryName || "Katering & Konsumsi";
+    quickVendorPhone = "";
+    quickVendorContact = "";
+    quickVendorStatus = "deal";
     quickVendorCost = defaultCost;
-    quickVendorNotes = '';
+    quickVendorNotes = "";
     showQuickVendorModal = true;
   }
 
@@ -42,15 +64,19 @@
 
     const newVen = addVendor({
       name: quickVendorName.trim(),
-      category: quickVendorCategory || quickVendorTarget.categoryName || 'Lainnya',
+      category:
+        quickVendorCategory || quickVendorTarget.categoryName || "Lainnya",
       contactPerson: quickVendorContact.trim(),
       phone: quickVendorPhone.trim(),
-      email: '',
-      instagram: '',
-      address: '',
+      email: "",
+      instagram: "",
+      address: "",
       status: quickVendorStatus,
       estimatedCost: quickVendorCost || 0,
-      actualCost: quickVendorStatus === 'deal' || quickVendorStatus === 'lunas' ? quickVendorCost : 0,
+      actualCost:
+        quickVendorStatus === "deal" || quickVendorStatus === "lunas"
+          ? quickVendorCost
+          : 0,
       notes: quickVendorNotes.trim(),
     });
 
@@ -59,13 +85,13 @@
     });
 
     try {
-      await fetch('/api/vendor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/vendor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newVen),
       });
     } catch (err) {
-      console.error('Error syncing new vendor:', err);
+      console.error("Error syncing new vendor:", err);
     }
 
     showQuickVendorModal = false;
@@ -74,11 +100,21 @@
 
   function findVendorByName(name: string) {
     if (!name) return null;
-    return ($wedding.vendors || []).find(v => v.name.toLowerCase() === name.toLowerCase()) || null;
+    return (
+      ($wedding.vendors || []).find(
+        (v) => v.name.toLowerCase() === name.toLowerCase(),
+      ) || null
+    );
   }
 
-  function handleVendorDropdownChange(categoryId: string, itemId: string, value: string, categoryName: string, defaultCost: number) {
-    if (value === '__new__') {
+  function handleVendorDropdownChange(
+    categoryId: string,
+    itemId: string,
+    value: string,
+    categoryName: string,
+    defaultCost: number,
+  ) {
+    if (value === "__new__") {
       openQuickVendor(categoryId, itemId, categoryName, defaultCost);
       return;
     }
@@ -86,9 +122,9 @@
   }
 
   function formatWaNumber(phone: string): string {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.startsWith('0')) {
-      return '62' + cleaned.slice(1);
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("0")) {
+      return "62" + cleaned.slice(1);
     }
     return cleaned;
   }
@@ -99,34 +135,72 @@
 
   // Payment modal state
   let showPaymentModal = $state(false);
-  let paymentItem = $state<{ categoryId: string; itemId: string; itemName: string; remaining: number } | null>(null);
-  let payType = $state<'dp' | 'cicilan' | 'lunas'>('dp');
+  let paymentItem = $state<{
+    categoryId: string;
+    itemId: string;
+    itemName: string;
+    remaining: number;
+  } | null>(null);
+  let payType = $state<"dp" | "cicilan" | "lunas">("dp");
   let payAmount = $state(0);
-  let payDueDate = $state('');
-  let payPaidAt = $state('');
-  let payNotes = $state('');
+  let payDueDate = $state("");
+  let payPaidAt = $state("");
+  let payNotes = $state("");
 
   // Add category modal state
   let showAddCategoryModal = $state(false);
-  let newCatName = $state('');
-  let newCatIcon = $state('🍽️');
-  let newCatColor = $state('#C9847A');
+  let newCatName = $state("");
+  let newCatIcon = $state("🍽️");
+  let newCatColor = $state("#C9847A");
 
   const bs = $derived($budgetSummary);
   const categories = $derived($wedding.budgetCategories);
-  const selectedCategory = $derived(categories.find(c => c.id === selectedCategoryId) || null);
+  const selectedCategory = $derived(
+    categories.find((c) => c.id === selectedCategoryId) || null,
+  );
 
-  const availableIcons = ['🍽️', '🏛️', '🌸', '📸', '💍', '✉️', '🎵', '🚗', '📋', '🎂', '🎁', '💄', '☕', '🎪', '🛡️'];
-  const availableColors = ['#C9847A', '#8B5E52', '#D4956A', '#6A8AB8', '#B8726A', '#6BAB8A', '#A88880', '#7A5850', '#6B4438', '#9B6B9E'];
+  const availableIcons = [
+    "🍽️",
+    "🏛️",
+    "🌸",
+    "📸",
+    "💍",
+    "✉️",
+    "🎵",
+    "🚗",
+    "📋",
+    "🎂",
+    "🎁",
+    "💄",
+    "☕",
+    "🎪",
+    "🛡️",
+  ];
+  const availableColors = [
+    "#C9847A",
+    "#8B5E52",
+    "#D4956A",
+    "#6A8AB8",
+    "#B8726A",
+    "#6BAB8A",
+    "#A88880",
+    "#7A5850",
+    "#6B4438",
+    "#9B6B9E",
+  ];
 
   function toggleCategoryAccordion(id: string) {
     const next = new Set(expandedCategories);
-    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
     expandedCategories = next;
   }
 
   function expandAllCategories() {
-    expandedCategories = new Set(categories.map(c => c.id));
+    expandedCategories = new Set(categories.map((c) => c.id));
   }
 
   function collapseAllCategories() {
@@ -135,41 +209,58 @@
 
   function toggleItem(id: string) {
     const next = new Set(expandedItems);
-    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
     expandedItems = next;
   }
 
-  function getCategoryTotal(cat: typeof $wedding.budgetCategories[0]) {
+  function getCategoryTotal(cat: (typeof $wedding.budgetCategories)[0]) {
     return cat.items.reduce((a, i) => a + i.quantity * i.unitPrice, 0);
   }
 
-  function getCategoryPaid(cat: typeof $wedding.budgetCategories[0]) {
-    return cat.items.reduce((a, i) =>
-      a + i.payments.filter(p => p.paidAt).reduce((b, p) => b + p.amount, 0), 0
+  function getCategoryPaid(cat: (typeof $wedding.budgetCategories)[0]) {
+    return cat.items.reduce(
+      (a, i) =>
+        a +
+        i.payments.filter((p) => p.paidAt).reduce((b, p) => b + p.amount, 0),
+      0,
     );
   }
 
   function openCategoryDetail(id: string) {
     selectedCategoryId = id;
-    activeView = 'grid';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    activeView = "grid";
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function backToGrid() {
     selectedCategoryId = null;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function openPaymentModal(categoryId: string, item: typeof $wedding.budgetCategories[0]['items'][0]) {
+  function openPaymentModal(
+    categoryId: string,
+    item: (typeof $wedding.budgetCategories)[0]["items"][0],
+  ) {
     const total = item.quantity * item.unitPrice;
-    const paid = item.payments.filter(p => p.paidAt).reduce((a, p) => a + p.amount, 0);
+    const paid = item.payments
+      .filter((p) => p.paidAt)
+      .reduce((a, p) => a + p.amount, 0);
     const remaining = total - paid;
-    paymentItem = { categoryId, itemId: item.id, itemName: item.name, remaining };
+    paymentItem = {
+      categoryId,
+      itemId: item.id,
+      itemName: item.name,
+      remaining,
+    };
     payAmount = remaining;
-    payDueDate = '';
+    payDueDate = "";
     payPaidAt = new Date().toISOString().slice(0, 10);
-    payNotes = '';
-    payType = paid > 0 ? 'lunas' : 'dp';
+    payNotes = "";
+    payType = paid > 0 ? "lunas" : "dp";
     showPaymentModal = true;
   }
 
@@ -188,13 +279,15 @@
   function handleAddCategorySubmit() {
     if (!newCatName.trim()) return;
     const id = addBudgetCategory(newCatName.trim(), newCatIcon, newCatColor);
-    newCatName = '';
+    newCatName = "";
     showAddCategoryModal = false;
     openCategoryDetail(id);
   }
 
   function handleDeleteCategory(id: string, name: string) {
-    if (confirm(`Yakin ingin menghapus kategori "${name}" beserta semua itemnya?`)) {
+    if (
+      confirm(`Yakin ingin menghapus kategori "${name}" beserta semua itemnya?`)
+    ) {
       deleteBudgetCategory(id);
       if (selectedCategoryId === id) {
         selectedCategoryId = null;
@@ -203,14 +296,22 @@
   }
 
   function handleItemNameEdit(categoryId: string, itemId: string, e: Event) {
-    const val = (e.target as HTMLElement).textContent?.trim() || '';
+    const val = (e.target as HTMLElement).textContent?.trim() || "";
     updateBudgetItem(categoryId, itemId, { name: val });
   }
 
-  function formatNum(v: number) { return Math.round(v).toLocaleString('id-ID'); }
-  function parseNum(s: string) { return parseInt(s.replace(/\D/g, ''), 10) || 0; }
+  function formatNum(v: number) {
+    return Math.round(v).toLocaleString("id-ID");
+  }
+  function parseNum(s: string) {
+    return parseInt(s.replace(/\D/g, ""), 10) || 0;
+  }
 
-  const overallPct = $derived(bs.totalRencana > 0 ? Math.round((bs.totalDibayar / bs.totalRencana) * 100) : 0);
+  const overallPct = $derived(
+    bs.totalRencana > 0
+      ? Math.round((bs.totalDibayar / bs.totalRencana) * 100)
+      : 0,
+  );
 </script>
 
 <svelte:head>
@@ -227,937 +328,1550 @@
         </div>
         <h1 class="page-title">Anggaran Biaya Pernikahan</h1>
         <p class="page-subtitle">
-          Rencana alokasi dan realisasi pembayaran per vendor terhubung langsung dengan sistem tabungan bersama.
+          Rencana alokasi dan realisasi pembayaran per vendor terhubung langsung
+          dengan sistem tabungan bersama.
         </p>
       </div>
 
       <div class="header-actions">
-        <button class="btn btn-secondary btn-sm flex items-center gap-1.5" onclick={() => exportWeddingToExcel()} title="Export seluruh data pernikahan ke Excel (.xls)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+        <button
+          class="btn btn-secondary btn-sm flex items-center gap-1.5"
+          onclick={() => exportWeddingToExcel()}
+          title="Export seluruh data pernikahan ke Excel (.xls)"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            ></path><polyline points="14 2 14 8 20 8"></polyline><line
+              x1="8"
+              y1="13"
+              x2="16"
+              y2="13"
+            ></line><line x1="8" y1="17" x2="16" y2="17"></line></svg
+          >
           <span class="hide-mobile">Export Excel</span>
         </button>
-        <button class="btn btn-secondary btn-sm flex items-center gap-1.5" onclick={() => window.print()} title="Cetak atau simpan format PDF">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <button
+          class="btn btn-secondary btn-sm flex items-center gap-1.5"
+          onclick={() => window.print()}
+          title="Cetak atau simpan format PDF"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><polyline points="6 9 6 2 18 2 18 9"></polyline><path
+              d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+            ></path><rect x="6" y="14" width="12" height="8"></rect></svg
+          >
           <span class="hide-mobile">Cetak / PDF</span>
         </button>
-        <button class="btn btn-primary btn-sm flex items-center gap-1.5" onclick={() => showAddCategoryModal = true}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <span>+ Tambah Kategori</span>
+        <button
+          class="btn btn-primary btn-sm flex items-center gap-1.5"
+          onclick={() => (showAddCategoryModal = true)}
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><line x1="12" y1="5" x2="12" y2="19"></line><line
+              x1="5"
+              y1="12"
+              x2="19"
+              y2="12"
+            ></line></svg
+          >
+          <span> Tambah Kategori</span>
         </button>
       </div>
     </div>
 
-      <!-- Summary Bar -->
-      <div class="summary-bar mt-6">
-        <div class="summary-stat">
-          <span class="summary-stat-label">Total Rencana</span>
-          <span class="summary-stat-value">{formatRupiah(bs.totalRencana)}</span>
-        </div>
-        <div class="summary-divider"></div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">Sudah Dibayar</span>
-          <span class="summary-stat-value text-success">{formatRupiah(bs.totalDibayar)}</span>
-        </div>
-        <div class="summary-divider"></div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">Sisa Tagihan</span>
-          <span class="summary-stat-value text-warning">{formatRupiah(bs.sisaTagihan)}</span>
-        </div>
-        <div class="summary-divider"></div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">Progress</span>
-          <span class="summary-stat-value">{overallPct}%</span>
-        </div>
+    <!-- Summary Bar -->
+    <div class="summary-bar mt-6">
+      <div class="summary-stat">
+        <span class="summary-stat-label">Total Rencana</span>
+        <span class="summary-stat-value">{formatRupiah(bs.totalRencana)}</span>
       </div>
-
-      <div class="progress-bar mt-4">
-        <div class="progress-fill" style="width: {overallPct}%"></div>
-      </div>
-
-      <!-- View Switcher Tabs -->
-      <div class="view-tabs mt-8">
-        <button
-          class="view-tab-btn {activeView === 'grid' && !selectedCategoryId ? 'active' : ''}"
-          onclick={() => { activeView = 'grid'; selectedCategoryId = null; }}
+      <div class="summary-divider"></div>
+      <div class="summary-stat">
+        <span class="summary-stat-label">Sudah Dibayar</span>
+        <span class="summary-stat-value text-success"
+          >{formatRupiah(bs.totalDibayar)}</span
         >
-          <span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span> Grid Kategori
-        </button>
-        <button
-          class="view-tab-btn {activeView === 'all' ? 'active' : ''}"
-          onclick={() => { activeView = 'all'; selectedCategoryId = null; }}
-        >
-          <span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></span> Rekap Semua Kategori
-        </button>
       </div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat">
+        <span class="summary-stat-label">Sisa Tagihan</span>
+        <span class="summary-stat-value text-warning"
+          >{formatRupiah(bs.sisaTagihan)}</span
+        >
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat">
+        <span class="summary-stat-label">Progress</span>
+        <span class="summary-stat-value">{overallPct}%</span>
+      </div>
+    </div>
+
+    <div class="progress-bar mt-4">
+      <div class="progress-fill" style="width: {overallPct}%"></div>
+    </div>
+
+    <!-- View Switcher Tabs -->
+    <div class="view-tabs mt-8">
+      <button
+        class="view-tab-btn {activeView === 'grid' && !selectedCategoryId
+          ? 'active'
+          : ''}"
+        onclick={() => {
+          activeView = "grid";
+          selectedCategoryId = null;
+        }}
+      >
+        <span class="tab-icon"
+          ><svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><rect x="3" y="3" width="7" height="7"></rect><rect
+              x="14"
+              y="3"
+              width="7"
+              height="7"
+            ></rect><rect x="14" y="14" width="7" height="7"></rect><rect
+              x="3"
+              y="14"
+              width="7"
+              height="7"
+            ></rect></svg
+          ></span
+        > Grid Kategori
+      </button>
+      <button
+        class="view-tab-btn {activeView === 'all' ? 'active' : ''}"
+        onclick={() => {
+          activeView = "all";
+          selectedCategoryId = null;
+        }}
+      >
+        <span class="tab-icon"
+          ><svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><line x1="8" y1="6" x2="21" y2="6"></line><line
+              x1="8"
+              y1="12"
+              x2="21"
+              y2="12"
+            ></line><line x1="8" y1="18" x2="21" y2="18"></line><line
+              x1="3"
+              y1="6"
+              x2="3.01"
+              y2="6"
+            ></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line
+              x1="3"
+              y1="18"
+              x2="3.01"
+              y2="18"
+            ></line></svg
+          ></span
+        > Rekap Semua Kategori
+      </button>
     </div>
   </div>
+</div>
 
-  <div class="container budget-content-area mt-8">
-    {#if categories.length === 0}
-      <div class="empty-page">
-        <div class="empty-icon"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg></div>
-        <h3>Belum ada anggaran</h3>
-        <p class="text-muted">Selesaikan wizard onboarding untuk mendapatkan template anggaran otomatis.</p>
-        <a href="/wizard" class="btn btn-primary mt-4">Mulai Wizard</a>
+<div class="container budget-content-area mt-8">
+  {#if categories.length === 0}
+    <div class="empty-page">
+      <div class="empty-icon">
+        <svg
+          width="44"
+          height="44"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path
+            d="M3 5v14a2 2 0 0 0 2 2h16v-5"
+          ></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg
+        >
       </div>
-    {:else}
-
-      <!-- ============================================== -->
-      <!-- VIEW 1: GRID KARTU KATEGORI (FOLDER VIEW)     -->
-      <!-- ============================================== -->
-      {#if activeView === 'grid' && !selectedCategoryId}
-        <div class="grid-view-section animate-fade-in">
-          <div class="grid-view-header mb-6">
-            <div>
-              <h2 class="view-section-title">Pilih Kategori Anggaran</h2>
-              <p class="text-muted text-sm">Klik kartu untuk melihat rincian item, vendor, dan pembayaran.</p>
-            </div>
-            <button class="btn btn-outline-primary btn-sm" onclick={() => showAddCategoryModal = true}>
-              + Tambah Kategori
-            </button>
+      <h3>Belum ada anggaran</h3>
+      <p class="text-muted">
+        Selesaikan wizard onboarding untuk mendapatkan template anggaran
+        otomatis.
+      </p>
+      <a href="/wizard" class="btn btn-primary mt-4">Mulai Wizard</a>
+    </div>
+  {:else}
+    <!-- ============================================== -->
+    <!-- VIEW 1: GRID KARTU KATEGORI (FOLDER VIEW)     -->
+    <!-- ============================================== -->
+    {#if activeView === "grid" && !selectedCategoryId}
+      <div class="grid-view-section animate-fade-in">
+        <div class="grid-view-header mb-6">
+          <div>
+            <h2 class="view-section-title">Pilih Kategori Anggaran</h2>
+            <p class="text-muted text-sm">
+              Klik kartu untuk melihat rincian item, vendor, dan pembayaran.
+            </p>
           </div>
+          <button
+            class="btn btn-outline-primary btn-sm"
+            onclick={() => (showAddCategoryModal = true)}
+          >
+            + Tambah Kategori
+          </button>
+        </div>
 
-          <div class="categories-grid">
-            {#each categories as cat}
-              {@const catTotal = getCategoryTotal(cat)}
-              {@const catPaid = getCategoryPaid(cat)}
-              {@const catRemaining = Math.max(0, catTotal - catPaid)}
-              {@const catPct = catTotal > 0 ? Math.round((catPaid / catTotal) * 100) : 0}
+        <div class="categories-grid">
+          {#each categories as cat}
+            {@const catTotal = getCategoryTotal(cat)}
+            {@const catPaid = getCategoryPaid(cat)}
+            {@const catRemaining = Math.max(0, catTotal - catPaid)}
+            {@const catPct =
+              catTotal > 0 ? Math.round((catPaid / catTotal) * 100) : 0}
 
-              <button
-                class="category-grid-card"
-                onclick={() => openCategoryDetail(cat.id)}
-                style="--cat-color: {cat.color}"
-              >
-                <!-- Top card info -->
-                <div class="card-top">
-                  <div class="card-icon-badge" style="background: {cat.color}20; color: {cat.color}">
-                    <CategoryIcon icon={cat.icon} size={22} />
-                  </div>
-                  <div class="card-title-group">
-                    <h3 class="card-cat-name">{cat.name}</h3>
-                    <span class="card-item-badge">{cat.items.length} item</span>
-                  </div>
+            <button
+              class="category-grid-card"
+              onclick={() => openCategoryDetail(cat.id)}
+              style="--cat-color: {cat.color}"
+            >
+              <!-- Top card info -->
+              <div class="card-top">
+                <div
+                  class="card-icon-badge"
+                  style="background: {cat.color}20; color: {cat.color}"
+                >
+                  <CategoryIcon icon={cat.icon} size={22} />
                 </div>
-
-                <!-- Financial Stats -->
-                <div class="card-budget-stats mt-4">
-                  <div class="card-stat-row">
-                    <span class="card-stat-label">Alokasi Rencana</span>
-                    <span class="card-stat-val font-semibold">{formatRupiah(catTotal)}</span>
-                  </div>
-                  <div class="card-stat-row mt-1">
-                    <span class="card-stat-label">Terbayar</span>
-                    <span class="card-stat-val text-success font-medium">{formatRupiah(catPaid)}</span>
-                  </div>
-                  <div class="card-stat-row mt-1">
-                    <span class="card-stat-label">Sisa Tagihan</span>
-                    <span class="card-stat-val text-muted text-xs">{formatRupiah(catRemaining)}</span>
-                  </div>
+                <div class="card-title-group">
+                  <h3 class="card-cat-name">{cat.name}</h3>
+                  <span class="card-item-badge">{cat.items.length} item</span>
                 </div>
+              </div>
 
-                <!-- Progress Bar & Percentage -->
-                <div class="card-progress-wrapper mt-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs text-subtle font-medium">Pembayaran</span>
-                    <span class="card-pct-badge font-bold" style="color: {cat.color}">{catPct}%</span>
-                  </div>
-                  <div class="card-progress-track">
-                    <div
-                      class="card-progress-fill"
-                      style="background: {cat.color}; width: {catPct}%"
-                    ></div>
-                  </div>
+              <!-- Financial Stats -->
+              <div class="card-budget-stats mt-4">
+                <div class="card-stat-row">
+                  <span class="card-stat-label">Alokasi Rencana</span>
+                  <span class="card-stat-val font-semibold"
+                    >{formatRupiah(catTotal)}</span
+                  >
                 </div>
-
-                <!-- Card Bottom Status & Action -->
-                <div class="card-bottom mt-4">
-                  {#if catTotal === 0}
-                    <span class="badge badge-neutral badge-sm">Belum ada biaya</span>
-                  {:else if catPct === 100}
-                    <span class="badge badge-success badge-sm">✓ Lunas</span>
-                  {:else if catPct > 0}
-                    <span class="badge badge-warning badge-sm">Sebagian ({catPct}%)</span>
-                  {:else}
-                    <span class="badge badge-neutral badge-sm">Belum Dibayar</span>
-                  {/if}
-
-                  <span class="card-cta-link">
-                    Buka Rincian →
-                  </span>
+                <div class="card-stat-row mt-1">
+                  <span class="card-stat-label">Terbayar</span>
+                  <span class="card-stat-val text-success font-medium"
+                    >{formatRupiah(catPaid)}</span
+                  >
                 </div>
-              </button>
-            {/each}
+                <div class="card-stat-row mt-1">
+                  <span class="card-stat-label">Sisa Tagihan</span>
+                  <span class="card-stat-val text-muted text-xs"
+                    >{formatRupiah(catRemaining)}</span
+                  >
+                </div>
+              </div>
 
-            <!-- Add Category Card Tile -->
-            <button class="category-add-card" onclick={() => showAddCategoryModal = true}>
-              <div class="add-card-inner">
-                <span class="add-card-plus">+</span>
-                <span class="add-card-title">Tambah Kategori Baru</span>
-                <span class="add-card-sub text-muted text-xs">Kustomisasi anggaran sesuai kebutuhan</span>
+              <!-- Progress Bar & Percentage -->
+              <div class="card-progress-wrapper mt-4">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs text-subtle font-medium">Pembayaran</span
+                  >
+                  <span
+                    class="card-pct-badge font-bold"
+                    style="color: {cat.color}">{catPct}%</span
+                  >
+                </div>
+                <div class="card-progress-track">
+                  <div
+                    class="card-progress-fill"
+                    style="background: {cat.color}; width: {catPct}%"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Card Bottom Status & Action -->
+              <div class="card-bottom mt-4">
+                {#if catTotal === 0}
+                  <span class="badge badge-neutral badge-sm"
+                    >Belum ada biaya</span
+                  >
+                {:else if catPct === 100}
+                  <span class="badge badge-success badge-sm">✓ Lunas</span>
+                {:else if catPct > 0}
+                  <span class="badge badge-warning badge-sm"
+                    >Sebagian ({catPct}%)</span
+                  >
+                {:else}
+                  <span class="badge badge-neutral badge-sm">Belum Dibayar</span
+                  >
+                {/if}
+
+                <span class="card-cta-link"> Buka Rincian → </span>
               </div>
             </button>
-          </div>
+          {/each}
+
+          <!-- Add Category Card Tile -->
+          <button
+            class="category-add-card"
+            onclick={() => (showAddCategoryModal = true)}
+          >
+            <div class="add-card-inner">
+              <span class="add-card-plus">+</span>
+              <span class="add-card-title">Tambah Kategori Baru</span>
+              <span class="add-card-sub text-muted text-xs"
+                >Kustomisasi anggaran sesuai kebutuhan</span
+              >
+            </div>
+          </button>
         </div>
+      </div>
 
       <!-- ============================================== -->
       <!-- VIEW 2: DETAIL KATEGORI TERTENTU (SINGLE CAT)  -->
       <!-- ============================================== -->
-      {:else if activeView === 'grid' && selectedCategory}
-        {@const cat = selectedCategory}
-        {@const catTotal = getCategoryTotal(cat)}
-        {@const catPaid = getCategoryPaid(cat)}
-        {@const catRemaining = Math.max(0, catTotal - catPaid)}
-        {@const catPct = catTotal > 0 ? Math.round((catPaid / catTotal) * 100) : 0}
+    {:else if activeView === "grid" && selectedCategory}
+      {@const cat = selectedCategory}
+      {@const catTotal = getCategoryTotal(cat)}
+      {@const catPaid = getCategoryPaid(cat)}
+      {@const catRemaining = Math.max(0, catTotal - catPaid)}
+      {@const catPct =
+        catTotal > 0 ? Math.round((catPaid / catTotal) * 100) : 0}
 
-        <div class="single-cat-view animate-fade-in">
-          <!-- Back Bar & Quick Category Switcher -->
-          <div class="single-cat-nav mb-6">
-            <button class="btn btn-secondary btn-sm" onclick={backToGrid}>
-              ← Kembali ke Semua Kategori
-            </button>
+      <div class="single-cat-view animate-fade-in">
+        <!-- Back Bar & Quick Category Switcher -->
+        <div class="single-cat-nav mb-6">
+          <button class="btn btn-secondary btn-sm" onclick={backToGrid}>
+            ← Kembali ke Semua Kategori
+          </button>
 
-            <!-- Quick Pill Category Picker -->
-            <div class="quick-category-pills">
-              {#each categories as c}
-                <button
-                  class="pill-cat-btn {c.id === cat.id ? 'active' : ''}"
-                  onclick={() => openCategoryDetail(c.id)}
-                  title={c.name}
+          <!-- Quick Pill Category Picker -->
+          <div class="quick-category-pills">
+            {#each categories as c}
+              <button
+                class="pill-cat-btn {c.id === cat.id ? 'active' : ''}"
+                onclick={() => openCategoryDetail(c.id)}
+                title={c.name}
+              >
+                <span><CategoryIcon icon={c.icon} size={15} /></span>
+                <span class="pill-name">{c.name.split(" ")[0]}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Category Banner Card -->
+        <div class="cat-banner-card" style="border-top: 4px solid {cat.color}">
+          <div class="cat-banner-header">
+            <div class="cat-banner-left">
+              <div
+                class="cat-banner-icon"
+                style="background: {cat.color}20; color: {cat.color}"
+              >
+                <CategoryIcon icon={cat.icon} size={28} />
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="cat-banner-title">{cat.name}</h2>
+                  <span
+                    class="badge {catPct === 100
+                      ? 'badge-success'
+                      : catPct > 0
+                        ? 'badge-warning'
+                        : 'badge-neutral'}"
+                  >
+                    {catPct === 100
+                      ? "✓ Lunas"
+                      : catPct > 0
+                        ? `Terbayar ${catPct}%`
+                        : "Belum Ada Bayar"}
+                  </span>
+                </div>
+                <p class="text-muted text-xs mt-1">
+                  {cat.items.length} item pengeluaran terdaftar
+                </p>
+              </div>
+            </div>
+
+            <div class="cat-banner-actions">
+              <button
+                class="btn btn-primary btn-sm"
+                onclick={() => addBudgetItem(cat.id)}
+              >
+                + Tambah Item
+              </button>
+              <button
+                class="btn btn-icon btn-ghost text-muted"
+                onclick={() => handleDeleteCategory(cat.id, cat.name)}
+                title="Hapus Kategori"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><polyline points="3 6 5 6 21 6"></polyline><path
+                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                  ></path></svg
                 >
-                  <span><CategoryIcon icon={c.icon} size={15} /></span>
-                  <span class="pill-name">{c.name.split(' ')[0]}</span>
-                </button>
-              {/each}
+              </button>
             </div>
           </div>
 
-          <!-- Category Banner Card -->
-          <div class="cat-banner-card" style="border-top: 4px solid {cat.color}">
-            <div class="cat-banner-header">
-              <div class="cat-banner-left">
-                <div class="cat-banner-icon" style="background: {cat.color}20; color: {cat.color}">
-                  <CategoryIcon icon={cat.icon} size={28} />
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <h2 class="cat-banner-title">{cat.name}</h2>
-                    <span class="badge {catPct === 100 ? 'badge-success' : catPct > 0 ? 'badge-warning' : 'badge-neutral'}">
-                      {catPct === 100 ? '✓ Lunas' : catPct > 0 ? `Terbayar ${catPct}%` : 'Belum Ada Bayar'}
-                    </span>
-                  </div>
-                  <p class="text-muted text-xs mt-1">{cat.items.length} item pengeluaran terdaftar</p>
-                </div>
-              </div>
-
-              <div class="cat-banner-actions">
-                <button class="btn btn-primary btn-sm" onclick={() => addBudgetItem(cat.id)}>
-                  + Tambah Item
-                </button>
-                <button
-                  class="btn btn-icon btn-ghost text-muted"
-                  onclick={() => handleDeleteCategory(cat.id, cat.name)}
-                  title="Hapus Kategori"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-              </div>
+          <!-- Financial Summary for This Category -->
+          <div class="cat-summary-grid mt-4">
+            <div class="cat-stat-box">
+              <span class="cat-stat-label">Total Alokasi Rencana</span>
+              <span class="cat-stat-value">{formatRupiah(catTotal)}</span>
             </div>
-
-            <!-- Financial Summary for This Category -->
-            <div class="cat-summary-grid mt-4">
-              <div class="cat-stat-box">
-                <span class="cat-stat-label">Total Alokasi Rencana</span>
-                <span class="cat-stat-value">{formatRupiah(catTotal)}</span>
-              </div>
-              <div class="cat-stat-box">
-                <span class="cat-stat-label">Sudah Dibayar</span>
-                <span class="cat-stat-value text-success">{formatRupiah(catPaid)}</span>
-              </div>
-              <div class="cat-stat-box">
-                <span class="cat-stat-label">Sisa Tagihan</span>
-                <span class="cat-stat-value text-warning">{formatRupiah(catRemaining)}</span>
-              </div>
-              <div class="cat-stat-box">
-                <span class="cat-stat-label">Persentase Lunas</span>
-                <span class="cat-stat-value" style="color: {cat.color}">{catPct}%</span>
-              </div>
+            <div class="cat-stat-box">
+              <span class="cat-stat-label">Sudah Dibayar</span>
+              <span class="cat-stat-value text-success"
+                >{formatRupiah(catPaid)}</span
+              >
             </div>
-
-            <div class="cat-progress-bar mt-3">
-              <div class="cat-progress-fill" style="background: {cat.color}; width: {catPct}%"></div>
+            <div class="cat-stat-box">
+              <span class="cat-stat-label">Sisa Tagihan</span>
+              <span class="cat-stat-value text-warning"
+                >{formatRupiah(catRemaining)}</span
+              >
+            </div>
+            <div class="cat-stat-box">
+              <span class="cat-stat-label">Persentase Lunas</span>
+              <span class="cat-stat-value" style="color: {cat.color}"
+                >{catPct}%</span
+              >
             </div>
           </div>
 
-          <!-- Items Table / List in this Category -->
-          <div class="cat-items-container mt-6">
-            <div class="flex justify-between items-center mb-3">
-              <h3 class="text-base font-semibold">Daftar Item & Vendor</h3>
-              <span class="text-xs text-muted">Klik nama item untuk mengedit langsung</span>
+          <div class="cat-progress-bar mt-3">
+            <div
+              class="cat-progress-fill"
+              style="background: {cat.color}; width: {catPct}%"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Items Table / List in this Category -->
+        <div class="cat-items-container mt-6">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-base font-semibold">Daftar Item & Vendor</h3>
+            <span class="text-xs text-muted"
+              >Klik nama item untuk mengedit langsung</span
+            >
+          </div>
+
+          {#if cat.items.length === 0}
+            <div class="empty-cat-items">
+              <p class="text-muted text-sm mb-3">
+                Belum ada item pengeluaran di kategori {cat.name}.
+              </p>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                onclick={() => addBudgetItem(cat.id)}
+              >
+                + Tambah Item Pertama
+              </button>
             </div>
-
-            {#if cat.items.length === 0}
-              <div class="empty-cat-items">
-                <p class="text-muted text-sm mb-3">Belum ada item pengeluaran di kategori {cat.name}.</p>
-                <button type="button" class="btn btn-primary btn-sm" onclick={() => addBudgetItem(cat.id)}>
-                  + Tambah Item Pertama
-                </button>
+          {:else}
+            <div class="items-list-card">
+              <!-- Table Header for items -->
+              <div class="items-table-header hide-mobile">
+                <span class="th-name">Pos Pengeluaran</span>
+                <span class="th-calc">Jumlah & Harga Satuan</span>
+                <span class="th-total">Total & Status</span>
+                <span class="th-actions">Aksi</span>
               </div>
-            {:else}
-              <div class="items-list-card">
-                <!-- Table Header for items -->
-                <div class="items-table-header hide-mobile">
-                  <span class="th-name">Pos Pengeluaran</span>
-                  <span class="th-calc">Jumlah & Harga Satuan</span>
-                  <span class="th-total">Total & Status</span>
-                  <span class="th-actions">Aksi</span>
-                </div>
 
-                {#each cat.items as item}
-                  {@const itemTotal = item.quantity * item.unitPrice}
-                  {@const paidAmount = item.payments.filter(p => p.paidAt).reduce((a, p) => a + p.amount, 0)}
-                  {@const status = getPaymentStatus(item)}
-                  {@const isItemOpen = expandedItems.has(item.id)}
+              {#each cat.items as item}
+                {@const itemTotal = item.quantity * item.unitPrice}
+                {@const paidAmount = item.payments
+                  .filter((p) => p.paidAt)
+                  .reduce((a, p) => a + p.amount, 0)}
+                {@const status = getPaymentStatus(item)}
+                {@const isItemOpen = expandedItems.has(item.id)}
 
-                  <div class="item-row">
-                    <div class="item-main">
-                      <div class="item-col-name">
-                        <div class="status-dot status-{status}" title="Status: {status === 'lunas' ? 'Lunas' : status === 'dp' ? 'DP' : 'Belum Dibayar'}"></div>
-                        <div class="item-name-group">
-                          <span
-                            class="item-name-input"
-                            contenteditable="true"
-                            onblur={(e) => handleItemNameEdit(cat.id, item.id, e)}
-                            suppressContentEditableWarning={true}
-                            title="Klik untuk ubah nama item"
-                          >{item.name}</span>
-                          {#if item.vendorName}
-                            <span class="item-vendor-badge">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                              </svg>
-                              {item.vendorName}
-                            </span>
-                          {/if}
-                        </div>
-                      </div>
-
-                      <div class="item-col-calc">
-                        <div class="calc-pill">
-                          <div class="calc-field qty-field">
-                            <input
-                              type="number" min="1"
-                              class="calc-input qty-input"
-                              value={item.quantity}
-                              oninput={(e) => updateBudgetItem(cat.id, item.id, { quantity: parseInt((e.target as HTMLInputElement).value) || 1 })}
-                              title="Jumlah / kuantitas"
-                            />
-                            <span class="calc-unit">item</span>
-                          </div>
-
-                          <span class="calc-sep">×</span>
-
-                          <div class="calc-field price-field">
-                            <span class="calc-currency">Rp</span>
-                            <input
-                              type="text"
-                              class="calc-input price-input"
-                              value={formatNum(item.unitPrice)}
-                              oninput={(e) => updateBudgetItem(cat.id, item.id, { unitPrice: parseNum((e.target as HTMLInputElement).value) })}
-                              title="Harga satuan (Rp)"
-                              placeholder="0"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="item-col-total">
-                        <span class="item-total-val font-numeric">{formatRupiahShort(itemTotal)}</span>
-                        <span class="item-status-pill status-{status}">
-                          {#if status === 'lunas'}
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                              <polyline points="20 6 9 17 4 12"></polyline>
+                <div class="item-row">
+                  <div class="item-main">
+                    <div class="item-col-name">
+                      <div
+                        class="status-dot status-{status}"
+                        title="Status: {status === 'lunas'
+                          ? 'Lunas'
+                          : status === 'dp'
+                            ? 'DP'
+                            : 'Belum Dibayar'}"
+                      ></div>
+                      <div class="item-name-group">
+                        <span
+                          class="item-name-input"
+                          contenteditable="true"
+                          onblur={(e) => handleItemNameEdit(cat.id, item.id, e)}
+                          suppressContentEditableWarning={true}
+                          title="Klik untuk ubah nama item">{item.name}</span
+                        >
+                        {#if item.vendorName}
+                          <span class="item-vendor-badge">
+                            <svg
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path
+                                d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
+                              ></path>
+                              <circle cx="12" cy="10" r="3"></circle>
                             </svg>
-                            <span>Lunas</span>
-                          {:else if status === 'dp'}
-                            <span class="status-dot-inner"></span> <span>DP</span>
-                          {:else}
-                            <span class="status-dot-inner"></span> <span>Belum</span>
-                          {/if}
-                        </span>
-                      </div>
-
-                      <div class="item-col-actions">
-                        <button
-                          type="button"
-                          class="item-act-btn act-pay"
-                          onclick={() => openPaymentModal(cat.id, item)}
-                          title="Catat Pembayaran"
-                        >
-                          <span class="act-plus">+</span>
-                          <span>Bayar</span>
-                        </button>
-
-                        {#if status !== 'lunas'}
-                          <button
-                            type="button"
-                            class="item-act-btn act-settle"
-                            onclick={() => markItemPaid(cat.id, item.id)}
-                            title="Tandai Sudah Lunas"
-                          >
-                            <span>✓ Lunas</span>
-                          </button>
+                            {item.vendorName}
+                          </span>
                         {/if}
-
-                        <button
-                          type="button"
-                          class="item-act-icon {isItemOpen ? 'open' : ''}"
-                          onclick={() => toggleItem(item.id)}
-                          title={isItemOpen ? 'Tutup rincian' : 'Lihat rincian pembayaran'}
-                          aria-label="Rincian"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron-arrow {isItemOpen ? 'rotated' : ''}">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                          </svg>
-                        </button>
-
-                        <button
-                          type="button"
-                          class="item-act-icon act-delete"
-                          onclick={() => deleteBudgetItem(cat.id, item.id)}
-                          title="Hapus item"
-                          aria-label="Hapus item"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                        </button>
                       </div>
                     </div>
 
-                    <!-- Item Detail Accordion -->
-                    {#if isItemOpen}
-                      <div class="item-detail animate-fade-in">
-                        <div class="form-group mb-3">
-                          <div class="flex items-center justify-between mb-1.5">
-                            <label class="form-label mb-0" for="vendor-{item.id}">Vendor Terhubung</label>
-                            <button
-                              type="button"
-                              class="text-xs text-accent font-semibold hover:underline bg-none border-0 p-0 cursor-pointer"
-                              onclick={() => openQuickVendor(cat.id, item.id, cat.name, item.quantity * item.unitPrice)}
-                            >
-                              + Tambah Vendor Baru
-                            </button>
-                          </div>
-
-                          <div class="grid-2 gap-2">
-                            <select
-                              class="form-select text-xs"
-                              value={findVendorByName(item.vendorName) ? item.vendorName : (item.vendorName ? '__custom__' : '')}
-                              onchange={(e) => handleVendorDropdownChange(cat.id, item.id, (e.target as HTMLSelectElement).value, cat.name, item.quantity * item.unitPrice)}
-                            >
-                              <option value="">-- Pilih dari Vendor --</option>
-                              {#each $wedding.vendors as v}
-                                <option value={v.name}>{v.name} ({v.category} • {v.status.toUpperCase()})</option>
-                              {/each}
-                              {#if item.vendorName && !findVendorByName(item.vendorName)}
-                                <option value="__custom__">Nama Manual: {item.vendorName}</option>
-                              {/if}
-                              <option value="__new__">+ Tambah Vendor Baru...</option>
-                            </select>
-
-                            <input
-                              id="vendor-{item.id}"
-                              type="text"
-                              class="form-input text-xs"
-                              value={item.vendorName}
-                              oninput={(e) => updateBudgetItem(cat.id, item.id, { vendorName: (e.target as HTMLInputElement).value })}
-                              placeholder="Ketik manual nama vendor..."
-                            />
-                          </div>
-
-                          {#if findVendorByName(item.vendorName)}
-                            {@const mv = findVendorByName(item.vendorName)!}
-                            <div class="vendor-connected-chip mt-2">
-                              <span class="badge badge-{mv.status === 'deal' || mv.status === 'lunas' ? 'success' : mv.status === 'diskusi' ? 'warning' : 'info'} text-xs">
-                                {mv.status.toUpperCase()}
-                              </span>
-                              <span class="text-xs text-muted">Kategori: {mv.category}</span>
-                              {#if mv.phone}
-                                <a
-                                  href="https://wa.me/{formatWaNumber(mv.phone)}"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  class="text-xs text-success hover:underline flex items-center gap-1 font-medium"
-                                  title="Chat WhatsApp"
-                                >
-                                  💬 WA: {mv.phone}
-                                </a>
-                              {/if}
-                              <a href="/vendor" class="text-xs text-accent hover:underline ml-auto font-medium">
-                                Kelola Vendor ↗
-                              </a>
-                            </div>
-                          {/if}
+                    <div class="item-col-calc">
+                      <div class="calc-pill">
+                        <div class="calc-field qty-field">
+                          <input
+                            type="number"
+                            min="1"
+                            class="calc-input qty-input"
+                            value={item.quantity}
+                            oninput={(e) =>
+                              updateBudgetItem(cat.id, item.id, {
+                                quantity:
+                                  parseInt(
+                                    (e.target as HTMLInputElement).value,
+                                  ) || 1,
+                              })}
+                            title="Jumlah / kuantitas"
+                          />
+                          <span class="calc-unit">item</span>
                         </div>
 
-                        {#if item.payments.length > 0}
-                          <h5 class="text-sm font-semibold mb-2">Riwayat Pembayaran</h5>
-                          <div class="payments-list">
-                            {#each item.payments as payment}
-                              <div class="payment-row">
-                                <div class="payment-left">
-                                  <span class="badge badge-{payment.type === 'lunas' ? 'success' : payment.type === 'dp' ? 'warning' : 'info'}">
-                                    {payment.type === 'dp' ? 'DP' : payment.type === 'cicilan' ? 'Cicilan' : 'Lunas'}
-                                  </span>
-                                  <span class="text-sm font-semibold">{formatRupiah(payment.amount)}</span>
-                                </div>
-                                <div class="payment-right text-xs text-subtle">
-                                  {#if payment.paidAt}
-                                    <span class="text-success">✓ {formatDate(payment.paidAt)}</span>
-                                  {:else if payment.dueDate}
-                                    <span>Jatuh tempo: {formatDate(payment.dueDate)}</span>
-                                  {:else}
-                                    <span>Belum dibayar</span>
-                                  {/if}
-                                </div>
-                              </div>
-                            {/each}
-                          </div>
+                        <span class="calc-sep">×</span>
 
-                          <div class="payment-summary mt-3">
-                            <div class="flex justify-between text-sm">
-                              <span class="text-muted">Total item:</span>
-                              <span class="font-semibold">{formatRupiah(itemTotal)}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                              <span class="text-muted">Sudah dibayar:</span>
-                              <span class="font-semibold text-success">{formatRupiah(paidAmount)}</span>
-                            </div>
-                            <div class="flex justify-between text-sm font-bold">
-                              <span>Sisa belum bayar:</span>
-                              <span class="text-warning">{formatRupiah(Math.max(0, itemTotal - paidAmount))}</span>
-                            </div>
-                          </div>
+                        <div class="calc-field price-field">
+                          <span class="calc-currency">Rp</span>
+                          <input
+                            type="text"
+                            class="calc-input price-input"
+                            value={formatNum(item.unitPrice)}
+                            oninput={(e) =>
+                              updateBudgetItem(cat.id, item.id, {
+                                unitPrice: parseNum(
+                                  (e.target as HTMLInputElement).value,
+                                ),
+                              })}
+                            title="Harga satuan (Rp)"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="item-col-total">
+                      <span class="item-total-val font-numeric"
+                        >{formatRupiahShort(itemTotal)}</span
+                      >
+                      <span class="item-status-pill status-{status}">
+                        {#if status === "lunas"}
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="3"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                          <span>Lunas</span>
+                        {:else if status === "dp"}
+                          <span class="status-dot-inner"></span> <span>DP</span>
                         {:else}
-                          <div class="empty-payments-notice">
-                            <span class="text-subtle text-xs">Belum ada pembayaran yang dicatat untuk item ini.</span>
-                            <button
-                              type="button"
-                              class="btn-link-action text-xs"
-                              onclick={() => openPaymentModal(cat.id, item)}
-                            >+ Catat Sekarang</button>
+                          <span class="status-dot-inner"></span>
+                          <span>Belum</span>
+                        {/if}
+                      </span>
+                    </div>
+
+                    <div class="item-col-actions">
+                      <button
+                        type="button"
+                        class="item-act-btn act-pay"
+                        onclick={() => openPaymentModal(cat.id, item)}
+                        title="Catat Pembayaran"
+                      >
+                        <span class="act-plus">+</span>
+                        <span>Bayar</span>
+                      </button>
+
+                      {#if status !== "lunas"}
+                        <button
+                          type="button"
+                          class="item-act-btn act-settle"
+                          onclick={() => markItemPaid(cat.id, item.id)}
+                          title="Tandai Sudah Lunas"
+                        >
+                          <span>✓ Lunas</span>
+                        </button>
+                      {/if}
+
+                      <button
+                        type="button"
+                        class="item-act-icon {isItemOpen ? 'open' : ''}"
+                        onclick={() => toggleItem(item.id)}
+                        title={isItemOpen
+                          ? "Tutup rincian"
+                          : "Lihat rincian pembayaran"}
+                        aria-label="Rincian"
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="chevron-arrow {isItemOpen ? 'rotated' : ''}"
+                        >
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="item-act-icon act-delete"
+                        onclick={() => deleteBudgetItem(cat.id, item.id)}
+                        title="Hapus item"
+                        aria-label="Hapus item"
+                      >
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path
+                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Item Detail Accordion -->
+                  {#if isItemOpen}
+                    <div class="item-detail animate-fade-in">
+                      <div class="form-group mb-3">
+                        <div class="flex items-center justify-between mb-1.5">
+                          <label class="form-label mb-0" for="vendor-{item.id}"
+                            >Vendor Terhubung</label
+                          >
+                          <button
+                            type="button"
+                            class="text-xs text-accent font-semibold hover:underline bg-none border-0 p-0 cursor-pointer"
+                            onclick={() =>
+                              openQuickVendor(
+                                cat.id,
+                                item.id,
+                                cat.name,
+                                item.quantity * item.unitPrice,
+                              )}
+                          >
+                            + Tambah Vendor Baru
+                          </button>
+                        </div>
+
+                        <div class="grid-2 gap-2">
+                          <select
+                            class="form-select text-xs"
+                            value={findVendorByName(item.vendorName)
+                              ? item.vendorName
+                              : item.vendorName
+                                ? "__custom__"
+                                : ""}
+                            onchange={(e) =>
+                              handleVendorDropdownChange(
+                                cat.id,
+                                item.id,
+                                (e.target as HTMLSelectElement).value,
+                                cat.name,
+                                item.quantity * item.unitPrice,
+                              )}
+                          >
+                            <option value="">-- Pilih dari Vendor --</option>
+                            {#each $wedding.vendors as v}
+                              <option value={v.name}
+                                >{v.name} ({v.category} • {v.status.toUpperCase()})</option
+                              >
+                            {/each}
+                            {#if item.vendorName && !findVendorByName(item.vendorName)}
+                              <option value="__custom__"
+                                >Nama Manual: {item.vendorName}</option
+                              >
+                            {/if}
+                            <option value="__new__"
+                              >+ Tambah Vendor Baru...</option
+                            >
+                          </select>
+
+                          <input
+                            id="vendor-{item.id}"
+                            type="text"
+                            class="form-input text-xs"
+                            value={item.vendorName}
+                            oninput={(e) =>
+                              updateBudgetItem(cat.id, item.id, {
+                                vendorName: (e.target as HTMLInputElement)
+                                  .value,
+                              })}
+                            placeholder="Ketik manual nama vendor..."
+                          />
+                        </div>
+
+                        {#if findVendorByName(item.vendorName)}
+                          {@const mv = findVendorByName(item.vendorName)!}
+                          <div class="vendor-connected-chip mt-2">
+                            <span
+                              class="badge badge-{mv.status === 'deal' ||
+                              mv.status === 'lunas'
+                                ? 'success'
+                                : mv.status === 'diskusi'
+                                  ? 'warning'
+                                  : 'info'} text-xs"
+                            >
+                              {mv.status.toUpperCase()}
+                            </span>
+                            <span class="text-xs text-muted"
+                              >Kategori: {mv.category}</span
+                            >
+                            {#if mv.phone}
+                              <a
+                                href="https://wa.me/{formatWaNumber(mv.phone)}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-xs text-success hover:underline flex items-center gap-1 font-medium"
+                                title="Chat WhatsApp"
+                              >
+                                💬 WA: {mv.phone}
+                              </a>
+                            {/if}
+                            <a
+                              href="/vendor"
+                              class="text-xs text-accent hover:underline ml-auto font-medium"
+                            >
+                              Kelola Vendor ↗
+                            </a>
                           </div>
                         {/if}
                       </div>
-                    {/if}
-                  </div>
-                {/each}
 
-                <!-- Add item button at bottom -->
-                <button type="button" class="add-item-btn" onclick={() => addBudgetItem(cat.id)}>
-                  <span class="add-plus-icon">+</span>
-                  <span>Tambah Item di {cat.name}</span>
-                </button>
-              </div>
-            {/if}
-          </div>
+                      {#if item.payments.length > 0}
+                        <h5 class="text-sm font-semibold mb-2">
+                          Riwayat Pembayaran
+                        </h5>
+                        <div class="payments-list">
+                          {#each item.payments as payment}
+                            <div class="payment-row">
+                              <div class="payment-left">
+                                <span
+                                  class="badge badge-{payment.type === 'lunas'
+                                    ? 'success'
+                                    : payment.type === 'dp'
+                                      ? 'warning'
+                                      : 'info'}"
+                                >
+                                  {payment.type === "dp"
+                                    ? "DP"
+                                    : payment.type === "cicilan"
+                                      ? "Cicilan"
+                                      : "Lunas"}
+                                </span>
+                                <span class="text-sm font-semibold"
+                                  >{formatRupiah(payment.amount)}</span
+                                >
+                              </div>
+                              <div class="payment-right text-xs text-subtle">
+                                {#if payment.paidAt}
+                                  <span class="text-success"
+                                    >✓ {formatDate(payment.paidAt)}</span
+                                  >
+                                {:else if payment.dueDate}
+                                  <span
+                                    >Jatuh tempo: {formatDate(
+                                      payment.dueDate,
+                                    )}</span
+                                  >
+                                {:else}
+                                  <span>Belum dibayar</span>
+                                {/if}
+                              </div>
+                            </div>
+                          {/each}
+                        </div>
+
+                        <div class="payment-summary mt-3">
+                          <div class="flex justify-between text-sm">
+                            <span class="text-muted">Total item:</span>
+                            <span class="font-semibold"
+                              >{formatRupiah(itemTotal)}</span
+                            >
+                          </div>
+                          <div class="flex justify-between text-sm">
+                            <span class="text-muted">Sudah dibayar:</span>
+                            <span class="font-semibold text-success"
+                              >{formatRupiah(paidAmount)}</span
+                            >
+                          </div>
+                          <div class="flex justify-between text-sm font-bold">
+                            <span>Sisa belum bayar:</span>
+                            <span class="text-warning"
+                              >{formatRupiah(
+                                Math.max(0, itemTotal - paidAmount),
+                              )}</span
+                            >
+                          </div>
+                        </div>
+                      {:else}
+                        <div class="empty-payments-notice">
+                          <span class="text-subtle text-xs"
+                            >Belum ada pembayaran yang dicatat untuk item ini.</span
+                          >
+                          <button
+                            type="button"
+                            class="btn-link-action text-xs"
+                            onclick={() => openPaymentModal(cat.id, item)}
+                            >+ Catat Sekarang</button
+                          >
+                        </div>
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+
+              <!-- Add item button at bottom -->
+              <button
+                type="button"
+                class="add-item-btn"
+                onclick={() => addBudgetItem(cat.id)}
+              >
+                <span class="add-plus-icon">+</span>
+                <span>Tambah Item di {cat.name}</span>
+              </button>
+            </div>
+          {/if}
         </div>
+      </div>
 
       <!-- ============================================== -->
       <!-- VIEW 3: REKAP SEMUA KATEGORI (ALL ACCORDION)  -->
       <!-- ============================================== -->
-      {:else if activeView === 'all'}
-        <div class="all-categories-view animate-fade-in">
-          <div class="flex justify-between items-center mb-6">
-            <div>
-              <h2 class="view-section-title">Rekap Menyeluruh Semua Kategori</h2>
-              <p class="text-muted text-sm">Daftar lengkap untuk audit anggaran dan cetak laporan.</p>
-            </div>
-            <div class="flex gap-2">
-              <button class="btn btn-secondary btn-sm" onclick={expandAllCategories}>
-                Buka Semua
-              </button>
-              <button class="btn btn-ghost btn-sm" onclick={collapseAllCategories}>
-                Tutup Semua
-              </button>
-            </div>
+    {:else if activeView === "all"}
+      <div class="all-categories-view animate-fade-in">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="view-section-title">Rekap Menyeluruh Semua Kategori</h2>
+            <p class="text-muted text-sm">
+              Daftar lengkap untuk audit anggaran dan cetak laporan.
+            </p>
           </div>
+          <div class="flex gap-2">
+            <button
+              class="btn btn-secondary btn-sm"
+              onclick={expandAllCategories}
+            >
+              Buka Semua
+            </button>
+            <button
+              class="btn btn-ghost btn-sm"
+              onclick={collapseAllCategories}
+            >
+              Tutup Semua
+            </button>
+          </div>
+        </div>
 
-          <div class="categories-list">
-            {#each categories as cat}
-              {@const catTotal = getCategoryTotal(cat)}
-              {@const catPaid = getCategoryPaid(cat)}
-              {@const catPct = catTotal > 0 ? Math.round((catPaid / catTotal) * 100) : 0}
-              {@const isOpen = expandedCategories.has(cat.id)}
+        <div class="categories-list">
+          {#each categories as cat}
+            {@const catTotal = getCategoryTotal(cat)}
+            {@const catPaid = getCategoryPaid(cat)}
+            {@const catPct =
+              catTotal > 0 ? Math.round((catPaid / catTotal) * 100) : 0}
+            {@const isOpen = expandedCategories.has(cat.id)}
 
-              <div class="category-card {isOpen ? 'open' : ''}">
-                <!-- Category Accordion Header -->
-                <button type="button" class="category-header" onclick={() => toggleCategoryAccordion(cat.id)}>
-                  <div class="category-left">
-                    <div class="category-color-dot" style="background: {cat.color}"></div>
-                    <span class="category-icon"><CategoryIcon icon={cat.icon} size={18} /></span>
-                    <div class="category-title-group">
-                      <span class="category-name">{cat.name}</span>
-                      <span class="category-count-badge">{cat.items.length} item</span>
-                    </div>
+            <div class="category-card {isOpen ? 'open' : ''}">
+              <!-- Category Accordion Header -->
+              <button
+                type="button"
+                class="category-header"
+                onclick={() => toggleCategoryAccordion(cat.id)}
+              >
+                <div class="category-left">
+                  <div
+                    class="category-color-dot"
+                    style="background: {cat.color}"
+                  ></div>
+                  <span class="category-icon"
+                    ><CategoryIcon icon={cat.icon} size={18} /></span
+                  >
+                  <div class="category-title-group">
+                    <span class="category-name">{cat.name}</span>
+                    <span class="category-count-badge"
+                      >{cat.items.length} item</span
+                    >
                   </div>
+                </div>
 
-                  <div class="category-right">
-                    <div class="category-progress-block hide-mobile">
-                      <div class="category-ratio-text">
-                        <span class="cat-paid-val">{formatRupiahShort(catPaid)}</span>
-                        <span class="cat-slash">/</span>
-                        <span class="cat-total-val">{formatRupiahShort(catTotal)}</span>
-                      </div>
-                      <div class="category-mini-progress">
-                        <div class="category-mini-fill" style="background: {cat.color}; width: {catPct}%;"></div>
-                      </div>
-                      <span class="cat-pct-pill {catPct === 100 ? 'done' : catPct > 0 ? 'partial' : 'zero'}">
-                        {catPct}%
-                      </span>
+                <div class="category-right">
+                  <div class="category-progress-block hide-mobile">
+                    <div class="category-ratio-text">
+                      <span class="cat-paid-val"
+                        >{formatRupiahShort(catPaid)}</span
+                      >
+                      <span class="cat-slash">/</span>
+                      <span class="cat-total-val"
+                        >{formatRupiahShort(catTotal)}</span
+                      >
                     </div>
-
-                    <div class="category-header-total">
-                      <span class="category-header-total-label hide-mobile">Total</span>
-                      <span class="category-header-total-val font-numeric">{formatRupiahShort(catTotal)}</span>
+                    <div class="category-mini-progress">
+                      <div
+                        class="category-mini-fill"
+                        style="background: {cat.color}; width: {catPct}%;"
+                      ></div>
                     </div>
-
-                    <span class="category-chevron-wrapper {isOpen ? 'open' : ''}">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="category-chevron-svg">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                      </svg>
+                    <span
+                      class="cat-pct-pill {catPct === 100
+                        ? 'done'
+                        : catPct > 0
+                          ? 'partial'
+                          : 'zero'}"
+                    >
+                      {catPct}%
                     </span>
                   </div>
-                </button>
 
-                <!-- Items in Accordion -->
-                {#if isOpen}
-                  <div class="items-list animate-fade-in">
-                    {#if cat.items.length > 0}
-                      <div class="items-table-header hide-mobile">
-                        <span class="th-name">Pos Pengeluaran</span>
-                        <span class="th-calc">Jumlah & Harga Satuan</span>
-                        <span class="th-total">Total & Status</span>
-                        <span class="th-actions">Aksi</span>
-                      </div>
-                    {/if}
+                  <div class="category-header-total">
+                    <span class="category-header-total-label hide-mobile"
+                      >Total</span
+                    >
+                    <span class="category-header-total-val font-numeric"
+                      >{formatRupiahShort(catTotal)}</span
+                    >
+                  </div>
 
-                    {#each cat.items as item}
-                      {@const itemTotal = item.quantity * item.unitPrice}
-                      {@const paidAmount = item.payments.filter(p => p.paidAt).reduce((a, p) => a + p.amount, 0)}
-                      {@const status = getPaymentStatus(item)}
-                      {@const isItemOpen = expandedItems.has(item.id)}
+                  <span class="category-chevron-wrapper {isOpen ? 'open' : ''}">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="category-chevron-svg"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span>
+                </div>
+              </button>
 
-                      <div class="item-row">
-                        <div class="item-main">
-                          <div class="item-col-name">
-                            <div class="status-dot status-{status}" title="Status: {status === 'lunas' ? 'Lunas' : status === 'dp' ? 'DP' : 'Belum Dibayar'}"></div>
-                            <div class="item-name-group">
-                              <span
-                                class="item-name-input"
-                                contenteditable="true"
-                                onblur={(e) => handleItemNameEdit(cat.id, item.id, e)}
-                                suppressContentEditableWarning={true}
-                                title="Klik untuk ubah nama item"
-                              >{item.name}</span>
-                              {#if item.vendorName}
-                                <span class="item-vendor-badge">
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
-                                  </svg>
-                                  {item.vendorName}
-                                </span>
-                              {/if}
-                            </div>
-                          </div>
+              <!-- Items in Accordion -->
+              {#if isOpen}
+                <div class="items-list animate-fade-in">
+                  {#if cat.items.length > 0}
+                    <div class="items-table-header hide-mobile">
+                      <span class="th-name">Pos Pengeluaran</span>
+                      <span class="th-calc">Jumlah & Harga Satuan</span>
+                      <span class="th-total">Total & Status</span>
+                      <span class="th-actions">Aksi</span>
+                    </div>
+                  {/if}
 
-                          <div class="item-col-calc">
-                            <div class="calc-pill">
-                              <div class="calc-field qty-field">
-                                <input
-                                  type="number" min="1"
-                                  class="calc-input qty-input"
-                                  value={item.quantity}
-                                  oninput={(e) => updateBudgetItem(cat.id, item.id, { quantity: parseInt((e.target as HTMLInputElement).value) || 1 })}
-                                  title="Jumlah / kuantitas"
-                                />
-                                <span class="calc-unit">item</span>
-                              </div>
+                  {#each cat.items as item}
+                    {@const itemTotal = item.quantity * item.unitPrice}
+                    {@const paidAmount = item.payments
+                      .filter((p) => p.paidAt)
+                      .reduce((a, p) => a + p.amount, 0)}
+                    {@const status = getPaymentStatus(item)}
+                    {@const isItemOpen = expandedItems.has(item.id)}
 
-                              <span class="calc-sep">×</span>
-
-                              <div class="calc-field price-field">
-                                <span class="calc-currency">Rp</span>
-                                <input
-                                  type="text"
-                                  class="calc-input price-input"
-                                  value={formatNum(item.unitPrice)}
-                                  oninput={(e) => updateBudgetItem(cat.id, item.id, { unitPrice: parseNum((e.target as HTMLInputElement).value) })}
-                                  title="Harga satuan (Rp)"
-                                  placeholder="0"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div class="item-col-total">
-                            <span class="item-total-val font-numeric">{formatRupiahShort(itemTotal)}</span>
-                            <span class="item-status-pill status-{status}">
-                              {#if status === 'lunas'}
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                  <polyline points="20 6 9 17 4 12"></polyline>
+                    <div class="item-row">
+                      <div class="item-main">
+                        <div class="item-col-name">
+                          <div
+                            class="status-dot status-{status}"
+                            title="Status: {status === 'lunas'
+                              ? 'Lunas'
+                              : status === 'dp'
+                                ? 'DP'
+                                : 'Belum Dibayar'}"
+                          ></div>
+                          <div class="item-name-group">
+                            <span
+                              class="item-name-input"
+                              contenteditable="true"
+                              onblur={(e) =>
+                                handleItemNameEdit(cat.id, item.id, e)}
+                              suppressContentEditableWarning={true}
+                              title="Klik untuk ubah nama item"
+                              >{item.name}</span
+                            >
+                            {#if item.vendorName}
+                              <span class="item-vendor-badge">
+                                <svg
+                                  width="10"
+                                  height="10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                >
+                                  <path
+                                    d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
+                                  ></path>
+                                  <circle cx="12" cy="10" r="3"></circle>
                                 </svg>
-                                <span>Lunas</span>
-                              {:else if status === 'dp'}
-                                <span class="status-dot-inner"></span> <span>DP</span>
-                              {:else}
-                                <span class="status-dot-inner"></span> <span>Belum</span>
-                              {/if}
-                            </span>
-                          </div>
-
-                          <div class="item-col-actions">
-                            <button
-                              type="button"
-                              class="item-act-btn act-pay"
-                              onclick={() => openPaymentModal(cat.id, item)}
-                              title="Catat Pembayaran"
-                            >
-                              <span class="act-plus">+</span>
-                              <span>Bayar</span>
-                            </button>
-
-                            {#if status !== 'lunas'}
-                              <button
-                                type="button"
-                                class="item-act-btn act-settle"
-                                onclick={() => markItemPaid(cat.id, item.id)}
-                                title="Tandai Sudah Lunas"
-                              >
-                                <span>✓ Lunas</span>
-                              </button>
+                                {item.vendorName}
+                              </span>
                             {/if}
-
-                            <button
-                              type="button"
-                              class="item-act-icon {isItemOpen ? 'open' : ''}"
-                              onclick={() => toggleItem(item.id)}
-                              title={isItemOpen ? 'Tutup rincian' : 'Lihat rincian pembayaran'}
-                              aria-label="Rincian"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron-arrow {isItemOpen ? 'rotated' : ''}">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                              </svg>
-                            </button>
-
-                            <button
-                              type="button"
-                              class="item-act-icon act-delete"
-                              onclick={() => deleteBudgetItem(cat.id, item.id)}
-                              title="Hapus item"
-                              aria-label="Hapus item"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2 2v2"></path>
-                              </svg>
-                            </button>
                           </div>
                         </div>
 
-                        <!-- Item Detail Accordion -->
-                        {#if isItemOpen}
-                          <div class="item-detail animate-fade-in">
-                            <div class="form-group mb-3">
-                              <div class="flex items-center justify-between mb-1.5">
-                                <label class="form-label mb-0" for="all-vendor-{item.id}">Vendor Terhubung</label>
-                                <button
-                                  type="button"
-                                  class="text-xs text-accent font-semibold hover:underline bg-none border-0 p-0 cursor-pointer"
-                                  onclick={() => openQuickVendor(cat.id, item.id, cat.name, item.quantity * item.unitPrice)}
-                                >
-                                  + Tambah Vendor Baru
-                                </button>
-                              </div>
-
-                              <div class="grid-2 gap-2">
-                                <select
-                                  class="form-select text-xs"
-                                  value={findVendorByName(item.vendorName) ? item.vendorName : (item.vendorName ? '__custom__' : '')}
-                                  onchange={(e) => handleVendorDropdownChange(cat.id, item.id, (e.target as HTMLSelectElement).value, cat.name, item.quantity * item.unitPrice)}
-                                >
-                                  <option value="">-- Pilih dari Vendor --</option>
-                                  {#each $wedding.vendors as v}
-                                    <option value={v.name}>{v.name} ({v.category} • {v.status.toUpperCase()})</option>
-                                  {/each}
-                                  {#if item.vendorName && !findVendorByName(item.vendorName)}
-                                    <option value="__custom__">Nama Manual: {item.vendorName}</option>
-                                  {/if}
-                                  <option value="__new__">+ Tambah Vendor Baru...</option>
-                                </select>
-
-                                <input
-                                  id="all-vendor-{item.id}"
-                                  type="text"
-                                  class="form-input text-xs"
-                                  value={item.vendorName}
-                                  oninput={(e) => updateBudgetItem(cat.id, item.id, { vendorName: (e.target as HTMLInputElement).value })}
-                                  placeholder="Ketik manual nama vendor..."
-                                />
-                              </div>
-
-                              {#if findVendorByName(item.vendorName)}
-                                {@const mv = findVendorByName(item.vendorName)!}
-                                <div class="vendor-connected-chip mt-2">
-                                  <span class="badge badge-{mv.status === 'deal' || mv.status === 'lunas' ? 'success' : mv.status === 'diskusi' ? 'warning' : 'info'} text-xs">
-                                    {mv.status.toUpperCase()}
-                                  </span>
-                                  <span class="text-xs text-muted">Kategori: {mv.category}</span>
-                                  {#if mv.phone}
-                                    <a
-                                      href="https://wa.me/{formatWaNumber(mv.phone)}"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      class="text-xs text-success hover:underline flex items-center gap-1 font-medium"
-                                      title="Chat WhatsApp"
-                                    >
-                                      💬 WA: {mv.phone}
-                                    </a>
-                                  {/if}
-                                  <a href="/vendor" class="text-xs text-accent hover:underline ml-auto font-medium">
-                                    Kelola Vendor ↗
-                                  </a>
-                                </div>
-                              {/if}
+                        <div class="item-col-calc">
+                          <div class="calc-pill">
+                            <div class="calc-field qty-field">
+                              <input
+                                type="number"
+                                min="1"
+                                class="calc-input qty-input"
+                                value={item.quantity}
+                                oninput={(e) =>
+                                  updateBudgetItem(cat.id, item.id, {
+                                    quantity:
+                                      parseInt(
+                                        (e.target as HTMLInputElement).value,
+                                      ) || 1,
+                                  })}
+                                title="Jumlah / kuantitas"
+                              />
+                              <span class="calc-unit">item</span>
                             </div>
 
-                            {#if item.payments.length > 0}
-                              <h5 class="text-sm font-semibold mb-2">Riwayat Pembayaran</h5>
-                              <div class="payments-list">
-                                {#each item.payments as payment}
-                                  <div class="payment-row">
-                                    <div class="payment-left">
-                                      <span class="badge badge-{payment.type === 'lunas' ? 'success' : payment.type === 'dp' ? 'warning' : 'info'}">
-                                        {payment.type === 'dp' ? 'DP' : payment.type === 'cicilan' ? 'Cicilan' : 'Lunas'}
-                                      </span>
-                                      <span class="text-sm font-semibold">{formatRupiah(payment.amount)}</span>
-                                    </div>
-                                    <div class="payment-right text-xs text-subtle">
-                                      {#if payment.paidAt}
-                                        <span class="text-success">✓ {formatDate(payment.paidAt)}</span>
-                                      {:else if payment.dueDate}
-                                        <span>Jatuh tempo: {formatDate(payment.dueDate)}</span>
-                                      {:else}
-                                        <span>Belum dibayar</span>
-                                      {/if}
-                                    </div>
-                                  </div>
-                                {/each}
-                              </div>
+                            <span class="calc-sep">×</span>
 
-                              <div class="payment-summary mt-3">
-                                <div class="flex justify-between text-sm">
-                                  <span class="text-muted">Total item:</span>
-                                  <span class="font-semibold">{formatRupiah(itemTotal)}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                  <span class="text-muted">Sudah dibayar:</span>
-                                  <span class="font-semibold text-success">{formatRupiah(paidAmount)}</span>
-                                </div>
-                                <div class="flex justify-between text-sm font-bold">
-                                  <span>Sisa belum bayar:</span>
-                                  <span class="text-warning">{formatRupiah(Math.max(0, itemTotal - paidAmount))}</span>
-                                </div>
-                              </div>
+                            <div class="calc-field price-field">
+                              <span class="calc-currency">Rp</span>
+                              <input
+                                type="text"
+                                class="calc-input price-input"
+                                value={formatNum(item.unitPrice)}
+                                oninput={(e) =>
+                                  updateBudgetItem(cat.id, item.id, {
+                                    unitPrice: parseNum(
+                                      (e.target as HTMLInputElement).value,
+                                    ),
+                                  })}
+                                title="Harga satuan (Rp)"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="item-col-total">
+                          <span class="item-total-val font-numeric"
+                            >{formatRupiahShort(itemTotal)}</span
+                          >
+                          <span class="item-status-pill status-{status}">
+                            {#if status === "lunas"}
+                              <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="3"
+                              >
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                              <span>Lunas</span>
+                            {:else if status === "dp"}
+                              <span class="status-dot-inner"></span>
+                              <span>DP</span>
                             {:else}
-                              <div class="empty-payments-notice">
-                                <span class="text-subtle text-xs">Belum ada pembayaran yang dicatat untuk item ini.</span>
-                                <button
-                                  type="button"
-                                  class="btn-link-action text-xs"
-                                  onclick={() => openPaymentModal(cat.id, item)}
-                                >+ Catat Sekarang</button>
+                              <span class="status-dot-inner"></span>
+                              <span>Belum</span>
+                            {/if}
+                          </span>
+                        </div>
+
+                        <div class="item-col-actions">
+                          <button
+                            type="button"
+                            class="item-act-btn act-pay"
+                            onclick={() => openPaymentModal(cat.id, item)}
+                            title="Catat Pembayaran"
+                          >
+                            <span class="act-plus">+</span>
+                            <span>Bayar</span>
+                          </button>
+
+                          {#if status !== "lunas"}
+                            <button
+                              type="button"
+                              class="item-act-btn act-settle"
+                              onclick={() => markItemPaid(cat.id, item.id)}
+                              title="Tandai Sudah Lunas"
+                            >
+                              <span>✓ Lunas</span>
+                            </button>
+                          {/if}
+
+                          <button
+                            type="button"
+                            class="item-act-icon {isItemOpen ? 'open' : ''}"
+                            onclick={() => toggleItem(item.id)}
+                            title={isItemOpen
+                              ? "Tutup rincian"
+                              : "Lihat rincian pembayaran"}
+                            aria-label="Rincian"
+                          >
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              class="chevron-arrow {isItemOpen
+                                ? 'rotated'
+                                : ''}"
+                            >
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                          </button>
+
+                          <button
+                            type="button"
+                            class="item-act-icon act-delete"
+                            onclick={() => deleteBudgetItem(cat.id, item.id)}
+                            title="Hapus item"
+                            aria-label="Hapus item"
+                          >
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path
+                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2 2v2"
+                              ></path>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Item Detail Accordion -->
+                      {#if isItemOpen}
+                        <div class="item-detail animate-fade-in">
+                          <div class="form-group mb-3">
+                            <div
+                              class="flex items-center justify-between mb-1.5"
+                            >
+                              <label
+                                class="form-label mb-0"
+                                for="all-vendor-{item.id}"
+                                >Vendor Terhubung</label
+                              >
+                              <button
+                                type="button"
+                                class="text-xs text-accent font-semibold hover:underline bg-none border-0 p-0 cursor-pointer"
+                                onclick={() =>
+                                  openQuickVendor(
+                                    cat.id,
+                                    item.id,
+                                    cat.name,
+                                    item.quantity * item.unitPrice,
+                                  )}
+                              >
+                                + Tambah Vendor Baru
+                              </button>
+                            </div>
+
+                            <div class="grid-2 gap-2">
+                              <select
+                                class="form-select text-xs"
+                                value={findVendorByName(item.vendorName)
+                                  ? item.vendorName
+                                  : item.vendorName
+                                    ? "__custom__"
+                                    : ""}
+                                onchange={(e) =>
+                                  handleVendorDropdownChange(
+                                    cat.id,
+                                    item.id,
+                                    (e.target as HTMLSelectElement).value,
+                                    cat.name,
+                                    item.quantity * item.unitPrice,
+                                  )}
+                              >
+                                <option value="">-- Pilih dari Vendor --</option
+                                >
+                                {#each $wedding.vendors as v}
+                                  <option value={v.name}
+                                    >{v.name} ({v.category} • {v.status.toUpperCase()})</option
+                                  >
+                                {/each}
+                                {#if item.vendorName && !findVendorByName(item.vendorName)}
+                                  <option value="__custom__"
+                                    >Nama Manual: {item.vendorName}</option
+                                  >
+                                {/if}
+                                <option value="__new__"
+                                  >+ Tambah Vendor Baru...</option
+                                >
+                              </select>
+
+                              <input
+                                id="all-vendor-{item.id}"
+                                type="text"
+                                class="form-input text-xs"
+                                value={item.vendorName}
+                                oninput={(e) =>
+                                  updateBudgetItem(cat.id, item.id, {
+                                    vendorName: (e.target as HTMLInputElement)
+                                      .value,
+                                  })}
+                                placeholder="Ketik manual nama vendor..."
+                              />
+                            </div>
+
+                            {#if findVendorByName(item.vendorName)}
+                              {@const mv = findVendorByName(item.vendorName)!}
+                              <div class="vendor-connected-chip mt-2">
+                                <span
+                                  class="badge badge-{mv.status === 'deal' ||
+                                  mv.status === 'lunas'
+                                    ? 'success'
+                                    : mv.status === 'diskusi'
+                                      ? 'warning'
+                                      : 'info'} text-xs"
+                                >
+                                  {mv.status.toUpperCase()}
+                                </span>
+                                <span class="text-xs text-muted"
+                                  >Kategori: {mv.category}</span
+                                >
+                                {#if mv.phone}
+                                  <a
+                                    href="https://wa.me/{formatWaNumber(
+                                      mv.phone,
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-xs text-success hover:underline flex items-center gap-1 font-medium"
+                                    title="Chat WhatsApp"
+                                  >
+                                    💬 WA: {mv.phone}
+                                  </a>
+                                {/if}
+                                <a
+                                  href="/vendor"
+                                  class="text-xs text-accent hover:underline ml-auto font-medium"
+                                >
+                                  Kelola Vendor ↗
+                                </a>
                               </div>
                             {/if}
                           </div>
-                        {/if}
-                      </div>
-                    {/each}
 
-                    <button type="button" class="add-item-btn" onclick={() => addBudgetItem(cat.id)}>
-                      <span class="add-plus-icon">+</span>
-                      <span>Tambah Item di {cat.name}</span>
-                    </button>
-                  </div>
-                {/if}
-              </div>
-            {/each}
-          </div>        </div>
-      {/if}
+                          {#if item.payments.length > 0}
+                            <h5 class="text-sm font-semibold mb-2">
+                              Riwayat Pembayaran
+                            </h5>
+                            <div class="payments-list">
+                              {#each item.payments as payment}
+                                <div class="payment-row">
+                                  <div class="payment-left">
+                                    <span
+                                      class="badge badge-{payment.type ===
+                                      'lunas'
+                                        ? 'success'
+                                        : payment.type === 'dp'
+                                          ? 'warning'
+                                          : 'info'}"
+                                    >
+                                      {payment.type === "dp"
+                                        ? "DP"
+                                        : payment.type === "cicilan"
+                                          ? "Cicilan"
+                                          : "Lunas"}
+                                    </span>
+                                    <span class="text-sm font-semibold"
+                                      >{formatRupiah(payment.amount)}</span
+                                    >
+                                  </div>
+                                  <div
+                                    class="payment-right text-xs text-subtle"
+                                  >
+                                    {#if payment.paidAt}
+                                      <span class="text-success"
+                                        >✓ {formatDate(payment.paidAt)}</span
+                                      >
+                                    {:else if payment.dueDate}
+                                      <span
+                                        >Jatuh tempo: {formatDate(
+                                          payment.dueDate,
+                                        )}</span
+                                      >
+                                    {:else}
+                                      <span>Belum dibayar</span>
+                                    {/if}
+                                  </div>
+                                </div>
+                              {/each}
+                            </div>
+
+                            <div class="payment-summary mt-3">
+                              <div class="flex justify-between text-sm">
+                                <span class="text-muted">Total item:</span>
+                                <span class="font-semibold"
+                                  >{formatRupiah(itemTotal)}</span
+                                >
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                <span class="text-muted">Sudah dibayar:</span>
+                                <span class="font-semibold text-success"
+                                  >{formatRupiah(paidAmount)}</span
+                                >
+                              </div>
+                              <div
+                                class="flex justify-between text-sm font-bold"
+                              >
+                                <span>Sisa belum bayar:</span>
+                                <span class="text-warning"
+                                  >{formatRupiah(
+                                    Math.max(0, itemTotal - paidAmount),
+                                  )}</span
+                                >
+                              </div>
+                            </div>
+                          {:else}
+                            <div class="empty-payments-notice">
+                              <span class="text-subtle text-xs"
+                                >Belum ada pembayaran yang dicatat untuk item
+                                ini.</span
+                              >
+                              <button
+                                type="button"
+                                class="btn-link-action text-xs"
+                                onclick={() => openPaymentModal(cat.id, item)}
+                                >+ Catat Sekarang</button
+                              >
+                            </div>
+                          {/if}
+                        </div>
+                      {/if}
+                    </div>
+                  {/each}
+
+                  <button
+                    type="button"
+                    class="add-item-btn"
+                    onclick={() => addBudgetItem(cat.id)}
+                  >
+                    <span class="add-plus-icon">+</span>
+                    <span>Tambah Item di {cat.name}</span>
+                  </button>
+                </div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      </div>
     {/if}
-  </div>
+  {/if}
+</div>
 
 <!-- ============================================== -->
 <!-- PAYMENT MODAL                                  -->
 <!-- ============================================== -->
 {#if showPaymentModal && paymentItem}
-  <div class="modal-overlay" onclick={() => showPaymentModal = false} role="dialog" aria-modal="true" tabindex="-1" onkeydown={(e) => e.key === 'Escape' && (showPaymentModal = false)}>
-    <div class="modal" onclick={(e) => e.stopPropagation()} role="document">
+  <div
+    class="modal-overlay animate-fade-in"
+    onclick={() => (showPaymentModal = false)}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    onkeydown={(e) => e.key === "Escape" && (showPaymentModal = false)}
+  >
+    <div
+      class="modal card max-w-lg"
+      onclick={(e) => e.stopPropagation()}
+      role="document"
+    >
       <div class="modal-header">
-        <h3>Catat Pembayaran</h3>
-        <button class="btn btn-icon btn-ghost" onclick={() => showPaymentModal = false}>✕</button>
-      </div>
-
-      <p class="text-muted text-sm mb-4">
-        <strong>{paymentItem.itemName}</strong> — Sisa belum dibayar: <strong class="text-warning">{formatRupiah(paymentItem.remaining)}</strong>
-      </p>
-
-      <div class="form-group mb-4">
-        <label class="form-label" for="payTypeChoice">Jenis Pembayaran</label>
-        <div class="pay-type-choices" id="payTypeChoice">
-          {#each [['dp', 'DP / Uang Muka'], ['cicilan', 'Cicilan'], ['lunas', 'Pelunasan']] as [val, label]}
-            <button
-              class="choice-btn-sm {payType === val ? 'active' : ''}"
-              onclick={() => payType = val as typeof payType}
-            >{label}</button>
-          {/each}
+        <div>
+          <h3 class="modal-title">Catat Pembayaran</h3>
+          <p class="modal-subtitle">
+            <strong>{paymentItem.itemName}</strong> — Sisa:
+            <strong class="text-warning"
+              >{formatRupiah(paymentItem.remaining)}</strong
+            >
+          </p>
         </div>
+        <button
+          type="button"
+          class="btn-close-modal"
+          onclick={() => (showPaymentModal = false)}
+          aria-label="Tutup formulir">✕</button
+        >
       </div>
 
-      <div class="form-group mb-4">
-        <label class="form-label" for="payAmount">Nominal</label>
-        <div class="currency-input-wrapper">
-          <span class="currency-prefix">Rp</span>
-          <input id="payAmount" type="text" class="form-input"
-            value={payAmount.toLocaleString('id-ID')}
-            oninput={(e) => payAmount = parseInt((e.target as HTMLInputElement).value.replace(/\D/g,''),10)||0}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="payTypeChoice">Jenis Pembayaran</label>
+          <div class="pay-type-choices" id="payTypeChoice">
+            {#each [["dp", "DP / Uang Muka"], ["cicilan", "Cicilan"], ["lunas", "Pelunasan"]] as [val, label]}
+              <button
+                type="button"
+                class="choice-btn-sm {payType === val ? 'active' : ''}"
+                onclick={() => (payType = val as typeof payType)}
+                >{label}</button
+              >
+            {/each}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="payAmount"
+            >Nominal Pembayaran <span class="text-danger">*</span></label
+          >
+          <div class="currency-input-wrapper">
+            <span class="currency-prefix">Rp</span>
+            <input
+              id="payAmount"
+              type="text"
+              class="form-input"
+              value={payAmount.toLocaleString("id-ID")}
+              oninput={(e) =>
+                (payAmount =
+                  parseInt(
+                    (e.target as HTMLInputElement).value.replace(/\D/g, ""),
+                    10,
+                  ) || 0)}
+              placeholder="0"
+              autofocus
+            />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="payDueDate">Jatuh Tempo</label>
+            <input
+              id="payDueDate"
+              type="date"
+              class="form-input"
+              bind:value={payDueDate}
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="payPaidAt">Tanggal Bayar</label>
+            <input
+              id="payPaidAt"
+              type="date"
+              class="form-input"
+              bind:value={payPaidAt}
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="payNotes">Catatan (opsional)</label>
+          <input
+            id="payNotes"
+            type="text"
+            class="form-input"
+            bind:value={payNotes}
+            placeholder="Transfer BCA, No. kwitansi, bukti pembayaran, dll."
           />
         </div>
       </div>
 
-      <div class="grid-2 mb-4">
-        <div class="form-group">
-          <label class="form-label" for="payDueDate">Jatuh Tempo</label>
-          <input id="payDueDate" type="date" class="form-input" bind:value={payDueDate} />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="payPaidAt">Tanggal Bayar</label>
-          <input id="payPaidAt" type="date" class="form-input" bind:value={payPaidAt} />
-        </div>
-      </div>
-
-      <div class="form-group mb-6">
-        <label class="form-label" for="payNotes">Catatan (opsional)</label>
-        <input id="payNotes" type="text" class="form-input" bind:value={payNotes} placeholder="Transfer BCA, No. kwitansi, dll." />
-      </div>
-
-      <div class="flex gap-3">
-        <button class="btn btn-secondary flex-1" onclick={() => showPaymentModal = false}>Batal</button>
-        <button class="btn btn-primary flex-1" onclick={submitPayment} disabled={payAmount <= 0}>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick={() => (showPaymentModal = false)}>Batal</button
+        >
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick={submitPayment}
+          disabled={payAmount <= 0}
+        >
           Simpan Pembayaran
         </button>
       </div>
@@ -1169,59 +1883,91 @@
 <!-- ADD CATEGORY MODAL                             -->
 <!-- ============================================== -->
 {#if showAddCategoryModal}
-  <div class="modal-overlay" onclick={() => showAddCategoryModal = false} role="dialog" aria-modal="true" tabindex="-1" onkeydown={(e) => e.key === 'Escape' && (showAddCategoryModal = false)}>
-    <div class="modal" onclick={(e) => e.stopPropagation()} role="document">
+  <div
+    class="modal-overlay animate-fade-in"
+    onclick={() => (showAddCategoryModal = false)}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    onkeydown={(e) => e.key === "Escape" && (showAddCategoryModal = false)}
+  >
+    <div
+      class="modal card max-w-lg"
+      onclick={(e) => e.stopPropagation()}
+      role="document"
+    >
       <div class="modal-header">
-        <h3>Tambah Kategori Anggaran</h3>
-        <button class="btn btn-icon btn-ghost" onclick={() => showAddCategoryModal = false}>✕</button>
+        <div>
+          <h3 class="modal-title">Tambah Kategori Anggaran</h3>
+          <p class="modal-subtitle">Kelompokkan pengeluaran pernikahanmu.</p>
+        </div>
+        <button
+          type="button"
+          class="btn-close-modal"
+          onclick={() => (showAddCategoryModal = false)}
+          aria-label="Tutup formulir">✕</button
+        >
       </div>
 
-      <div class="form-group mb-4">
-        <label class="form-label" for="newCatNameInput">Nama Kategori</label>
-        <input
-          id="newCatNameInput"
-          type="text"
-          class="form-input"
-          bind:value={newCatName}
-          placeholder="Misal: Seserahan, Honeymoon, Photobooth"
-          autofocus
-        />
-      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="newCatNameInput"
+            >Nama Kategori <span class="text-danger">*</span></label
+          >
+          <input
+            id="newCatNameInput"
+            type="text"
+            class="form-input"
+            bind:value={newCatName}
+            placeholder="Misal: Seserahan, Honeymoon, Photobooth"
+            autofocus
+          />
+        </div>
 
-      <div class="form-group mb-4">
-        <label class="form-label">Pilih Icon</label>
-        <div class="icon-picker-grid">
-          {#each availableIcons as icon}
-            <button
-              class="icon-pick-btn {newCatIcon === icon ? 'active' : ''}"
-              onclick={() => newCatIcon = icon}
-              type="button"
-            >
-              {icon}
-            </button>
-          {/each}
+        <div class="form-group">
+          <label class="form-label">Pilih Icon</label>
+          <div class="icon-picker-grid">
+            {#each availableIcons as icon}
+              <button
+                class="icon-pick-btn {newCatIcon === icon ? 'active' : ''}"
+                onclick={() => (newCatIcon = icon)}
+                type="button"
+              >
+                {icon}
+              </button>
+            {/each}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pilih Aksen Warna</label>
+          <div class="color-picker-row">
+            {#each availableColors as col}
+              <button
+                class="color-pick-circle {newCatColor === col ? 'active' : ''}"
+                style="background: {col}"
+                onclick={() => (newCatColor = col)}
+                type="button"
+                aria-label="Pilih warna {col}"
+              ></button>
+            {/each}
+          </div>
         </div>
       </div>
 
-      <div class="form-group mb-6">
-        <label class="form-label">Pilih Aksen Warna</label>
-        <div class="color-picker-row">
-          {#each availableColors as col}
-            <button
-              class="color-pick-circle {newCatColor === col ? 'active' : ''}"
-              style="background: {col}"
-              onclick={() => newCatColor = col}
-              type="button"
-              aria-label="Pilih warna {col}"
-            ></button>
-          {/each}
-        </div>
-      </div>
-
-      <div class="flex gap-3">
-        <button class="btn btn-secondary flex-1" onclick={() => showAddCategoryModal = false}>Batal</button>
-        <button class="btn btn-primary flex-1" onclick={handleAddCategorySubmit} disabled={!newCatName.trim()}>
-          Tambahkan
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick={() => (showAddCategoryModal = false)}>Batal</button
+        >
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick={handleAddCategorySubmit}
+          disabled={!newCatName.trim()}
+        >
+          Tambahkan Kategori
         </button>
       </div>
     </div>
@@ -1232,16 +1978,28 @@
 <!-- QUICK ADD VENDOR MODAL                         -->
 <!-- ============================================== -->
 {#if showQuickVendorModal && quickVendorTarget}
-  <div class="modal-overlay animate-fade-in" onclick={() => showQuickVendorModal = false} role="dialog" aria-modal="true" tabindex="-1">
+  <div
+    class="modal-overlay animate-fade-in"
+    onclick={() => (showQuickVendorModal = false)}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+  >
     <div class="modal card max-w-lg" onclick={(e) => e.stopPropagation()}>
       <div class="modal-header">
         <h3 class="modal-title">Tambah Vendor Baru ke Manajemen</h3>
-        <button class="btn-icon btn-ghost" onclick={() => showQuickVendorModal = false}>✕</button>
+        <button
+          type="button"
+          class="btn-close-modal"
+          onclick={() => (showQuickVendorModal = false)}
+          aria-label="Tutup formulir">✕</button
+        >
       </div>
 
       <div class="modal-body">
         <p class="text-xs text-muted mb-3">
-          Vendor ini akan otomatis tersimpan ke <strong>Manajemen Vendor</strong> dan terhubung ke item anggaran ini.
+          Vendor ini akan otomatis tersimpan ke <strong>Manajemen Vendor</strong
+          > dan terhubung ke item anggaran ini.
         </p>
 
         <div class="form-group mb-3">
@@ -1269,7 +2027,11 @@
 
           <div class="form-group">
             <label class="form-label" for="qvStatus">Status</label>
-            <select id="qvStatus" class="form-select" bind:value={quickVendorStatus}>
+            <select
+              id="qvStatus"
+              class="form-select"
+              bind:value={quickVendorStatus}
+            >
               <option value="deal">Sudah Deal / DP</option>
               <option value="diskusi">Dalam Diskusi</option>
               <option value="riset">Riset / Tanya</option>
@@ -1315,7 +2077,9 @@
         </div>
 
         <div class="form-group mb-3">
-          <label class="form-label" for="qvNotes">Catatan Tambahan (opsional)</label>
+          <label class="form-label" for="qvNotes"
+            >Catatan Tambahan (opsional)</label
+          >
           <input
             id="qvNotes"
             type="text"
@@ -1327,7 +2091,11 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick={() => showQuickVendorModal = false}>Batal</button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick={() => (showQuickVendorModal = false)}>Batal</button
+        >
         <button
           type="button"
           class="btn btn-primary"
@@ -1372,9 +2140,21 @@
     min-width: 110px;
   }
 
-  .summary-stat-label { font-size: var(--font-size-xs); color: var(--color-text-subtle); font-weight: 500; }
-  .summary-stat-value { font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text); }
-  .summary-divider { width: 1px; height: 36px; background: var(--color-border-light); }
+  .summary-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-subtle);
+    font-weight: 500;
+  }
+  .summary-stat-value {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-text);
+  }
+  .summary-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--color-border-light);
+  }
 
   .progress-bar {
     height: 8px;
@@ -1385,7 +2165,11 @@
 
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+    background: linear-gradient(
+      90deg,
+      var(--color-primary),
+      var(--color-success)
+    );
     border-radius: var(--radius-full);
     transition: width 0.4s ease;
   }
@@ -1429,7 +2213,9 @@
     box-shadow: 0 2px 6px rgba(139, 94, 82, 0.12);
   }
 
-  .tab-icon { font-size: 1rem; }
+  .tab-icon {
+    font-size: 1rem;
+  }
 
   /* ========================================= */
   /* GRID VIEW STYLES                          */
@@ -1469,9 +2255,11 @@
   }
 
   .category-grid-card::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 4px;
     background: var(--cat-color, var(--color-primary));
     opacity: 0.85;
@@ -1546,8 +2334,12 @@
     font-size: var(--font-size-xs);
   }
 
-  .card-stat-label { color: var(--color-text-muted); }
-  .card-stat-val { color: var(--color-text); }
+  .card-stat-label {
+    color: var(--color-text-muted);
+  }
+  .card-stat-val {
+    color: var(--color-text);
+  }
 
   .card-progress-track {
     height: 6px;
@@ -1735,8 +2527,15 @@
     gap: 4px;
   }
 
-  .cat-stat-label { font-size: var(--font-size-xs); color: var(--color-text-subtle); }
-  .cat-stat-value { font-size: var(--font-size-base); font-weight: 700; color: var(--color-text); }
+  .cat-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-subtle);
+  }
+  .cat-stat-value {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--color-text);
+  }
 
   .cat-progress-bar {
     height: 8px;
@@ -1770,7 +2569,11 @@
   /* ========================================= */
   /* ITEMS & ACCORDION (COMMON)                */
   /* ========================================= */
-  .categories-list { display: flex; flex-direction: column; gap: var(--space-4); }
+  .categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
 
   .category-card {
     background: white;
@@ -1778,7 +2581,9 @@
     border-radius: var(--radius-xl);
     overflow: hidden;
     box-shadow: var(--shadow-xs);
-    transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+    transition:
+      box-shadow var(--transition-fast),
+      border-color var(--transition-fast);
   }
 
   .category-card:hover {
@@ -1845,7 +2650,7 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--color-text-subtle);
-    background: #FAF7F5;
+    background: #faf7f5;
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-full);
     padding: 1px 8px;
@@ -1869,9 +2674,17 @@
     font-size: 12px;
     font-variant-numeric: tabular-nums;
   }
-  .cat-paid-val { font-weight: 600; color: var(--color-text); }
-  .cat-slash { color: var(--color-text-subtle); margin: 0 1px; }
-  .cat-total-val { color: var(--color-text-muted); }
+  .cat-paid-val {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .cat-slash {
+    color: var(--color-text-subtle);
+    margin: 0 1px;
+  }
+  .cat-total-val {
+    color: var(--color-text-muted);
+  }
 
   .category-mini-progress {
     width: 76px;
@@ -1895,16 +2708,16 @@
     line-height: 1.3;
   }
   .cat-pct-pill.done {
-    background: var(--color-success-bg, #E8F5E9);
-    color: var(--color-success, #2E7D32);
+    background: var(--color-success-bg, #e8f5e9);
+    color: var(--color-success, #2e7d32);
   }
   .cat-pct-pill.partial {
-    background: var(--color-warning-bg, #FFF3E0);
-    color: var(--color-warning, #E65100);
+    background: var(--color-warning-bg, #fff3e0);
+    color: var(--color-warning, #e65100);
   }
   .cat-pct-pill.zero {
-    background: #F0ECE9;
-    color: var(--color-text-subtle, #7A5850);
+    background: #f0ece9;
+    color: var(--color-text-subtle, #7a5850);
   }
 
   .category-header-total {
@@ -1942,7 +2755,7 @@
     transition: all var(--transition-fast);
   }
   .category-header:hover .category-chevron-wrapper {
-    background: rgba(0,0,0,0.04);
+    background: rgba(0, 0, 0, 0.04);
     color: var(--color-text);
   }
   .category-chevron-svg {
@@ -1968,10 +2781,12 @@
 
   .items-table-header {
     display: grid;
-    grid-template-columns: minmax(180px, 2.2fr) minmax(210px, 1.4fr) minmax(110px, 0.9fr) auto;
+    grid-template-columns:
+      minmax(180px, 2.2fr) minmax(210px, 1.4fr) minmax(110px, 0.9fr)
+      auto;
     align-items: center;
     padding: 8px var(--space-6);
-    background: #FAF6F5;
+    background: #faf6f5;
     border-bottom: 1px solid var(--color-border-light);
     font-size: 10.5px;
     font-weight: 700;
@@ -2001,7 +2816,9 @@
 
   .item-main {
     display: grid;
-    grid-template-columns: minmax(180px, 2.2fr) minmax(210px, 1.4fr) minmax(110px, 0.9fr) auto;
+    grid-template-columns:
+      minmax(180px, 2.2fr) minmax(210px, 1.4fr) minmax(110px, 0.9fr)
+      auto;
     align-items: center;
     padding: 10px var(--space-6);
     gap: var(--space-3);
@@ -2025,9 +2842,15 @@
     border-radius: var(--radius-full);
     flex-shrink: 0;
   }
-  .status-dot.status-lunas { background: var(--color-success); }
-  .status-dot.status-dp { background: var(--color-warning); }
-  .status-dot.status-unpaid { background: #D5CBC7; }
+  .status-dot.status-lunas {
+    background: var(--color-success);
+  }
+  .status-dot.status-dp {
+    background: var(--color-warning);
+  }
+  .status-dot.status-unpaid {
+    background: #d5cbc7;
+  }
 
   .item-name-group {
     display: flex;
@@ -2065,7 +2888,7 @@
     gap: 4px;
     font-size: 11px;
     color: var(--color-text-muted);
-    background: #FAF7F5;
+    background: #faf7f5;
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-full);
     padding: 1px 7px;
@@ -2082,13 +2905,14 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: #FAF7F5;
+    background: #faf7f5;
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);
     padding: 3px 8px;
     transition: all var(--transition-fast);
   }
-  .calc-pill:hover, .calc-pill:focus-within {
+  .calc-pill:hover,
+  .calc-pill:focus-within {
     background: white;
     border-color: var(--color-primary-light);
     box-shadow: 0 1px 4px rgba(201, 132, 122, 0.12);
@@ -2125,7 +2949,8 @@
     text-align: right;
   }
 
-  .calc-unit, .calc-currency {
+  .calc-unit,
+  .calc-currency {
     font-size: 11px;
     font-weight: 500;
     color: var(--color-text-subtle);
@@ -2170,16 +2995,16 @@
     white-space: nowrap;
   }
   .item-status-pill.status-lunas {
-    background: var(--color-success-bg, #E8F5E9);
-    color: var(--color-success, #2E7D32);
+    background: var(--color-success-bg, #e8f5e9);
+    color: var(--color-success, #2e7d32);
   }
   .item-status-pill.status-dp {
-    background: var(--color-warning-bg, #FFF3E0);
-    color: var(--color-warning, #E65100);
+    background: var(--color-warning-bg, #fff3e0);
+    color: var(--color-warning, #e65100);
   }
   .item-status-pill.status-unpaid {
-    background: #F0ECE9;
-    color: var(--color-text-subtle, #7A5850);
+    background: #f0ece9;
+    color: var(--color-text-subtle, #7a5850);
   }
 
   .status-dot-inner {
@@ -2230,8 +3055,8 @@
     border: 1px solid var(--color-border-light);
   }
   .act-settle:hover {
-    background: var(--color-success-bg, #E8F5E9);
-    color: var(--color-success, #2E7D32);
+    background: var(--color-success-bg, #e8f5e9);
+    color: var(--color-success, #2e7d32);
     border-color: rgba(46, 125, 50, 0.25);
   }
 
@@ -2275,22 +3100,34 @@
   /* Item Detail Section */
   .item-detail {
     padding: var(--space-4) var(--space-6) var(--space-5);
-    background: #FAF7F5;
+    background: #faf7f5;
     border-top: 1px solid var(--color-border-light);
   }
 
-  .payments-list { display: flex; flex-direction: column; gap: var(--space-2); }
+  .payments-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
 
   .payment-row {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: var(--space-2) var(--space-3);
     background: white;
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);
   }
 
-  .payment-left { display: flex; align-items: center; gap: var(--space-2); }
-  .payment-right { text-align: right; }
+  .payment-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .payment-right {
+    text-align: right;
+  }
 
   .payment-summary {
     background: white;
@@ -2322,8 +3159,12 @@
     color: var(--color-primary-dark);
   }
 
-  .text-success { color: var(--color-success); }
-  .text-warning { color: var(--color-warning); }
+  .text-success {
+    color: var(--color-success);
+  }
+  .text-warning {
+    color: var(--color-warning);
+  }
 
   .add-item-btn {
     width: 100%;
@@ -2353,22 +3194,34 @@
   .empty-page {
     text-align: center;
     padding: var(--space-20) 0;
-    display: flex; flex-direction: column; align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .empty-icon { font-size: 4rem; margin-bottom: var(--space-4); }
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-4);
+  }
 
   /* Modals */
-  .pay-type-choices { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .pay-type-choices {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
 
   .choice-btn-sm {
     padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-full);
     background: var(--color-surface);
     border: 1.5px solid var(--color-border);
-    font-size: var(--font-size-sm); font-weight: 500;
-    color: var(--color-text-muted); cursor: pointer;
-    transition: all var(--transition-fast); font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-body);
   }
 
   .choice-btn-sm.active {
@@ -2422,7 +3275,9 @@
   }
 
   @media (max-width: 768px) {
-    .items-table-header { display: none; }
+    .items-table-header {
+      display: none;
+    }
     .item-main {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -2434,18 +3289,55 @@
       gap: var(--space-2) var(--space-3);
       align-items: center;
     }
-    .item-col-name { grid-area: name; }
-    .item-col-calc { grid-area: calc; margin-bottom: 2px; }
-    .calc-pill { width: 100%; justify-content: space-between; box-sizing: border-box; }
-    .price-input { width: 110px; }
-    .item-col-total { grid-area: total; align-items: flex-start; text-align: left; }
-    .item-col-actions { grid-area: actions; justify-content: flex-end; min-width: auto; }
-    .category-header { padding: var(--space-3) var(--space-4); }
-    .summary-bar { gap: var(--space-3); padding: var(--space-3) var(--space-4); }
-    .summary-divider { display: none; }
-    .categories-grid { grid-template-columns: 1fr; }
-    .cat-banner-header { flex-direction: column; align-items: flex-start; }
-    .cat-banner-actions { width: 100%; justify-content: space-between; }
-    .single-cat-nav { flex-direction: column; align-items: stretch; }
+    .item-col-name {
+      grid-area: name;
+    }
+    .item-col-calc {
+      grid-area: calc;
+      margin-bottom: 2px;
+    }
+    .calc-pill {
+      width: 100%;
+      justify-content: space-between;
+      box-sizing: border-box;
+    }
+    .price-input {
+      width: 110px;
+    }
+    .item-col-total {
+      grid-area: total;
+      align-items: flex-start;
+      text-align: left;
+    }
+    .item-col-actions {
+      grid-area: actions;
+      justify-content: flex-end;
+      min-width: auto;
+    }
+    .category-header {
+      padding: var(--space-3) var(--space-4);
+    }
+    .summary-bar {
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+    }
+    .summary-divider {
+      display: none;
+    }
+    .categories-grid {
+      grid-template-columns: 1fr;
+    }
+    .cat-banner-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .cat-banner-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .single-cat-nav {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
 </style>
