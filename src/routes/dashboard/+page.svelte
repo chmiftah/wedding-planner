@@ -239,6 +239,16 @@
       <div class="stat-sub">Total rencana semua kategori</div>
     </div>
 
+    <div class="stat-card stat-card-savings">
+      <div class="stat-label">Total Tabungan</div>
+      <div class="stat-value" style="color: var(--color-primary)">
+        {formatRupiahShort(ss.totalTerkumpul)}
+      </div>
+      <div class="stat-sub">
+        {Math.round(savingsProgress)}% dari target
+      </div>
+    </div>
+
     <div class="stat-card">
       <div class="stat-label">Sudah Dibayar</div>
       <div class="stat-value" style="color: var(--color-success)">
@@ -404,7 +414,7 @@
               Progress Tabungan
             </h3>
             <p class="text-subtle text-sm">
-              {formatRupiah(ss.totalTerkumpul)} terkumpul
+              <strong style="color: var(--color-primary)">{formatRupiah(ss.totalTerkumpul)}</strong> terkumpul dari target {formatRupiah(ss.target)}
             </p>
           </div>
           <a href="/tabungan" class="btn btn-secondary btn-sm">Lihat Detail</a>
@@ -418,7 +428,7 @@
             >{Math.round(savingsProgress)}% dari target</span
           >
           <span class="text-xs text-subtle"
-            >Target: {formatRupiahShort(ss.target)}</span
+            >Sisa target: {formatRupiahShort(Math.max(0, ss.target - ss.totalTerkumpul))}</span
           >
         </div>
 
@@ -821,7 +831,7 @@
   /* Stats Grid */
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--space-4);
   }
 
@@ -830,6 +840,15 @@
       135deg,
       var(--color-primary-xlight),
       var(--color-secondary)
+    );
+    border-color: var(--color-primary-light);
+  }
+
+  .stat-card-savings {
+    background: linear-gradient(
+      135deg,
+      var(--color-surface-alt),
+      var(--color-card)
     );
     border-color: var(--color-primary-light);
   }
@@ -1178,6 +1197,12 @@
     }
   }
 
+  @media (max-width: 1200px) {
+    .stats-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
   @media (max-width: 1024px) {
     .stats-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -1209,6 +1234,9 @@
     }
     .stats-grid {
       grid-template-columns: 1fr 1fr;
+    }
+    .stats-grid > :last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
   }
 </style>

@@ -5,6 +5,7 @@ import {
   budgetItems,
   payments,
   fundingSources,
+  savingsEntries,
   checklistItems,
   guests,
   invitations,
@@ -409,6 +410,12 @@ export async function getFullWeddingData(userId: string) {
     };
   });
 
+  const sourceIds = sources.map((s) => s.id);
+  const savingsList =
+    sourceIds.length > 0
+      ? await db.select().from(savingsEntries).where(inArray(savingsEntries.fundingSourceId, sourceIds))
+      : [];
+
   const invitationRecord = invitationList[0] || null;
 
   return {
@@ -421,6 +428,13 @@ export async function getFullWeddingData(userId: string) {
       confirmedAmount: Number(s.confirmedAmount),
       isEstimate: s.isEstimate,
       notes: s.notes || '',
+    })),
+    savingsEntries: savingsList.map((se) => ({
+      id: se.id,
+      sourceId: se.fundingSourceId,
+      amount: Number(se.amount),
+      entryDate: se.entryDate,
+      notes: se.notes || '',
     })),
     checklist: tasks.map((t) => ({
       id: t.id,

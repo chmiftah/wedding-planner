@@ -1087,6 +1087,7 @@ export function hydrateWeddingFromDb(dbData: any) {
     monthlySavingsTarget: Number(w.monthlySavingsTarget) || 0,
     budgetCategories: dbData.budgetCategories !== undefined ? dbData.budgetCategories : s.budgetCategories,
     fundingSources: dbData.fundingSources !== undefined ? dbData.fundingSources : s.fundingSources,
+    savingsEntries: dbData.savingsEntries !== undefined ? dbData.savingsEntries : s.savingsEntries,
     checklist: dbData.checklist !== undefined ? dbData.checklist : s.checklist,
     guests: dbData.guests !== undefined ? dbData.guests : s.guests,
     vendors: dbData.vendors !== undefined ? dbData.vendors : s.vendors,
