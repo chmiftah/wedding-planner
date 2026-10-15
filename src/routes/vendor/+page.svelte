@@ -171,18 +171,8 @@
         notes: formNotes.trim(),
       };
       updateVendor(editId, updates);
-
-      try {
-        await fetch('/api/vendor', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editId, ...updates }),
-        });
-      } catch (err) {
-        console.error('Error updating vendor to DB:', err);
-      }
     } else {
-      const newVen = addVendor({
+      addVendor({
         name: formName.trim(),
         category: formCategory,
         contactPerson: formContactPerson.trim(),
@@ -195,16 +185,6 @@
         actualCost: formActualCost || 0,
         notes: formNotes.trim(),
       });
-
-      try {
-        await fetch('/api/vendor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newVen),
-        });
-      } catch (err) {
-        console.error('Error inserting vendor to DB:', err);
-      }
     }
 
     showModal = false;
@@ -212,14 +192,7 @@
 
   async function handleDeleteVendor(id: string, name: string) {
     if (!confirm(`Hapus vendor "${name}" dari daftar?`)) return;
-    deleteVendor(id);
-    try {
-      await fetch(`/api/vendor?id=${id}`, {
-        method: 'DELETE',
-      });
-    } catch (err) {
-      console.error('Error deleting vendor from DB:', err);
-    }
+    deleteVendor(id, name);
   }
 
   function handleResetTemplate() {

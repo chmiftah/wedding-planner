@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '#lib/server/db';
 import { weddings, guests } from '#lib/server/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
+import { invalidateWeddingCache } from '#lib/server/weddingService';
 
 function isValidUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -50,6 +51,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       if (itemsToInsert.length > 0) {
         await db.insert(guests).values(itemsToInsert);
       }
+      invalidateWeddingCache(locals.user.id);
       return json({ success: true, count: itemsToInsert.length });
     }
 
@@ -75,6 +77,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       .values(insertValues)
       .returning();
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true, item: inserted });
   } catch (err) {
     console.error('Error inserting guest to DB:', err);
@@ -121,6 +124,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
       .set(updateFields)
       .where(and(eq(guests.id, data.id), eq(guests.weddingId, wedding.id)));
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true });
   } catch (err) {
     console.error('Error updating guest in DB:', err);
@@ -150,6 +154,7 @@ export const DELETE: RequestHandler = async ({ url, request, locals }) => {
       await db
         .delete(guests)
         .where(and(eq(guests.id, queryId), eq(guests.weddingId, wedding.id)));
+      invalidateWeddingCache(locals.user.id);
       return json({ success: true });
     }
 
@@ -162,6 +167,7 @@ export const DELETE: RequestHandler = async ({ url, request, locals }) => {
           await db
             .delete(guests)
             .where(and(inArray(guests.id, validIds), eq(guests.weddingId, wedding.id)));
+          invalidateWeddingCache(locals.user.id);
         }
         return json({ success: true, deleted: validIds.length });
       }

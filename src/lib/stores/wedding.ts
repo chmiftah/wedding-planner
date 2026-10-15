@@ -512,7 +512,7 @@ function loadState(): WeddingStore {
     return {
       ...initialState,
       ...parsed,
-      vendors: parsed.vendors?.length ? parsed.vendors : defaultVendorTemplates,
+      vendors: Array.isArray(parsed.vendors) ? parsed.vendors : defaultVendorTemplates,
       rundowns: parsed.rundowns?.length ? parsed.rundowns : defaultRundownTemplates,
       calendarEvents: parsed.calendarEvents?.length ? parsed.calendarEvents : defaultCalendarTemplates(parsed.info?.weddingDate),
       invitation: loadedInvitation,
@@ -558,11 +558,20 @@ export function updateBudgetItem(categoryId: string, itemId: string, updates: Pa
         : cat
     ),
   }));
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/anggaran', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'item', id: itemId, categoryId, ...updates }),
+    }).catch(console.error);
+  }
 }
 
 export function addBudgetItem(categoryId: string) {
+  const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `item-${Date.now()}`;
   const newItem: BudgetItem = {
-    id: `item-${Date.now()}`,
+    id,
     categoryId,
     name: 'Item baru',
     quantity: 1,
@@ -578,6 +587,25 @@ export function addBudgetItem(categoryId: string) {
       cat.id === categoryId ? { ...cat, items: [...cat.items, newItem] } : cat
     ),
   }));
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/anggaran', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'item',
+        id,
+        categoryId,
+        name: newItem.name,
+        quantity: newItem.quantity,
+        unit: newItem.unit,
+        unitPrice: newItem.unitPrice,
+        vendorName: newItem.vendorName,
+        notes: newItem.notes,
+      }),
+    }).catch(console.error);
+  }
+
   return newItem.id;
 }
 
@@ -588,10 +616,17 @@ export function deleteBudgetItem(categoryId: string, itemId: string) {
       cat.id === categoryId ? { ...cat, items: cat.items.filter((i) => i.id !== itemId) } : cat
     ),
   }));
+
+  if (typeof window !== 'undefined') {
+    fetch(`/api/anggaran?type=item&id=${encodeURIComponent(itemId)}`, {
+      method: 'DELETE',
+    }).catch(console.error);
+  }
 }
 
 export function addPayment(categoryId: string, itemId: string, payment: Omit<Payment, 'id'>) {
-  const newPayment: Payment = { id: `pay-${Date.now()}`, ...payment };
+  const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}`;
+  const newPayment: Payment = { id, ...payment };
   wedding.update((s) => ({
     ...s,
     budgetCategories: s.budgetCategories.map((cat) =>
@@ -605,6 +640,22 @@ export function addPayment(categoryId: string, itemId: string, payment: Omit<Pay
         : cat
     ),
   }));
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/anggaran', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'payment',
+        id,
+        budgetItemId: itemId,
+        amount: newPayment.amount,
+        paymentDate: newPayment.dueDate || new Date().toISOString().slice(0, 10),
+        paymentType: newPayment.type,
+        notes: newPayment.notes,
+      }),
+    }).catch(console.error);
+  }
 }
 
 export function markItemPaid(categoryId: string, itemId: string) {
@@ -620,14 +671,32 @@ export function markItemPaid(categoryId: string, itemId: string) {
               const existing = item.payments.reduce((a, p) => a + p.amount, 0);
               const remaining = total - existing;
               if (remaining <= 0) return item;
+              const newPaymentId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}`;
               const newPayment: Payment = {
-                id: `pay-${Date.now()}`,
+                id: newPaymentId,
                 type: 'lunas',
                 amount: remaining,
                 dueDate: '',
                 paidAt: new Date().toISOString().slice(0, 10),
                 notes: 'Ditandai lunas',
               };
+
+              if (typeof window !== 'undefined') {
+                fetch('/api/anggaran', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: 'payment',
+                    id: newPaymentId,
+                    budgetItemId: itemId,
+                    amount: newPayment.amount,
+                    paymentDate: newPayment.paidAt,
+                    paymentType: newPayment.type,
+                    notes: newPayment.notes,
+                  }),
+                }).catch(console.error);
+              }
+
               return { ...item, payments: [...item.payments, newPayment] };
             }),
           }
@@ -636,10 +705,10 @@ export function markItemPaid(categoryId: string, itemId: string) {
   }));
 }
 
-
 export function addBudgetCategory(name: string, icon: string = '📦', color: string = '#C9847A') {
+  const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cat-${Date.now()}`;
   const newCat: BudgetCategory = {
-    id: `cat-${Date.now()}`,
+    id,
     name,
     icon,
     color,
@@ -649,6 +718,21 @@ export function addBudgetCategory(name: string, icon: string = '📦', color: st
     ...s,
     budgetCategories: [...s.budgetCategories, newCat],
   }));
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/anggaran', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'category',
+        id,
+        name,
+        icon,
+        color,
+      }),
+    }).catch(console.error);
+  }
+
   return newCat.id;
 }
 
@@ -657,6 +741,12 @@ export function deleteBudgetCategory(categoryId: string) {
     ...s,
     budgetCategories: s.budgetCategories.filter((c) => c.id !== categoryId),
   }));
+
+  if (typeof window !== 'undefined') {
+    fetch(`/api/anggaran?type=category&id=${encodeURIComponent(categoryId)}`, {
+      method: 'DELETE',
+    }).catch(console.error);
+  }
 }
 
 export function addSavingsEntry(entry: Omit<SavingsEntry, 'id'>) {
@@ -834,6 +924,15 @@ export function addVendor(vendor: Omit<VendorItem, 'id'>) {
     ...vendor,
   };
   wedding.update((s) => ({ ...s, vendors: [newVendor, ...s.vendors] }));
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/vendor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newVendor),
+    }).catch(console.error);
+  }
+
   return newVendor;
 }
 
@@ -842,16 +941,43 @@ export function updateVendor(id: string, updates: Partial<Omit<VendorItem, 'id'>
     ...s,
     vendors: s.vendors.map((v) => (v.id === id ? { ...v, ...updates } : v)),
   }));
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/vendor', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...updates }),
+    }).catch(console.error);
+  }
 }
 
-export function deleteVendor(id: string) {
+export function deleteVendor(id: string, name?: string) {
   wedding.update((s) => ({
     ...s,
     vendors: s.vendors.filter((v) => v.id !== id),
   }));
+
+  if (typeof window !== 'undefined') {
+    const url = name
+      ? `/api/vendor?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`
+      : `/api/vendor?id=${encodeURIComponent(id)}`;
+    fetch(url, {
+      method: 'DELETE',
+    }).catch(console.error);
+  }
 }
 
 export function resetVendorsToDefault() {
+  if (typeof window !== 'undefined') {
+    fetch('/api/vendor?action=reset', { method: 'DELETE' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.vendors) {
+          wedding.update((s) => ({ ...s, vendors: data.vendors }));
+        }
+      })
+      .catch(console.error);
+  }
   wedding.update((s) => ({ ...s, vendors: defaultVendorTemplates }));
 }
 
@@ -959,13 +1085,13 @@ export function hydrateWeddingFromDb(dbData: any) {
       events: s.info.events.length > 0 ? s.info.events : [{ id: 'ev-1', name: 'Resepsi', date: w.weddingDate || '' }],
     },
     monthlySavingsTarget: Number(w.monthlySavingsTarget) || 0,
-    budgetCategories: dbData.budgetCategories?.length ? dbData.budgetCategories : s.budgetCategories,
-    fundingSources: dbData.fundingSources?.length ? dbData.fundingSources : s.fundingSources,
-    checklist: dbData.checklist?.length ? dbData.checklist : s.checklist,
-    guests: dbData.guests?.length ? dbData.guests : s.guests,
-    vendors: dbData.vendors?.length ? dbData.vendors : s.vendors,
-    rundowns: dbData.rundowns?.length ? dbData.rundowns : s.rundowns,
-    calendarEvents: dbData.calendarEvents?.length ? dbData.calendarEvents : s.calendarEvents,
+    budgetCategories: dbData.budgetCategories !== undefined ? dbData.budgetCategories : s.budgetCategories,
+    fundingSources: dbData.fundingSources !== undefined ? dbData.fundingSources : s.fundingSources,
+    checklist: dbData.checklist !== undefined ? dbData.checklist : s.checklist,
+    guests: dbData.guests !== undefined ? dbData.guests : s.guests,
+    vendors: dbData.vendors !== undefined ? dbData.vendors : s.vendors,
+    rundowns: dbData.rundowns !== undefined ? dbData.rundowns : s.rundowns,
+    calendarEvents: dbData.calendarEvents !== undefined ? dbData.calendarEvents : s.calendarEvents,
     documents: dbData.documents?.length ? dbData.documents : s.documents?.length ? s.documents : defaultDocumentTemplates,
     invitation: dbData.invitation?.config
       ? { ...createDefaultInvitation(w), ...dbData.invitation.config }

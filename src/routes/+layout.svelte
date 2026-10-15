@@ -2,17 +2,23 @@
   import '../app.css';
   import { browser } from '$app/environment';
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
-  import { wedding } from '#lib/stores/wedding';
+  import { wedding, hydrateWeddingFromDb } from '#lib/stores/wedding';
 
   interface Props {
     children: any;
     data: {
       user: { id: string; email: string; name: string; role?: string } | null;
+      weddingData?: any;
     };
   }
 
   const { children, data }: Props = $props();
+
+  $effect(() => {
+    if (data?.weddingData) {
+      hydrateWeddingFromDb(data.weddingData);
+    }
+  });
 
   // Navigation Groups with Logical Categorization
   const navGroups = [

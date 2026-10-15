@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '#lib/server/db';
 import { weddings, documents } from '#lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { invalidateWeddingCache } from '#lib/server/weddingService';
 
 function isValidUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -48,6 +49,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       if (itemsToInsert.length > 0) {
         await db.insert(documents).values(itemsToInsert);
       }
+      invalidateWeddingCache(locals.user.id);
       return json({ success: true, count: itemsToInsert.length });
     }
 
@@ -70,6 +72,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       .values(insertValues)
       .returning();
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true, item: inserted });
   } catch (err) {
     console.error('Error inserting document to DB:', err);
@@ -114,6 +117,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
       .set(updateFields)
       .where(and(eq(documents.id, data.id), eq(documents.weddingId, wedding.id)));
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true });
   } catch (err) {
     console.error('Error updating document in DB:', err);
@@ -143,6 +147,7 @@ export const DELETE: RequestHandler = async ({ url, locals }) => {
       await db
         .delete(documents)
         .where(eq(documents.weddingId, wedding.id));
+      invalidateWeddingCache(locals.user.id);
       return json({ success: true, reset: true });
     }
 
@@ -151,6 +156,7 @@ export const DELETE: RequestHandler = async ({ url, locals }) => {
       await db
         .delete(documents)
         .where(and(eq(documents.id, id), eq(documents.weddingId, wedding.id)));
+      invalidateWeddingCache(locals.user.id);
     }
 
     return json({ success: true });

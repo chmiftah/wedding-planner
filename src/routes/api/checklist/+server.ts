@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '#lib/server/db';
 import { weddings, checklistItems } from '#lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { invalidateWeddingCache } from '#lib/server/weddingService';
 
 function isValidUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -45,6 +46,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       .values(insertValues)
       .returning();
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true, item: inserted });
   } catch (err) {
     console.error('Error inserting checklist item to DB:', err);
@@ -87,6 +89,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
       .set(updateFields)
       .where(and(eq(checklistItems.id, data.id), eq(checklistItems.weddingId, wedding.id)));
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true });
   } catch (err) {
     console.error('Error updating checklist item in DB:', err);
@@ -118,6 +121,7 @@ export const DELETE: RequestHandler = async ({ request, url, locals }) => {
       await db
         .delete(checklistItems)
         .where(and(eq(checklistItems.weddingId, wedding.id), eq(checklistItems.completed, true)));
+      invalidateWeddingCache(locals.user.id);
       return json({ success: true });
     }
 
@@ -125,6 +129,7 @@ export const DELETE: RequestHandler = async ({ request, url, locals }) => {
       await db
         .delete(checklistItems)
         .where(and(eq(checklistItems.id, id), eq(checklistItems.weddingId, wedding.id)));
+      invalidateWeddingCache(locals.user.id);
     }
 
     return json({ success: true });

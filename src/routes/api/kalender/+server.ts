@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '#lib/server/db';
 import { weddings, calendarEvents } from '#lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { invalidateWeddingCache } from '#lib/server/weddingService';
 
 function isValidUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -47,6 +48,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       .values(insertValues)
       .returning();
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true, item: inserted });
   } catch (err) {
     console.error('Error inserting calendar event to DB:', err);
@@ -93,6 +95,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
       .set(updateFields)
       .where(and(eq(calendarEvents.id, data.id), eq(calendarEvents.weddingId, wedding.id)));
 
+    invalidateWeddingCache(locals.user.id);
     return json({ success: true });
   } catch (err) {
     console.error('Error updating calendar event in DB:', err);
@@ -122,6 +125,7 @@ export const DELETE: RequestHandler = async ({ url, locals }) => {
       await db
         .delete(calendarEvents)
         .where(and(eq(calendarEvents.id, id), eq(calendarEvents.weddingId, wedding.id)));
+      invalidateWeddingCache(locals.user.id);
     }
 
     return json({ success: true });

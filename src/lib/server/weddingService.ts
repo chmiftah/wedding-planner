@@ -3,6 +3,7 @@ import {
   weddings,
   budgetCategories,
   budgetItems,
+  payments,
   fundingSources,
   checklistItems,
   guests,
@@ -12,7 +13,7 @@ import {
   calendarEvents,
   documents,
 } from './db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, inArray } from 'drizzle-orm';
 
 export interface WizardSubmission {
   brideName: string;
@@ -65,6 +66,15 @@ const defaultChecklistTemplates = [
   { text: 'Buat & sebar undangan digital', category: 'Tamu & Undangan', assignee: 'Pasangan' },
   { text: 'Fitting busana pengantin & keluarga', category: 'Busana', assignee: 'Pasangan' },
   { text: 'Technical meeting & gladi resik panitia', category: 'Lainnya', assignee: 'Keluarga' },
+];
+
+export const defaultVendorTemplates = [
+  { name: 'Al-Hidayah Catering Service', category: 'Katering & Konsumsi', contactPerson: 'Ibu Ratna', phone: '081298765432', email: 'ratna@catering.com', instagram: 'alhidayah.catering', address: 'Jl. Melati No. 45, Jakarta', status: 'deal', estimatedCost: 35000000, actualCost: 35000000, notes: 'Paket 500 porsi prasmanan + 5 gubukan khas nusantara' },
+  { name: 'Grand Sasana Ballroom', category: 'Sewa Gedung / Tempat', contactPerson: 'Bpk. Hendra', phone: '081387654321', email: 'marketing@grandsasana.com', instagram: 'grandsasanaballroom', address: 'Jl. Veteran No. 88, Jakarta', status: 'deal', estimatedCost: 20000000, actualCost: 20000000, notes: 'Full AC, karpet, genset standby, 6 ruang ganti/transit' },
+  { name: 'Kinar Rustic Decoration', category: 'Dekorasi & Bunga', contactPerson: 'Mba Kinara', phone: '087812345678', email: 'kinardecor@gmail.com', instagram: 'kinar_decor', address: 'Jl. Anggrek No. 12, Jakarta', status: 'deal', estimatedCost: 12000000, actualCost: 12000000, notes: 'Pelaminan 10 meter, pergola jalan, backdrop foto, bunga segar mix artificial' },
+  { name: 'Lensa Asmara Photography', category: 'Dokumentasi', contactPerson: 'Mas Arya', phone: '085612349876', email: 'lensasmara@gmail.com', instagram: 'lensa.asmara', address: 'Jakarta Selatan', status: 'diskusi', estimatedCost: 8000000, actualCost: 0, notes: '2 fotografer + 1 videografer cinematic + drone + album kolase' },
+  { name: 'Sanggar Anggun Kebaya & MUA', category: 'Rias & Busana', contactPerson: 'Mba Dewi MUA', phone: '081901234567', email: 'dewi.mua@gmail.com', instagram: 'anggun_kebaya', address: 'Tebet, Jakarta Selatan', status: 'deal', estimatedCost: 8000000, actualCost: 8000000, notes: 'Busana akad & resepsi CPW-CPP, 2 set beskap ortu, 4 rias among tamu' },
+  { name: 'Harmoni Wedding Music & MC', category: 'Musik & Hiburan', contactPerson: 'Mas Dodi MC', phone: '081233445566', email: 'harmoni.music@gmail.com', instagram: 'harmoni_weddingmusic', address: 'Jakarta', status: 'riset', estimatedCost: 4000000, actualCost: 0, notes: 'Akustik semi-full band + 1 lead singer + MC formal dan santai' },
 ];
 
 function slugify(text: string): string {
@@ -228,6 +238,34 @@ export async function saveWizardSubmission(userId: string, data: WizardSubmissio
     });
   }
 
+  // 6. Buat Vendor Default jika belum ada
+  const existingVendors = await db
+    .select({ id: vendors.id })
+    .from(vendors)
+    .where(eq(vendors.weddingId, weddingId))
+    .limit(1);
+
+  if (existingVendors.length === 0) {
+    for (const v of defaultVendorTemplates) {
+      await db.insert(vendors).values({
+        weddingId,
+        name: v.name,
+        category: v.category,
+        contactPerson: v.contactPerson,
+        phone: v.phone,
+        email: v.email,
+        instagram: v.instagram,
+        address: v.address,
+        status: v.status,
+        estimatedCost: v.estimatedCost,
+        actualCost: v.actualCost,
+        notes: v.notes,
+      });
+    }
+  }
+
+  invalidateWeddingCache(userId);
+
   return weddingId;
 }
 
@@ -317,8 +355,21 @@ export async function getFullWeddingData(userId: string) {
   const catIds = categoriesList.map((c) => c.id);
   const allItems =
     catIds.length > 0
-      ? await db.select().from(budgetItems)
+      ? await db.select().from(budgetItems).where(inArray(budgetItems.categoryId, catIds))
       : [];
+
+  const itemIds = allItems.map((i) => i.id);
+  const allPayments =
+    itemIds.length > 0
+      ? await db.select().from(payments).where(inArray(payments.budgetItemId, itemIds))
+      : [];
+
+  const paymentsByItem = new Map<string, typeof allPayments>();
+  for (const p of allPayments) {
+    const list = paymentsByItem.get(p.budgetItemId) || [];
+    list.push(p);
+    paymentsByItem.set(p.budgetItemId, list);
+  }
 
   const itemsByCat = new Map<string, typeof allItems>();
   for (const it of allItems) {
@@ -334,17 +385,27 @@ export async function getFullWeddingData(userId: string) {
       name: cat.name,
       color: cat.color || '#C9847A',
       icon: cat.icon || 'catering',
-      items: items.map((it) => ({
-        id: it.id,
-        categoryId: it.categoryId,
-        name: it.name,
-        quantity: it.quantity,
-        unit: it.unit,
-        unitPrice: Number(it.unitPrice),
-        vendorName: it.vendorName || '',
-        notes: it.notes || '',
-        payments: [],
-      })),
+      items: items.map((it) => {
+        const itemPays = paymentsByItem.get(it.id) || [];
+        return {
+          id: it.id,
+          categoryId: it.categoryId,
+          name: it.name,
+          quantity: it.quantity,
+          unit: it.unit,
+          unitPrice: Number(it.unitPrice),
+          vendorName: it.vendorName || '',
+          notes: it.notes || '',
+          payments: itemPays.map((p) => ({
+            id: p.id,
+            type: p.type as any,
+            amount: Number(p.amount),
+            dueDate: p.paymentDate || '',
+            paidAt: p.paymentDate || null,
+            notes: p.notes || '',
+          })),
+        };
+      }),
     };
   });
 
