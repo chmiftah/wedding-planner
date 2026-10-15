@@ -410,7 +410,37 @@ export async function getFullWeddingData(userId: string) {
     };
   });
 
-  const sourceIds = sources.map((s) => s.id);
+  let finalSources = sources;
+  if (finalSources.length === 0) {
+    const groomTitle = wedding.groomName ? `Tabungan ${wedding.groomName}` : 'Tabungan Calon Pengantin Pria';
+    const brideTitle = wedding.brideName ? `Tabungan ${wedding.brideName}` : 'Tabungan Calon Pengantin Wanita';
+
+    const [insertedGroom] = await db
+      .insert(fundingSources)
+      .values({
+        weddingId: wedding.id,
+        type: 'tabungan_sendiri',
+        name: groomTitle,
+        confirmedAmount: 0,
+        isEstimate: false,
+      })
+      .returning();
+
+    const [insertedBride] = await db
+      .insert(fundingSources)
+      .values({
+        weddingId: wedding.id,
+        type: 'tabungan_pasangan',
+        name: brideTitle,
+        confirmedAmount: 0,
+        isEstimate: false,
+      })
+      .returning();
+
+    finalSources = [insertedGroom, insertedBride].filter(Boolean);
+  }
+
+  const sourceIds = finalSources.map((s) => s.id);
   const savingsList =
     sourceIds.length > 0
       ? await db.select().from(savingsEntries).where(inArray(savingsEntries.fundingSourceId, sourceIds))
@@ -421,7 +451,7 @@ export async function getFullWeddingData(userId: string) {
   return {
     wedding,
     budgetCategories: fullCategories,
-    fundingSources: sources.map((s) => ({
+    fundingSources: finalSources.map((s) => ({
       id: s.id,
       type: s.type,
       name: s.name,

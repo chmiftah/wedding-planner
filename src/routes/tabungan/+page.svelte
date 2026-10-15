@@ -3,6 +3,7 @@
     wedding,
     savingsSummary,
     addSavingsEntry,
+    deleteSavingsEntry,
   } from "#lib/stores/wedding";
   import {
     formatRupiah,
@@ -17,17 +18,43 @@
   let entryAmount = $state(0);
   let entryDate = $state(new Date().toISOString().slice(0, 10));
   let entryNotes = $state("");
+  let isSubmitting = $state(false);
 
-  function submitEntry() {
-    addSavingsEntry({
-      sourceId: entrySourceId,
-      amount: entryAmount,
-      entryDate,
-      notes: entryNotes,
-    });
-    showAddEntry = false;
-    entryAmount = 0;
-    entryNotes = "";
+  $effect(() => {
+    if (!entrySourceId && $wedding.fundingSources.length > 0) {
+      entrySourceId = $wedding.fundingSources[0].id;
+    }
+  });
+
+  function openModal() {
+    if (!entrySourceId && $wedding.fundingSources.length > 0) {
+      entrySourceId = $wedding.fundingSources[0].id;
+    }
+    showAddEntry = true;
+  }
+
+  async function submitEntry() {
+    if (entryAmount <= 0 || isSubmitting) return;
+    isSubmitting = true;
+    try {
+      await addSavingsEntry({
+        sourceId: entrySourceId || $wedding.fundingSources[0]?.id || "",
+        amount: entryAmount,
+        entryDate,
+        notes: entryNotes,
+      });
+      showAddEntry = false;
+      entryAmount = 0;
+      entryNotes = "";
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  function handleDeleteEntry(entryId: string, amount: number) {
+    if (confirm(`Hapus catatan setoran sebesar ${formatRupiah(amount)}?`)) {
+      deleteSavingsEntry(entryId);
+    }
   }
 
   function formatNum(v: number) {
@@ -78,7 +105,7 @@
       <div class="header-actions">
         <button
           class="btn btn-primary btn-sm flex items-center gap-1.5"
-          onclick={() => (showAddEntry = true)}
+          onclick={openModal}
         >
           <svg
             width="15"
@@ -322,7 +349,7 @@
           <h3>Riwayat Setoran</h3>
           <button
             class="btn btn-primary btn-sm flex items-center gap-1"
-            onclick={() => (showAddEntry = true)}
+            onclick={openModal}
           >
             <svg
               width="14"
@@ -361,12 +388,37 @@
                   >
                 </div>
                 <div class="entry-right">
-                  <span class="text-sm text-muted"
-                    >{formatDate(entry.entryDate)}</span
+                  <div class="entry-right-meta">
+                    <span class="text-sm text-muted"
+                      >{formatDate(entry.entryDate)}</span
+                    >
+                    {#if entry.notes}<span class="text-xs text-subtle"
+                        >{entry.notes}</span
+                      >{/if}
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-delete-entry"
+                    title="Hapus setoran ini"
+                    onclick={() => handleDeleteEntry(entry.id, entry.amount)}
+                    aria-label="Hapus setoran"
                   >
-                  {#if entry.notes}<span class="text-xs text-subtle"
-                      >{entry.notes}</span
-                    >{/if}
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path
+                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                      ></path>
+                    </svg>
+                  </button>
                 </div>
               </div>
             {/each}
@@ -513,6 +565,9 @@
             class="form-select"
             bind:value={entrySourceId}
           >
+            {#if $wedding.fundingSources.length === 0}
+              <option value="">Tabungan Bersama (Default)</option>
+            {/if}
             {#each $wedding.fundingSources as s}
               <option value={s.id}>{s.name}</option>
             {/each}
@@ -577,9 +632,9 @@
           type="button"
           class="btn btn-primary"
           onclick={submitEntry}
-          disabled={entryAmount <= 0}
+          disabled={entryAmount <= 0 || isSubmitting}
         >
-          Simpan Setoran
+          {isSubmitting ? "Menyimpan..." : "Simpan Setoran"}
         </button>
       </div>
     </div>
@@ -589,7 +644,7 @@
 <!-- Mobile Floating Action Button (FAB) -->
 <button
   class="mobile-fab no-print hide-desktop"
-  onclick={() => (showAddEntry = true)}
+  onclick={openModal}
   aria-label="Catat Setoran Tabungan"
 >
   <svg
@@ -734,9 +789,30 @@
   }
   .entry-right {
     display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .entry-right-meta {
+    display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 2px;
+  }
+  .btn-delete-entry {
+    background: transparent;
+    border: none;
+    color: var(--color-text-subtle);
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background-color 0.15s;
+  }
+  .btn-delete-entry:hover {
+    color: var(--color-danger);
+    background-color: var(--color-danger-bg);
   }
 
   /* Timeline */

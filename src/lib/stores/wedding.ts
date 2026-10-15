@@ -749,9 +749,50 @@ export function deleteBudgetCategory(categoryId: string) {
   }
 }
 
-export function addSavingsEntry(entry: Omit<SavingsEntry, 'id'>) {
-  const newEntry: SavingsEntry = { id: `sav-${Date.now()}`, ...entry };
+export async function addSavingsEntry(entry: Omit<SavingsEntry, 'id'>) {
+  const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sav-${Date.now()}`;
+  const newEntry: SavingsEntry = { id: tempId, ...entry };
   wedding.update((s) => ({ ...s, savingsEntries: [newEntry, ...s.savingsEntries] }));
+
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/tabungan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_entry',
+          sourceId: entry.sourceId,
+          amount: entry.amount,
+          entryDate: entry.entryDate,
+          notes: entry.notes,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.entry) {
+        wedding.update((s) => ({
+          ...s,
+          savingsEntries: s.savingsEntries.map((e) => (e.id === tempId ? data.entry : e)),
+        }));
+        return data.entry;
+      }
+    } catch (err) {
+      console.error('Error saving savings entry to DB:', err);
+    }
+  }
+  return newEntry;
+}
+
+export function deleteSavingsEntry(entryId: string) {
+  wedding.update((s) => ({
+    ...s,
+    savingsEntries: s.savingsEntries.filter((e) => e.id !== entryId),
+  }));
+
+  if (typeof window !== 'undefined') {
+    fetch(`/api/tabungan?type=entry&id=${encodeURIComponent(entryId)}`, {
+      method: 'DELETE',
+    }).catch(console.error);
+  }
 }
 
 export function addGuest(guest: Omit<Guest, 'id' | 'rsvpToken' | 'rsvpStatus' | 'guestCount' | 'rsvpMessage' | 'rsvpRespondedAt'> & {
