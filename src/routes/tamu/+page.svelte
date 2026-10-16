@@ -324,7 +324,7 @@
 </script>
 
 <svelte:head>
-  <title>Daftar Tamu & RSVP — Nikahku</title>
+  <title>Daftar Tamu & RSVP — Nikara</title>
 </svelte:head>
 
 <!-- Toast Notification -->

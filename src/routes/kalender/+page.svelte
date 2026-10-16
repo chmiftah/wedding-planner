@@ -328,7 +328,7 @@
 </script>
 
 <svelte:head>
-  <title>Kalender & Agenda Acara Pernikahan | Nikahku</title>
+  <title>Kalender & Agenda Acara Pernikahan | Nikara</title>
 </svelte:head>
 
 <div class="calendar-page animate-fade-in">

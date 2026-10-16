@@ -167,7 +167,7 @@
 </script>
 
 <svelte:head>
-  <title>Dokumen & Syarat Nikah — Nikahku</title>
+  <title>Dokumen & Syarat Nikah — Nikara</title>
 </svelte:head>
 
 <!-- Toast Notification -->

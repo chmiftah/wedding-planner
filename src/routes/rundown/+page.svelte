@@ -234,7 +234,7 @@
 <svelte:window onclick={handleWindowClick} />
 
 <svelte:head>
-  <title>Rundown & Susunan Acara Pernikahan | Nikahku</title>
+  <title>Rundown & Susunan Acara Pernikahan | Nikara</title>
 </svelte:head>
 
 <div class="rundown-page animate-fade-in">

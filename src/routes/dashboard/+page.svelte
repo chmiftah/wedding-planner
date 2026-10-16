@@ -35,6 +35,14 @@
   const cs = $derived($calendarSummary);
   const rs = $derived($rundownSummary);
 
+  const isWizardCompleted = $derived(
+    Boolean(
+      $wedding.wizardCompleted ||
+      data?.weddingData?.wedding?.wizardCompleted ||
+      Boolean($wedding.info.brideName && $wedding.info.groomName)
+    )
+  );
+
   // Next upcoming calendar event
   const nextEvent = $derived(() => {
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -117,7 +125,7 @@
 </script>
 
 <svelte:head>
-  <title>Dashboard — Nikahku</title>
+  <title>Dashboard — Nikara</title>
 </svelte:head>
 
 <div class="container dashboard">
@@ -160,45 +168,76 @@
     {/if}
   </div>
   {#if !data?.user}
-    <div class="guest-save-banner mb-6 animate-slide-up">
-      <div class="guest-banner-left">
-        <div class="guest-banner-icon-box">
-          <span class="guest-banner-icon">💍</span>
-        </div>
-        <div class="guest-banner-content">
-          <div class="guest-banner-badge">
-            <span class="pulse-dot"></span>
-            Mode Tamu — Tersimpan Sementara
+    {#if isWizardCompleted}
+      <div class="guest-save-banner mb-6 animate-slide-up">
+        <div class="guest-banner-left">
+          <div class="guest-banner-icon-box">
+            <span class="guest-banner-icon">💍</span>
           </div>
-          <h3 class="guest-banner-title">Amankan Rencana Pernikahan Anda</h3>
-          <p class="guest-banner-desc">
-            Rencana Anda saat ini hanya tersimpan di browser perangkat ini.
-            Simpan ke akun gratis agar data aman tidak hilang dan dapat dibuka
-            bersama pasangan dari smartphone/laptop lain!
-          </p>
+          <div class="guest-banner-content">
+            <div class="guest-banner-badge">
+              <span class="pulse-dot"></span>
+              Mode Tamu — Tersimpan Sementara
+            </div>
+            <h3 class="guest-banner-title">Amankan Rencana Pernikahan Anda</h3>
+            <p class="guest-banner-desc">
+              Rencana Anda saat ini hanya tersimpan di browser perangkat ini.
+              Simpan ke akun gratis agar data aman tidak hilang dan dapat dibuka
+              bersama pasangan dari smartphone/laptop lain!
+            </p>
+          </div>
+        </div>
+        <div class="guest-banner-actions">
+          <a href="/daftar" class="btn btn-primary btn-save-account">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Simpan ke Akun Gratis</span>
+          </a>
+          <a href="/masuk" class="btn-guest-login"> Sudah Punya Akun? Masuk </a>
         </div>
       </div>
-      <div class="guest-banner-actions">
-        <a href="/daftar" class="btn btn-primary btn-save-account">
+    {:else}
+      <div class="wizard-prompt-banner mb-6 animate-slide-up">
+        <div class="wizard-prompt-text">
+          <span class="prompt-icon">✨</span>
+          <div>
+            <h4 class="prompt-title">Rencanakan Pernikahan Impian Anda</h4>
+            <p class="prompt-desc">
+              Gunakan panduan Wizard untuk mengisi detail acara, anggaran, dan
+              kalkulasi otomatis.
+            </p>
+          </div>
+        </div>
+        <a href="/wizard" class="btn btn-primary btn-sm">
+          <span>Mulai Wizard</span>
           <svg
-            width="15"
-            height="15"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2.5"
+            stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
-          <span>Simpan ke Akun Gratis</span>
         </a>
-        <a href="/masuk" class="btn-guest-login"> Sudah Punya Akun? Masuk </a>
       </div>
-    </div>
-  {:else if !data?.weddingData || !data?.weddingData?.wedding?.wizardCompleted}
+    {/if}
+  {:else if !isWizardCompleted}
     <div class="wizard-prompt-banner mb-6 animate-slide-up">
       <div class="wizard-prompt-text">
         <span class="prompt-icon">✨</span>
@@ -228,6 +267,7 @@
       </a>
     </div>
   {/if}
+
 
   <!-- Summary Cards -->
   <div class="stats-grid animate-slide-up">

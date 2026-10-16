@@ -59,8 +59,8 @@
 </script>
 
 <svelte:head>
-  <title>Daftar Akun Baru — Wedding Planner</title>
-  <meta name="description" content="Daftar akun Wedding Planner gratis untuk merencanakan pernikahan impian Anda bersama pasangan." />
+  <title>Daftar Akun Baru — Nikara</title>
+  <meta name="description" content="Daftar akun Nikara gratis — satu klik awal cerita. Rencanakan pernikahan impian Anda bersama pasangan." />
 </svelte:head>
 
 <div class="auth-page">
@@ -69,7 +69,10 @@
     <div class="auth-header">
       <a href="/" class="auth-logo" title="Kembali ke Beranda">
         <span class="auth-logo-icon">💍</span>
-        <span class="auth-logo-text">Wedding Planner</span>
+        <div class="auth-logo-brand">
+          <span class="auth-logo-text">Nikara</span>
+          <span class="auth-logo-tagline">satu klik awal cerita</span>
+        </div>
       </a>
       <h1 class="auth-title">Buat Akun Baru</h1>
       <p class="auth-subtitle">Mulai perjalanan persiapan pernikahan impian Anda sekarang</p>
@@ -271,6 +274,20 @@
     font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--color-text);
+    line-height: 1.1;
+  }
+
+  .auth-logo-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .auth-logo-tagline {
+    font-size: var(--font-size-xs, 0.75rem);
+    color: var(--color-text-muted);
+    font-weight: 500;
+    line-height: 1.2;
   }
 
   .auth-title {

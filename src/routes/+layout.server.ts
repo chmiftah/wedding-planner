@@ -10,7 +10,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
   }
 
   try {
-    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000));
     const weddingData = await Promise.race([
       getFullWeddingData(locals.user.id),
       timeoutPromise,

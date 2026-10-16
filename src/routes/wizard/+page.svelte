@@ -163,13 +163,13 @@
       console.warn('Error syncing wizard to database:', err);
     } finally {
       isSaving = false;
-      goto('/dashboard');
+      goto('/dashboard', { invalidateAll: true });
     }
   }
 </script>
 
 <svelte:head>
-  <title>Mulai Merencanakan — Nikahku</title>
+  <title>Mulai Merencanakan — Nikara</title>
 </svelte:head>
 
 <div class="wizard-page">

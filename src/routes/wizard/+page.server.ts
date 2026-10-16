@@ -26,7 +26,6 @@ export const actions: Actions = {
       }
     }
 
-    // Untuk user tamu, data sudah tersimpan di localStorage browser via store client
-    throw redirect(303, '/dashboard');
+    return { success: true };
   },
 };

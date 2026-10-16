@@ -316,7 +316,7 @@
 </script>
 
 <svelte:head>
-  <title>Checklist Persiapan — Nikahku</title>
+  <title>Checklist Persiapan — Nikara</title>
 </svelte:head>
 
 <!-- Toast Floating Message -->

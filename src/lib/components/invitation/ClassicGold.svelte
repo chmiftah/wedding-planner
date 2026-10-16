@@ -566,7 +566,7 @@
       <div class="gold-crest mb-2">⚜️</div>
       <p class="gold-footer-names">{invitation.couple.groomNickname} &amp; {invitation.couple.brideNickname}</p>
       <p class="gold-footer-sub">Beserta Keluarga Besar</p>
-      <p class="gold-watermark">💍 Nikahku Digital Wedding</p>
+      <p class="gold-watermark">💍 Nikara — satu klik awal cerita</p>
     </footer>
   </main>
 </div>

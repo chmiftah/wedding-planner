@@ -1138,7 +1138,7 @@ export function hydrateWeddingFromDb(dbData: any) {
     invitation: dbData.invitation?.config
       ? { ...createDefaultInvitation(w), ...dbData.invitation.config }
       : s.invitation,
-    wizardCompleted: Boolean(w.wizardCompleted),
+    wizardCompleted: Boolean(w.wizardCompleted || s.wizardCompleted),
   }));
 }
 

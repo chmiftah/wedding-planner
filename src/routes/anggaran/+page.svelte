@@ -315,7 +315,7 @@
 </script>
 
 <svelte:head>
-  <title>Anggaran — Nikahku</title>
+  <title>Anggaran — Nikara</title>
 </svelte:head>
 
 <div class="anggaran-page animate-fade-in">

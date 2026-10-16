@@ -408,7 +408,7 @@ function buildWorkbookXml(worksheetsXml: string): string {
   " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
   " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n" +
   " <DocumentProperties xmlns=\"urn:schemas-microsoft-com:office:office\">\n" +
-  "  <Author>Nikahku Wedding Planner</Author>\n" +
+  "  <Author>Nikara — satu klik awal cerita</Author>\n" +
   "  <Created>" + new Date().toISOString() + "</Created>\n" +
   " </DocumentProperties>\n" +
   " <Styles>\n" +
@@ -422,7 +422,7 @@ export function exportWeddingToExcel(wedding: WeddingStore): void {
   const coupleSlug = String(wedding.info.groomName || "Groom") + "-" + String(wedding.info.brideName || "Bride");
   const cleanSlug = coupleSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const dateSlug = wedding.info.weddingDate || new Date().toISOString().split("T")[0];
-  const filename = "Nikahku-" + cleanSlug + "-" + dateSlug + ".xls";
+  const filename = "nikara-" + cleanSlug + "-" + dateSlug + ".xls";
 
   const sheetsXml =
     generateBudgetSheetXml(wedding) +
@@ -436,7 +436,7 @@ export function exportWeddingToExcel(wedding: WeddingStore): void {
 export function exportBudgetToExcel(wedding: WeddingStore): void {
   const coupleSlug = String(wedding.info.groomName || "Groom") + "-" + String(wedding.info.brideName || "Bride");
   const cleanSlug = coupleSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const filename = "Nikahku-Anggaran-" + cleanSlug + ".xls";
+  const filename = "nikara-anggaran-" + cleanSlug + ".xls";
 
   const sheetsXml = generateBudgetSheetXml(wedding);
   const fullXml = buildWorkbookXml(sheetsXml);
@@ -446,7 +446,7 @@ export function exportBudgetToExcel(wedding: WeddingStore): void {
 export function exportGuestsToExcel(wedding: WeddingStore): void {
   const coupleSlug = String(wedding.info.groomName || "Groom") + "-" + String(wedding.info.brideName || "Bride");
   const cleanSlug = coupleSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const filename = "Nikahku-Daftar-Tamu-" + cleanSlug + ".xls";
+  const filename = "nikara-daftar-tamu-" + cleanSlug + ".xls";
 
   const sheetsXml = generateGuestsSheetXml(wedding);
   const fullXml = buildWorkbookXml(sheetsXml);
@@ -456,7 +456,7 @@ export function exportGuestsToExcel(wedding: WeddingStore): void {
 export function exportChecklistToExcel(wedding: WeddingStore): void {
   const coupleSlug = String(wedding.info.groomName || "Groom") + "-" + String(wedding.info.brideName || "Bride");
   const cleanSlug = coupleSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const filename = "Nikahku-Checklist-" + cleanSlug + ".xls";
+  const filename = "nikara-checklist-" + cleanSlug + ".xls";
 
   const sheetsXml = generateChecklistSheetXml(wedding);
   const fullXml = buildWorkbookXml(sheetsXml);

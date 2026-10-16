@@ -947,7 +947,7 @@
 
       <div class="footer-branding">
         <span>Designed with love by</span>
-        <strong>💍 Nikahku</strong>
+        <strong>💍 Nikara — satu klik awal cerita</strong>
       </div>
     </footer>
   </main>

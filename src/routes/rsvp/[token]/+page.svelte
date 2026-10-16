@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-  <title>Konfirmasi Kehadiran — Nikahku</title>
+  <title>Konfirmasi Kehadiran — Nikara</title>
 </svelte:head>
 
 <div class="rsvp-page">
@@ -156,7 +156,7 @@
 
     <!-- Brand -->
     <div class="rsvp-brand">
-      <a href="/" class="text-subtle text-xs">Dibuat dengan 💍 Nikahku</a>
+      <a href="/" class="text-subtle text-xs">Dibuat dengan 💍 Nikara — satu klik awal cerita</a>
     </div>
   </div>
 </div>

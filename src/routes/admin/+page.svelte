@@ -35,7 +35,7 @@
 </script>
 
 <svelte:head>
-  <title>Admin - Manajemen Pengguna | Nikahku</title>
+  <title>Admin - Manajemen Pengguna | Nikara</title>
 </svelte:head>
 
 <div class="admin-page">

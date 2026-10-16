@@ -417,7 +417,7 @@
 </script>
 
 <svelte:head>
-  <title>Undangan Pernikahan Digital — Nikahku</title>
+  <title>Undangan Pernikahan Digital — Nikara</title>
 </svelte:head>
 
 <!-- Toast Notification -->

@@ -84,7 +84,7 @@
 </script>
 
 <svelte:head>
-  <title>Tabungan & Proyeksi — Nikahku</title>
+  <title>Tabungan & Proyeksi — Nikara</title>
 </svelte:head>
 
 <div class="tabungan-page animate-fade-in">

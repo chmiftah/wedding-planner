@@ -203,7 +203,7 @@
 </script>
 
 <svelte:head>
-  <title>Manajemen Vendor Pernikahan | Nikahku</title>
+  <title>Manajemen Vendor Pernikahan | Nikara</title>
 </svelte:head>
 
 <div class="vendor-page animate-fade-in">

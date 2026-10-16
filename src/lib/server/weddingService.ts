@@ -163,15 +163,16 @@ export async function saveWizardSubmission(userId: string, data: WizardSubmissio
 
       const categoryBudget = Math.round((data.totalBudget * (pcts[i] || 5)) / 100 / 1000) * 1000;
 
-      for (let j = 0; j < cat.items.length; j++) {
-        const itemName = cat.items[j];
-        await db.insert(budgetItems).values({
-          categoryId: insertedCat.id,
-          name: itemName,
-          quantity: 1,
-          unit: 'paket',
-          unitPrice: j === 0 ? categoryBudget : 0,
-        });
+      const itemsToInsert = cat.items.map((itemName, j) => ({
+        categoryId: insertedCat.id,
+        name: itemName,
+        quantity: 1,
+        unit: 'paket',
+        unitPrice: j === 0 ? categoryBudget : 0,
+      }));
+
+      if (itemsToInsert.length > 0) {
+        await db.insert(budgetItems).values(itemsToInsert);
       }
     }
   }
@@ -184,16 +185,15 @@ export async function saveWizardSubmission(userId: string, data: WizardSubmissio
     .limit(1);
 
   if (existingFunding.length === 0 && data.fundingSources.length > 0) {
-    for (const fs of data.fundingSources) {
-      await db.insert(fundingSources).values({
-        weddingId,
-        type: fs.type,
-        name: fs.name,
-        confirmedAmount: fs.confirmedAmount,
-        isEstimate: fs.isEstimate,
-        notes: fs.notes || '',
-      });
-    }
+    const fundingToInsert = data.fundingSources.map((fs) => ({
+      weddingId,
+      type: fs.type,
+      name: fs.name,
+      confirmedAmount: Number(fs.confirmedAmount) || 0,
+      isEstimate: Boolean(fs.isEstimate),
+      notes: fs.notes || '',
+    }));
+    await db.insert(fundingSources).values(fundingToInsert);
   }
 
   // 4. Buat Checklist Default jika belum ada
@@ -204,15 +204,14 @@ export async function saveWizardSubmission(userId: string, data: WizardSubmissio
     .limit(1);
 
   if (existingChecklist.length === 0) {
-    for (const item of defaultChecklistTemplates) {
-      await db.insert(checklistItems).values({
-        weddingId,
-        text: item.text,
-        category: item.category,
-        assignee: item.assignee,
-        completed: false,
-      });
-    }
+    const checklistToInsert = defaultChecklistTemplates.map((item) => ({
+      weddingId,
+      text: item.text,
+      category: item.category,
+      assignee: item.assignee,
+      completed: false,
+    }));
+    await db.insert(checklistItems).values(checklistToInsert);
   }
 
   // 5. Buat Konfigurasi Undangan Digital jika belum ada
@@ -247,22 +246,21 @@ export async function saveWizardSubmission(userId: string, data: WizardSubmissio
     .limit(1);
 
   if (existingVendors.length === 0) {
-    for (const v of defaultVendorTemplates) {
-      await db.insert(vendors).values({
-        weddingId,
-        name: v.name,
-        category: v.category,
-        contactPerson: v.contactPerson,
-        phone: v.phone,
-        email: v.email,
-        instagram: v.instagram,
-        address: v.address,
-        status: v.status,
-        estimatedCost: v.estimatedCost,
-        actualCost: v.actualCost,
-        notes: v.notes,
-      });
-    }
+    const vendorsToInsert = defaultVendorTemplates.map((v) => ({
+      weddingId,
+      name: v.name,
+      category: v.category,
+      contactPerson: v.contactPerson,
+      phone: v.phone,
+      email: v.email,
+      instagram: v.instagram,
+      address: v.address,
+      status: v.status,
+      estimatedCost: v.estimatedCost,
+      actualCost: v.actualCost,
+      notes: v.notes,
+    }));
+    await db.insert(vendors).values(vendorsToInsert);
   }
 
   invalidateWeddingCache(userId);

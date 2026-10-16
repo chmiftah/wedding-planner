@@ -89,8 +89,8 @@
 </script>
 
 <svelte:head>
-  <title>Nikahku — Rencanakan Pernikahan Impianmu</title>
-  <meta name="description" content="Rencanakan pernikahan dengan mudah. Atur anggaran, undang tamu, pantau tabungan — semua dalam satu tempat." />
+  <title>Nikara — satu klik awal cerita</title>
+  <meta name="description" content="Nikara — satu klik awal cerita. Rencanakan pernikahan dengan mudah. Atur anggaran, undang tamu, pantau tabungan — semua dalam satu tempat." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -278,13 +278,13 @@
   <!-- ============================================== -->
   <header class="landing-header">
     <div class="landing-header-container">
-      <a href="/" class="header-brand" aria-label="Nikahku Beranda">
+      <a href="/" class="header-brand" aria-label="Nikara Beranda">
         <div class="brand-icon-box">
           <span class="brand-icon">{@render iconSvg('ring', 20)}</span>
         </div>
         <div class="brand-text">
-          <span class="brand-name">Nikahku</span>
-          <span class="brand-tagline">Wedding Planner</span>
+          <span class="brand-name">Nikara</span>
+          <span class="brand-tagline">satu klik awal cerita</span>
         </div>
       </a>
 
@@ -529,11 +529,11 @@
 
         <!-- Comparison Cards -->
         <div class="spotlight-text animate-fade-in delay-100">
-          <span class="section-tag">{@render iconSvg('sparkles', 13)} Kenapa Nikahku?</span>
+          <span class="section-tag">{@render iconSvg('sparkles', 13)} Kenapa Nikara?</span>
           <h2 class="spotlight-title">Pernikahanmu terlalu istimewa untuk lembar kerja yang membosankan</h2>
           <p class="text-muted mb-6">
             Buku catatan hilang, rumus Excel rusak, dan lupa kapan jatuh tempo pelunasan katering.
-            Nikahku hadir mengubah kecemasan persiapan menjadi proses yang menyenangkan.
+            Nikara hadir mengubah kecemasan persiapan menjadi proses yang menyenangkan.
           </p>
 
           <div class="comparison-boxes">
@@ -548,7 +548,7 @@
             <div class="comparison-box positive">
               <div class="comp-icon">{@render iconSvg('check', 16)}</div>
               <div>
-                <h4 class="comp-title">Pakai Nikahku</h4>
+                <h4 class="comp-title">Pakai Nikara</h4>
                 <p class="comp-desc">Alokasi anggaran otomatis, status pelunasan per vendor langsung terlacak, dan tamu konfirmasi kehadiran lewat link unik.</p>
               </div>
             </div>
@@ -625,7 +625,7 @@
         </span>
         <h2>Pertanyaan yang Sering Diajukan</h2>
         <p class="section-subtitle">
-          Semua hal yang perlu kamu ketahui tentang cara kerja, kemudahan akses, dan keamanan rencana pernikahanmu di Nikahku.
+          Semua hal yang perlu kamu ketahui tentang cara kerja, kemudahan akses, dan keamanan rencana pernikahanmu di Nikara.
         </p>
       </div>
 
@@ -723,7 +723,10 @@
       <div class="footer-inner">
         <div class="footer-brand">
           <span class="brand-icon">{@render iconSvg('ring', 20)}</span>
-          <span class="brand-name">Nikahku</span>
+          <div class="brand-text">
+            <span class="brand-name">Nikara</span>
+            <span class="brand-tagline text-xs text-muted">satu klik awal cerita</span>
+          </div>
         </div>
         <p class="footer-copy">
           Dibuat dengan sepenuh hati untuk calon pengantin di seluruh Indonesia.
@@ -756,7 +759,7 @@
       action: { label: 'Coba Wizard Sekarang' },
     },
     {
-      question: 'Apakah aplikasi Nikahku benar-benar gratis?',
+      question: 'Apakah aplikasi Nikara benar-benar gratis?',
       answer: 'Ya, 100% gratis untuk calon pengantin. Anda bebas menggunakan seluruh fitur utama tanpa batas—mulai dari kalkulator alokasi anggaran, pelacak pembayaran vendor (DP & pelunasan), kalkulator tabungan bulanan, manajemen buku tamu & RSVP online, checklist persiapan H-Day, hingga undangan digital interaktif.',
     },
     {

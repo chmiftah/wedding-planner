@@ -87,7 +87,7 @@
     a.href = dataStr;
     const dateStr = new Date().toISOString().slice(0, 10);
     const bride = $wedding.info.brideName ? `-${$wedding.info.brideName.toLowerCase().replace(/\s+/g, '_')}` : '';
-    a.download = `nikahku-cadangan${bride}-${dateStr}.json`;
+    a.download = `nikara-cadangan${bride}-${dateStr}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -104,7 +104,7 @@
         const text = event.target?.result as string;
         const json = JSON.parse(text);
         if (!json || typeof json !== 'object' || !json.info) {
-          throw new Error('Format file tidak sesuai. Pastikan memilih file cadangan Nikahku (.json).');
+          throw new Error('Format file tidak sesuai. Pastikan memilih file cadangan Nikara (.json).');
         }
         if (confirm('Pulihkan data dari cadangan ini? Data rencana saat ini akan digantikan dengan data dari file cadangan.')) {
           wedding.set(json);
@@ -125,7 +125,7 @@
 </script>
 
 <svelte:head>
-  <title>Pengaturan — Nikahku</title>
+  <title>Pengaturan — Nikara</title>
 </svelte:head>
 
 <div class="container">

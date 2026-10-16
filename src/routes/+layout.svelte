@@ -64,7 +64,7 @@
   // Initialize from localStorage if browser
   if (browser) {
     try {
-      const savedCollapsed = localStorage.getItem('nikahku-sidebar-collapsed');
+      const savedCollapsed = localStorage.getItem('nikara-sidebar-collapsed') || localStorage.getItem('nikahku-sidebar-collapsed');
       if (savedCollapsed !== null) {
         isCollapsed = savedCollapsed === 'true';
       }
@@ -75,7 +75,7 @@
     isCollapsed = !isCollapsed;
     if (browser) {
       try {
-        localStorage.setItem('nikahku-sidebar-collapsed', String(isCollapsed));
+        localStorage.setItem('nikara-sidebar-collapsed', String(isCollapsed));
       } catch {}
     }
   }
@@ -103,7 +103,7 @@
     allNavItems.find(item => currentPath.startsWith(item.href)) ||
     (currentPath === '/pengaturan' ? { label: 'Pengaturan' } :
      currentPath.startsWith('/admin') ? { label: 'Panel Administrator' } :
-     { label: 'Nikahku Planner' })
+     { label: 'Nikara' })
   );
 
   // Wedding countdown calculation
@@ -219,8 +219,8 @@
           <span class="brand-icon">💍</span>
           {#if !isCollapsed}
             <div class="brand-text-block animate-fade-in">
-              <span class="brand-name">Nikahku</span>
-              <span class="brand-subname">{getCoupleHeading()}</span>
+              <span class="brand-name">Nikara</span>
+              <span class="brand-subname">satu klik awal cerita</span>
             </div>
           {/if}
         </a>
