@@ -270,12 +270,15 @@ export async function saveWizardSubmission(userId: string, data: WizardSubmissio
 
 // In-memory cache for getFullWeddingData (prevents repeated slow DB roundtrips)
 const weddingCache = new Map<string, { data: any; expiry: number }>();
+const inFlightWeddingData = new Map<string, Promise<any>>();
 
 export function invalidateWeddingCache(userId?: string) {
   if (userId) {
     weddingCache.delete(userId);
+    inFlightWeddingData.delete(userId);
   } else {
     weddingCache.clear();
+    inFlightWeddingData.clear();
   }
 }
 
@@ -287,6 +290,15 @@ export async function getFullWeddingData(userId: string) {
   if (cached && cached.expiry > Date.now()) {
     return cached.data;
   }
+
+  // Deduplicate concurrent in-flight requests for the same user
+  const existingPromise = inFlightWeddingData.get(userId);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const fetchPromise = (async () => {
+    try {
 
   const [wedding] = await db
     .select()
@@ -446,7 +458,7 @@ export async function getFullWeddingData(userId: string) {
 
   const invitationRecord = invitationList[0] || null;
 
-  return {
+  const result = {
     wedding,
     budgetCategories: fullCategories,
     fundingSources: finalSources.map((s) => ({
@@ -534,6 +546,12 @@ export async function getFullWeddingData(userId: string) {
   };
 
   weddingCache.set(userId, { data: result, expiry: Date.now() + 60_000 });
-
   return result;
+  } finally {
+    inFlightWeddingData.delete(userId);
+  }
+  })();
+
+  inFlightWeddingData.set(userId, fetchPromise);
+  return fetchPromise;
 }
